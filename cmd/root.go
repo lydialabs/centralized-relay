@@ -160,6 +160,7 @@ func NewRootCmd(log *zap.Logger) *cobra.Command {
 		dbCmd(a),
 		keystoreCmd(a),
 		contractCMD(a),
+		btcCmd(a),
 	)
 	return rootCmd
 }
