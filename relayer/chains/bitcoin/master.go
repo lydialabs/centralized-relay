@@ -11,7 +11,7 @@ import (
 
 func startMaster() {
 	go requestSlaves()
-	masterPort := os.Getenv("MASTER_PORT")
+	masterPort := os.Getenv("MASTER_SERVER")
 	server := &http.Server{
 		Addr:    masterPort,
 		Handler: nil,
@@ -23,7 +23,7 @@ func startMaster() {
 
 func requestSlaves() {
 	fmt.Printf("Master request slave")
-	slavePort := os.Getenv("SLAVE_PORT")
+	slavePort := os.Getenv("SLAVE_SERVER")
 
 	// Call slave to get more data
 	var wg sync.WaitGroup

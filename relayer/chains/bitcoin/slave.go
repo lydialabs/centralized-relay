@@ -8,7 +8,7 @@ import (
 )
 
 func startSlave() {
-	slavePort := os.Getenv("SLAVE_PORT")
+	slavePort := os.Getenv("SLAVE_SERVER")
 	http.HandleFunc("/", handleRoot)
 	server := &http.Server{
 		Addr:    slavePort,

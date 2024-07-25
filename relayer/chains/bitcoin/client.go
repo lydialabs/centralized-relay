@@ -1,8 +1,10 @@
 package bitcoin
 
-import "os"
+import (
+	"os"
+)
 
-func runApp() {
+func RunApp() {
 	goEnv := os.Getenv("GO_ENV")
 	if goEnv == "master" {
 		startMaster()
