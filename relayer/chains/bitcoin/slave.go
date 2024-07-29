@@ -1,24 +1,19 @@
 package bitcoin
 
 import (
-	"crypto/tls"
 	"log"
 	"net/http"
 	"os"
 )
 
 func startSlave() {
-	slavePort := os.Getenv("SLAVE_SERVER")
 	http.HandleFunc("/", handleRoot)
 	server := &http.Server{
-		Addr:    slavePort,
+		Addr:    "8080",
 		Handler: nil,
-		TLSConfig: &tls.Config{
-			MinVersion: tls.VersionTLS12,
-		},
 	}
 
-	log.Printf("Slave starting on port %s", slavePort)
+	log.Printf("Slave starting on port %s", "8080")
 	log.Fatal(server.ListenAndServe())
 }
 
