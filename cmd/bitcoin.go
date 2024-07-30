@@ -8,7 +8,7 @@ import (
 func bitcoinCmd(a *appState) *cobra.Command {
 	bitcoinCmd := &cobra.Command{
 		Use:   "bitcoin",
-		Short: "Run bitcoin server",
+		Short: "Run Bitcoin Relayer",
 		Run: func(cmd *cobra.Command, args []string) {
 			bitcoin.RunApp()
 		},

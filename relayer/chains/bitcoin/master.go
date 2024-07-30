@@ -11,7 +11,7 @@ import (
 )
 
 func startMaster() {
-	go requestSlaves()
+	go callSlaves()
 	http.HandleFunc("/execute", handleExecute)
 	server := &http.Server{
 		Addr:    "8080",
@@ -65,7 +65,7 @@ func handleExecute(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func requestSlaves() {
+func callSlaves() {
 	fmt.Printf("Master request slave")
 	slavePort := os.Getenv("SLAVE_SERVER")
 
@@ -74,7 +74,7 @@ func requestSlaves() {
 	responses := make(chan string, 2)
 
 	wg.Add(1)
-	go requestSlave(slavePort, responses, &wg)
+	go requestPartialSign(slavePort, responses, &wg)
 
 	go func() {
 		wg.Wait()
@@ -86,7 +86,7 @@ func requestSlaves() {
 	}
 }
 
-func requestSlave(url string, responses chan<- string, wg *sync.WaitGroup) {
+func requestPartialSign(url string, responses chan<- string, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	client := &http.Client{}

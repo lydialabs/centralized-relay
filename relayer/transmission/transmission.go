@@ -9,8 +9,8 @@ import (
 	"os"
 )
 
-func RequestBitcoin(message string) []byte {
-	fmt.Printf("Request bitcoin server")
+func CallBitcoinRelay(message string) []byte {
+	fmt.Printf("Call Bitcoin Relayer")
 	masterServer := os.Getenv("MASTER_SERVER")
 
 	client := &http.Client{}

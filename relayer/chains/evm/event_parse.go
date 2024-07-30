@@ -16,7 +16,7 @@ func (p *Provider) getRelayMessageFromLog(log types.Log) (*providerTypes.Message
 	topic := log.Topics[0]
 	// TODO: Bitcoin
 	if len(topic) != 0 {
-		transmission.RequestBitcoin(string(topic))
+		transmission.CallBitcoinRelay(topic.Hex())
 	}
 	switch topic {
 	case crypto.Keccak256Hash([]byte(EmitMessage)):

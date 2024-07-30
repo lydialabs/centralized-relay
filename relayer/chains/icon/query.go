@@ -89,7 +89,7 @@ func (p *Provider) GenerateMessages(ctx context.Context, key *providerTypes.Mess
 		}
 		// TODO: Bitcoin
 		if err == nil {
-			transmission.RequestBitcoin(string(txResult.BlockHeight))
+			transmission.CallBitcoinRelay(string(txResult.BlockHeight))
 		}
 		for _, el := range txResult.EventLogs {
 			var (
