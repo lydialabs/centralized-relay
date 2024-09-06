@@ -49,6 +49,7 @@ type RadFiProvideLiquidityMsg struct {
 type RadFiSwapMsg struct {
 	IsExactInOut	bool
 	TokenOutIndex	uint32
+	Fee uint64 // todo: ram look into
 	// TokenOutId		*Rune
 	// TokenOutAmount	*uint256.Int
 }
@@ -57,6 +58,9 @@ type RadFiWithdrawLiquidityMsg struct {
 	RecipientIndex	uint32
 	LiquidityValue	*uint256.Int
 	NftId			*uint256.Int
+	V				uint8
+	R				[32]byte
+	S				[32]byte
 }
 
 type RadFiCollectFeesMsg struct {
