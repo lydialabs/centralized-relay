@@ -6,7 +6,6 @@ import (
 	"log"
 	"math/big"
 	"net/http"
-	"os"
 	"strings"
 
 	relayTypes "github.com/icon-project/centralized-relay/relayer/types"
@@ -33,7 +32,7 @@ func handleRoot(w http.ResponseWriter, r *http.Request, p *Provider) {
 			http.Error(w, "Missing API Key", http.StatusUnauthorized)
 			return
 		}
-		apiKeyHeader := os.Getenv("API_KEY")
+		apiKeyHeader := p.cfg.ApiKey
 		if apiKey != apiKeyHeader {
 			http.Error(w, "Invalid API Key", http.StatusForbidden)
 			return

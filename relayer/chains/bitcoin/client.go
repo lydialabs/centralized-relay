@@ -70,6 +70,7 @@ func (c *Client) GetLatestBlockHeight(ctx context.Context) (uint64, error) {
 	// }
 
 	// return uint64(blockCount), nil
+	// TODO: remove it
 	return 2874461, nil
 }
 

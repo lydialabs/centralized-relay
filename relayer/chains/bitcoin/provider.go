@@ -37,11 +37,12 @@ import (
 //var _ provider.ChainProvider = (*Provider)(nil)
 
 var (
-	BTCToken      = "0:0"
-	MethodDeposit = "Deposit"
-	MasterMode    = "master"
-	SlaveMode     = "slave"
-	BtcSlaveDB    = "btc_slave.db"
+	BTCToken         = "0:0"
+	MethodDeposit    = "Deposit"
+	MethodWithdrawTo = "WithdrawTo"
+	MasterMode       = "master"
+	SlaveMode        = "slave"
+	BtcDB            = "btc.db"
 )
 
 var chainIdToName = map[uint8]string{
@@ -61,6 +62,13 @@ type MessageDecoded struct {
 
 type slaveRequestParams struct {
 	MsgSn *big.Int `json:"msgSn"`
+}
+type StoredMessageData struct {
+	OriginalMessage  *relayTypes.Message
+	TxHash           string
+	OutputIndex      uint32
+	Amount           uint64
+	RecipientAddress string
 }
 
 type Provider struct {
@@ -107,7 +115,7 @@ func (c *Config) NewProvider(ctx context.Context, log *zap.Logger, homepath stri
 	}
 
 	// Create the database file path
-	dbPath := filepath.Join(homepath+"/data", BtcSlaveDB)
+	dbPath := filepath.Join(homepath+"/data", BtcDB)
 
 	// Open the database, creating it if it doesn't exist
 	db, err := leveldb.OpenFile(dbPath, nil)
@@ -356,8 +364,8 @@ func (p *Provider) CreateBitcoinMultisigTx(
 	// add withdraw output
 	if err == nil {
 		amount := new(big.Int).SetBytes(decodedData.Amount).Uint64()
-		if decodedData.Action == "WithdrawTo" {
-			if decodedData.TokenAddress == "0:0" {
+		if decodedData.Action == MethodWithdrawTo {
+			if decodedData.TokenAddress == BTCToken {
 				// transfer btc
 				outputs = append(outputs, &multisig.OutputTx{
 					ReceiverAddress: decodedData.To,
@@ -426,7 +434,7 @@ func (p *Provider) CreateBitcoinMultisigTx(
 	}
 	txFee := uint64(len(outputs)) * feePerOutput
 	inputsSatNeeded += bitcoinAmountRequired + txFee
-	// todo: cover case rune UTXOs have big enough dust amount to cover inputsSatNeeded, can store rune and bitcoin in the same utxo
+	// TODO: cover case rune UTXOs have big enough dust amount to cover inputsSatNeeded, can store rune and bitcoin in the same utxo
 	// query bitcoin UTXOs from unisat
 	bitcoinInputs, err := p.GetBitcoinUTXOs(server, relayersMultisigAddressStr, inputsSatNeeded, 3)
 	if err != nil {
@@ -454,11 +462,11 @@ func (p *Provider) BuildAndPartSignBitcoinMessageTx(messageData []byte, messageD
 	slave1PubKey, _ := hex.DecodeString(p.cfg.Slave1PubKey)
 	slave2PubKey, _ := hex.DecodeString(p.cfg.Slave2PubKey)
 	relayersMultisigInfo := multisig.MultisigInfo{
-		PubKeys:				[][]byte{masterPubKey, slave1PubKey, slave2PubKey},
-		EcPubKeys:				nil,
-		NumberRequiredSigs:		3,
-		RecoveryPubKey:			masterPubKey,
-		RecoveryLockTime:		uint64(p.cfg.RecoveryLockTime),
+		PubKeys:            [][]byte{masterPubKey, slave1PubKey, slave2PubKey},
+		EcPubKeys:          nil,
+		NumberRequiredSigs: 3,
+		RecoveryPubKey:     masterPubKey,
+		RecoveryLockTime:   uint64(p.cfg.RecoveryLockTime),
 	}
 	relayersMultisigWallet, err := multisig.BuildMultisigWallet(&relayersMultisigInfo)
 	if err != nil {
@@ -587,7 +595,7 @@ func (p *Provider) logTxFailed(err error, txHash string, code uint8) {
 func (p *Provider) logTxSuccess(height uint64, txHash string) {
 	p.logger.Info("successful transaction",
 		zap.Uint64("block_height", height),
-		//zap.String("chain_id", p.cfg.ChainID),
+		zap.String("chain_id", p.cfg.NID),
 		zap.String("tx_hash", txHash),
 	)
 }
@@ -1004,17 +1012,39 @@ func (p *Provider) parseMessageFromTx(tx *TxSearchRes) (*relayTypes.Message, err
 	decodeMessage, _ := codec.RLP.MarshalToBytes(messageInfo)
 	data, _ := XcallFormat(decodeMessage, from, bridgeMessage.Address, uint(tx.Height), p.cfg.Protocals)
 
-	return &relayTypes.Message{
+	p.SetSerialNumberFunc(func() *big.Int {
+		return new(big.Int).SetUint64(tx.Height<<32 + tx.TxIndex)
+	})
+
+	relayMessage := &relayTypes.Message{
 		// TODO:
 		Dst: "0x2.icon",
 		// Dst: chainIdToName[bridgeMessage.ChainId],
-		Src: p.NID(),
-		// Sn:            p.LastSerialNumFunc(),
-		Sn:            new(big.Int).SetUint64(tx.Height<<32 + tx.TxIndex),
+		Src:           p.NID(),
+		Sn:            p.GetSerialNumber(),
 		Data:          data,
 		MessageHeight: tx.Height,
 		EventType:     events.EmitMessage,
-	}, nil
+	}
+	// When storing the message
+	storedData := StoredMessageData{
+		OriginalMessage:  relayMessage,
+		TxHash:           tx.Tx.TxHash().String(),                             // You need to get this from the transaction you're creating
+		OutputIndex:      0,                                                   // The index of the output that sends funds to the multisig address
+		Amount:           big.NewInt(0).SetBytes(messageInfo.Amount).Uint64(), // The amount of the transaction
+		RecipientAddress: p.cfg.Address,                                       // The address that received the funds
+	}
+
+	data, err = json.Marshal(storedData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal stored data: %v", err)
+	}
+
+	err = p.db.Put([]byte(p.GetSerialNumber().String()), data, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to store message data: %v", err)
+	}
+	return relayMessage, nil
 }
 
 func (p *Provider) getMessagesFromTxList(resultTxList []*TxSearchRes) ([]*relayTypes.BlockInfo, error) {
@@ -1043,14 +1073,52 @@ func (p *Provider) getMessagesFromTxList(resultTxList []*TxSearchRes) ([]*relayT
 func (p *Provider) getRawContractMessage(message *relayTypes.Message) (wasmTypes.RawContractMessage, error) {
 	switch message.EventType {
 	case events.EmitMessage:
-		rcvMsg := types.NewExecRecvMsg(message)
-		return jsoniter.Marshal(rcvMsg)
+		// Handle as current Route function
+		inputs, relayersMultisigWallet, msgTx, relayerSigs, err := p.BuildAndPartSignBitcoinMessageTx(message.Data, strings.Split(message.Dst, ".")[0])
+		if err != nil {
+			return nil, err
+		}
+		totalSigs := [][][]byte{relayerSigs}
+		// Send unsigned raw tx and message sn to 2 slave relayers to get sign
+		rsi := slaveRequestParams{
+			MsgSn: message.Sn,
+		}
+		slaveRequestData, _ := json.Marshal(rsi)
+		slaveSigs := p.CallSlaves(slaveRequestData)
+		totalSigs = append(totalSigs, slaveSigs...)
+		// Combine sigs
+		signedMsgTx, err := multisig.CombineMultisigSigs(msgTx, inputs, relayersMultisigWallet, 0, relayersMultisigWallet, 0, totalSigs)
+		if err != nil {
+			return nil, fmt.Errorf("error combining tx: %v", err)
+		}
+		// TODO: Broadcast transaction to bitcoin network
+		// For now, we'll just return the signed transaction as a placeholder
+		return jsoniter.Marshal(signedMsgTx)
+
+	case events.RollbackMessage:
+		// Get the data stored in db and revert tx
+		data, err := p.db.Get([]byte(message.Sn.String()), nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to retrieve original message from DB: %v", err)
+		}
+
+		var originalMessage relayTypes.Message
+		err = json.Unmarshal(data, &originalMessage)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal original message: %v", err)
+		}
+
+		// Create a revert transaction based on the original message
+		revertTx, err := p.createRevertTransaction(&originalMessage)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create revert transaction: %v", err)
+		}
+
+		return jsoniter.Marshal(revertTx)
+
 	case events.CallMessage:
 		execMsg := types.NewExecExecMsg(message)
 		return jsoniter.Marshal(execMsg)
-	case events.RevertMessage:
-		revertMsg := types.NewExecRevertMsg(message)
-		return jsoniter.Marshal(revertMsg)
 	case events.SetAdmin:
 		setAdmin := types.NewExecSetAdmin(message.Dst)
 		return jsoniter.Marshal(setAdmin)
@@ -1060,12 +1128,57 @@ func (p *Provider) getRawContractMessage(message *relayTypes.Message) (wasmTypes
 	case events.SetFee:
 		setFee := types.NewExecSetFee(message.Src, message.Sn, message.ReqID)
 		return jsoniter.Marshal(setFee)
-	case events.RollbackMessage:
-		executeRollback := types.NewExecExecuteRollback(message.Sn)
-		return jsoniter.Marshal(executeRollback)
 	default:
 		return nil, fmt.Errorf("unknown event type: %s ", message.EventType)
 	}
+}
+
+func (p *Provider) createRevertTransaction(originalMessage *relayTypes.Message) (*wire.MsgTx, error) {
+	// Retrieve the stored data
+	// data, err := p.db.Get([]byte(originalMessage.Sn.String()), nil)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to retrieve original message data from DB: %v", err)
+	// }
+
+	// var storedData StoredMessageData
+	// err = json.Unmarshal(data, &storedData)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to unmarshal stored data: %v", err)
+	// }
+
+	// // Create a new transaction that sends funds back to the original sender
+	// revertTx := wire.NewMsgTx(wire.TxVersion)
+
+	// // Add input from the original transaction
+	// originalTxHash, err := chainhash.NewHashFromStr(storedData.TxHash)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to create transaction hash: %v", err)
+	// }
+	// prevOut := wire.NewOutPoint(originalTxHash, storedData.OutputIndex)
+	// txIn := wire.NewTxIn(prevOut, nil, nil)
+	// revertTx.AddTxIn(txIn)
+	// // Add output to send funds back to the original sender
+	// originalSenderAddress, err := btcutil.DecodeAddress(storedData.RecipientAddress, storedData)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to decode original sender address: %v", err)
+	// }
+
+	// pkScript, err := txscript.PayToAddrScript(originalSenderAddress)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to create pkScript: %v", err)
+	// }
+	// txOut := wire.NewTxOut(int64(storedData.Amount), pkScript)
+	// revertTx.AddTxOut(txOut)
+
+	// // Add OP_RETURN output with revert message
+	// revertMessage := []byte("REVERT:" + originalMessage.Sn.String())
+	// nullDataScript, err := txscript.NullDataScript(revertMessage)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to create null data script: %v", err)
+	// }
+	// revertTx.AddTxOut(wire.NewTxOut(0, nullDataScript))
+
+	return nil, nil
 }
 
 func (p *Provider) getNumOfPipelines(diff int) int {
