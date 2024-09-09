@@ -12,7 +12,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/holiman/uint256"
 
 	bitcoinABI "github.com/icon-project/centralized-relay/relayer/chains/bitcoin/abi"
 	"github.com/icon-project/centralized-relay/utils/multisig"
@@ -57,7 +56,7 @@ func GetRuneTxIndex(endpoint, method, bearToken, txId string, index int) (*RuneT
 func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []string, requester, token0, token1 common.Address) ([]byte, error) {
 	var res, calldata []byte
 	bitcoinStateAbi, _ := abi.JSON(strings.NewReader(bitcoinABI.BitcoinStateMetaData.ABI))
-	nonfungibleABI, _ := abi.JSON(strings.NewReader(bitcoinABI.InonfungibleTokenMetaData.ABI))
+	nonfungibleABI, _ := abi.JSON(strings.NewReader(bitcoinABI.INonfungiblePositionManagerMetaData.ABI))
 	routerABI, _ := abi.JSON(strings.NewReader(bitcoinABI.IswaprouterMetaData.ABI))
 	addressTy, _ := abi.NewType("address", "", nil)
 	bytes, _ := abi.NewType("bytes", "", nil)
@@ -71,8 +70,6 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 		},
 	}
 
-	amount0, _ := big.NewInt(0).SetString("18999999999999999977305673", 10)
-
 	switch data.(type) {
 	case multisig.RadFiProvideLiquidityMsg:
 		dataMint := data.(multisig.RadFiProvideLiquidityMsg)
@@ -82,8 +79,8 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 			Fee:            big.NewInt(int64(dataMint.Detail.Fee) * 100),
 			TickLower:      big.NewInt(int64(dataMint.Detail.LowerTick)),
 			TickUpper:      big.NewInt(int64(dataMint.Detail.UpperTick)),
-			Amount0Desired: amount0,
-			Amount1Desired: big.NewInt(539580403982610478),
+			Amount0Desired: dataMint.Detail.Amount0Desired.ToBig(),
+			Amount1Desired: dataMint.Detail.Amount1Desired.ToBig(),
 			Recipient:      common.HexToAddress(to),
 			Deadline:       big.NewInt(1000000000),
 		}
@@ -92,14 +89,18 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 		mintParams.Amount1Min = mulDiv(mintParams.Amount1Desired, big.NewInt(int64(dataMint.Detail.Min1)), big.NewInt(1e4))
 
 		var err error
-		if dataMint.InitPrice == uint256.NewInt(0) {
-			calldata, err = bitcoinStateAbi.Pack("initPool", mintParams, "btc", "rad", 1e0)
+		if dataMint.InitPrice != nil && !dataMint.InitPrice.IsZero() {
+			encodeInitPoolArgs, err := nonfungibleABI.Pack("initPoolHelper", mintParams, dataMint.Token0, dataMint.Token1, dataMint.InitPrice.ToBig())
 			if err != nil {
 				return nil, err
 			}
+			
+			calldata, err = bitcoinStateAbi.Pack("initPool", encodeInitPoolArgs[4:])
+
 		} else {
 			calldata, err = nonfungibleABI.Pack("mint", mintParams)
 		}
+
 		if err != nil {
 			return nil, err
 		}
@@ -109,8 +110,8 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 		
 		decreaseLiquidityData := bitcoinABI.INonfungiblePositionManagerDecreaseLiquidityParams{
 			TokenId: withdrawLiquidityInfo.NftId.ToBig(),
-			Amount0Min: big.NewInt(0),
-			Amount1Min: big.NewInt(0),
+			Amount0Min: withdrawLiquidityInfo.Amount0Min.ToBig(),
+			Amount1Min: withdrawLiquidityInfo.Amount1Min.ToBig(),
 			Liquidity: withdrawLiquidityInfo.LiquidityValue.ToBig(),
 			Deadline: big.NewInt(1000000000),
 		}
@@ -144,11 +145,11 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 		increaseLiquidityInfo := data.(multisig.RadFiIncreaseLiquidityMsg)
 		increaseLiquidityData := bitcoinABI.INonfungiblePositionManagerIncreaseLiquidityParams{
 			TokenId: increaseLiquidityInfo.NftId.ToBig(),
-			Amount0Desired: big.NewInt(0), //todo fill in	
-			Amount1Desired: big.NewInt(0), //todo fill in
+			Amount0Desired: increaseLiquidityInfo.Amount0Desired.ToBig(), //todo fill in	
+			Amount1Desired: increaseLiquidityInfo.Amount1Desired.ToBig(), //todo fill in
 			Deadline: big.NewInt(1000000000),
-			Amount0Min: big.NewInt(0),
-			Amount1Min: big.NewInt(0),
+			Amount0Min: increaseLiquidityInfo.Amount0Min.ToBig(),
+			Amount1Min: increaseLiquidityInfo.Amount1Min.ToBig(),
 		}
 
 		var err error
@@ -168,8 +169,8 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 			//exact in
 			swapExactInData := bitcoinABI.ISwapRouterExactInputParams{
 				Path: path,
-				AmountIn: big.NewInt(0), // todo:
-				AmountOutMinimum: big.NewInt(0), // todo:
+				AmountIn: swapInfo.AmountIn.ToBig(), // todo:
+				AmountOutMinimum: swapInfo.AmountOutMinimum.ToBig(), // todo:
 				Recipient: common.HexToAddress(to),
 				Deadline: big.NewInt(1000000000),
 			}
@@ -183,10 +184,10 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 			//exact out	
 			swapExactOutData := bitcoinABI.ISwapRouterExactOutputParams{
 				Path: path,
-				AmountOut: amount0,
 				Recipient: common.HexToAddress(to), // todo: review
 				Deadline: big.NewInt(1000000000),
-				AmountInMaximum: big.NewInt(0), // todo:
+				AmountInMaximum: swapInfo.AmountInMaximum.ToBig(), // todo:
+				AmountOut: swapInfo.AmountIn.ToBig(),
 			}
 
 			calldata, err = nonfungibleABI.Pack("exactOutput", swapExactOutData)
@@ -196,7 +197,41 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 	
 		}
 	case multisig.RadFiCollectFeesMsg:
-		// todo:
+		collectInfo := data.(multisig.RadFiCollectFeesMsg)
+		collectParams := bitcoinABI.INonfungiblePositionManagerCollectParams{
+			TokenId: collectInfo.NftId.ToBig(), // todo:
+			Amount0Max: new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 128), big.NewInt(1)), // todo:
+			Amount1Max: new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 128), big.NewInt(1)), // todo:
+			Recipient: common.HexToAddress(to), // todo:
+		}
+		
+		collectCalldata, err := nonfungibleABI.Pack("collect", collectParams)
+		if err != nil {
+			return nil, err
+		}
+		
+		uint8Ty, _ := abi.NewType("uint8", "", nil)
+		bytes32Ty, _ := abi.NewType("bytes32", "", nil)
+	
+		collectLiquidityArgs := abi.Arguments{
+			{
+				Type: addressTy,
+			},
+			{
+				Type: bytes,
+			},
+			{
+				Type: uint8Ty,
+			},
+			{
+				Type: bytes32Ty,
+			},
+		}
+
+		calldata, err = collectLiquidityArgs.Pack(collectCalldata, collectInfo.V, collectInfo.R, collectInfo.S)
+		if err != nil {
+			return nil, err
+		}
 
 	default:
 		return nil, fmt.Errorf("not supported")
@@ -223,7 +258,7 @@ func XcallFormat(callData []byte, from, to string, sn uint, protocols []string) 
 		From:        from,
 		To:          to,
 		Sn:          big.NewInt(int64(sn)).Bytes(),
-		MessageType: uint8(CALL_MESSAGE_TYPE),
+		MessageType: uint8(CS_REQUEST),
 		Data:        callData,
 		Protocols:   protocols,
 	}

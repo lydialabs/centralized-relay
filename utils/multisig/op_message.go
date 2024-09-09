@@ -39,17 +39,27 @@ type RadFiProvideLiquidityDetail struct {
 	LowerTick	int32
 	Min0		uint16
 	Min1		uint16
+	Amount0Desired	*uint256.Int
+	Amount1Desired	*uint256.Int
 }
 
 type RadFiProvideLiquidityMsg struct {
 	Detail		*RadFiProvideLiquidityDetail
 	InitPrice	*uint256.Int
+	Token0			string
+	Token1			string
 }
 
 type RadFiSwapMsg struct {
 	IsExactInOut	bool
 	TokenOutIndex	uint32
 	Fee uint64 // todo: ram look into
+	// exact in
+	AmountIn *uint256.Int // todo:
+	AmountOutMinimum *uint256.Int // todo:
+	// exact out
+	AmountInMaximum *uint256.Int // todo:
+	AmountOut *uint256.Int
 	// TokenOutId		*Rune
 	// TokenOutAmount	*uint256.Int
 }
@@ -58,6 +68,8 @@ type RadFiWithdrawLiquidityMsg struct {
 	RecipientIndex	uint32
 	LiquidityValue	*uint256.Int
 	NftId			*uint256.Int
+	Amount0Min		*uint256.Int
+	Amount1Min		*uint256.Int
 	V				uint8
 	R				[32]byte
 	S				[32]byte
@@ -66,12 +78,19 @@ type RadFiWithdrawLiquidityMsg struct {
 type RadFiCollectFeesMsg struct {
 	RecipientIndex	uint32
 	NftId			*uint256.Int
+	V				uint8
+	R				[32]byte
+	S				[32]byte
 }
 
 type RadFiIncreaseLiquidityMsg struct {
 	Min0		uint16
 	Min1		uint16
 	NftId		*uint256.Int
+	Amount0Desired	*uint256.Int
+	Amount1Desired	*uint256.Int
+	Amount0Min		*uint256.Int
+	Amount1Min		*uint256.Int
 }
 
 type BridgeDecodedMsg struct {

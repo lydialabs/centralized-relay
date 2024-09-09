@@ -71,113 +71,113 @@ type INonfungiblePositionManagerMintParams struct {
 	Deadline       *big.Int
 }
 
-// InonfungibleTokenMetaData contains all meta data concerning the InonfungibleToken contract.
-var InonfungibleTokenMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"DOMAIN_SEPARATOR\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"PERMIT_TYPEHASH\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"pure\"},{\"type\":\"function\",\"name\":\"WETH9\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"approve\",\"inputs\":[{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"balanceOf\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"balance\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"burn\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"collect\",\"inputs\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structINonfungiblePositionManager.CollectParams\",\"components\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"recipient\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount0Max\",\"type\":\"uint128\",\"internalType\":\"uint128\"},{\"name\":\"amount1Max\",\"type\":\"uint128\",\"internalType\":\"uint128\"}]}],\"outputs\":[{\"name\":\"amount0\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amount1\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"createAndInitializePoolIfNecessary\",\"inputs\":[{\"name\":\"token0\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"token1\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"fee\",\"type\":\"uint24\",\"internalType\":\"uint24\"},{\"name\":\"sqrtPriceX96\",\"type\":\"uint160\",\"internalType\":\"uint160\"}],\"outputs\":[{\"name\":\"pool\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"decreaseLiquidity\",\"inputs\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structINonfungiblePositionManager.DecreaseLiquidityParams\",\"components\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"liquidity\",\"type\":\"uint128\",\"internalType\":\"uint128\"},{\"name\":\"amount0Min\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amount1Min\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"outputs\":[{\"name\":\"amount0\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amount1\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"factory\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getApproved\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"increaseLiquidity\",\"inputs\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structINonfungiblePositionManager.IncreaseLiquidityParams\",\"components\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amount0Desired\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amount1Desired\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amount0Min\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amount1Min\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"outputs\":[{\"name\":\"liquidity\",\"type\":\"uint128\",\"internalType\":\"uint128\"},{\"name\":\"amount0\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amount1\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"isApprovedForAll\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"mint\",\"inputs\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structINonfungiblePositionManager.MintParams\",\"components\":[{\"name\":\"token0\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"token1\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"fee\",\"type\":\"uint24\",\"internalType\":\"uint24\"},{\"name\":\"tickLower\",\"type\":\"int24\",\"internalType\":\"int24\"},{\"name\":\"tickUpper\",\"type\":\"int24\",\"internalType\":\"int24\"},{\"name\":\"amount0Desired\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amount1Desired\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amount0Min\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amount1Min\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"recipient\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"outputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"liquidity\",\"type\":\"uint128\",\"internalType\":\"uint128\"},{\"name\":\"amount0\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amount1\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"name\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"ownerOf\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"permit\",\"inputs\":[{\"name\":\"spender\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"positions\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"nonce\",\"type\":\"uint96\",\"internalType\":\"uint96\"},{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"token0\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"token1\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"fee\",\"type\":\"uint24\",\"internalType\":\"uint24\"},{\"name\":\"tickLower\",\"type\":\"int24\",\"internalType\":\"int24\"},{\"name\":\"tickUpper\",\"type\":\"int24\",\"internalType\":\"int24\"},{\"name\":\"liquidity\",\"type\":\"uint128\",\"internalType\":\"uint128\"},{\"name\":\"feeGrowthInside0LastX128\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"feeGrowthInside1LastX128\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"tokensOwed0\",\"type\":\"uint128\",\"internalType\":\"uint128\"},{\"name\":\"tokensOwed1\",\"type\":\"uint128\",\"internalType\":\"uint128\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"refundETH\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"safeTransferFrom\",\"inputs\":[{\"name\":\"from\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"safeTransferFrom\",\"inputs\":[{\"name\":\"from\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setApprovalForAll\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"_approved\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"supportsInterface\",\"inputs\":[{\"name\":\"interfaceId\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"sweepToken\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amountMinimum\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"recipient\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"symbol\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"tokenByIndex\",\"inputs\":[{\"name\":\"index\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"tokenOfOwnerByIndex\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"index\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"tokenURI\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"totalSupply\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"transferFrom\",\"inputs\":[{\"name\":\"from\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"unwrapWETH9\",\"inputs\":[{\"name\":\"amountMinimum\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"recipient\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"event\",\"name\":\"Approval\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"approved\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ApprovalForAll\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"operator\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"approved\",\"type\":\"bool\",\"indexed\":false,\"internalType\":\"bool\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Collect\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"recipient\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"amount0\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"amount1\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"DecreaseLiquidity\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"liquidity\",\"type\":\"uint128\",\"indexed\":false,\"internalType\":\"uint128\"},{\"name\":\"amount0\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"amount1\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"IncreaseLiquidity\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"liquidity\",\"type\":\"uint128\",\"indexed\":false,\"internalType\":\"uint128\"},{\"name\":\"amount0\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"amount1\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Transfer\",\"inputs\":[{\"name\":\"from\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"to\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"}],\"anonymous\":false}]",
+// INonfungiblePositionManagerMetaData contains all meta data concerning the INonfungiblePositionManager contract.
+var INonfungiblePositionManagerMetaData = &bind.MetaData{
+	ABI: "[{\"type\":\"function\",\"name\":\"DOMAIN_SEPARATOR\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"PERMIT_TYPEHASH\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"pure\"},{\"type\":\"function\",\"name\":\"WETH9\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"approve\",\"inputs\":[{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"balanceOf\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"balance\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"burn\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"collect\",\"inputs\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structINonfungiblePositionManager.CollectParams\",\"components\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"recipient\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount0Max\",\"type\":\"uint128\",\"internalType\":\"uint128\"},{\"name\":\"amount1Max\",\"type\":\"uint128\",\"internalType\":\"uint128\"}]}],\"outputs\":[{\"name\":\"amount0\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amount1\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"createAndInitializePoolIfNecessary\",\"inputs\":[{\"name\":\"token0\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"token1\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"fee\",\"type\":\"uint24\",\"internalType\":\"uint24\"},{\"name\":\"sqrtPriceX96\",\"type\":\"uint160\",\"internalType\":\"uint160\"}],\"outputs\":[{\"name\":\"pool\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"decreaseLiquidity\",\"inputs\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structINonfungiblePositionManager.DecreaseLiquidityParams\",\"components\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"liquidity\",\"type\":\"uint128\",\"internalType\":\"uint128\"},{\"name\":\"amount0Min\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amount1Min\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"outputs\":[{\"name\":\"amount0\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amount1\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"factory\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getApproved\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"increaseLiquidity\",\"inputs\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structINonfungiblePositionManager.IncreaseLiquidityParams\",\"components\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amount0Desired\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amount1Desired\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amount0Min\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amount1Min\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"outputs\":[{\"name\":\"liquidity\",\"type\":\"uint128\",\"internalType\":\"uint128\"},{\"name\":\"amount0\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amount1\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"initPoolHelper\",\"inputs\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structINonfungiblePositionManager.MintParams\",\"components\":[{\"name\":\"token0\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"token1\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"fee\",\"type\":\"uint24\",\"internalType\":\"uint24\"},{\"name\":\"tickLower\",\"type\":\"int24\",\"internalType\":\"int24\"},{\"name\":\"tickUpper\",\"type\":\"int24\",\"internalType\":\"int24\"},{\"name\":\"amount0Desired\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amount1Desired\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amount0Min\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amount1Min\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"recipient\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"token0Name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"token1Name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"sqrtpCur\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"isApprovedForAll\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"mint\",\"inputs\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structINonfungiblePositionManager.MintParams\",\"components\":[{\"name\":\"token0\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"token1\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"fee\",\"type\":\"uint24\",\"internalType\":\"uint24\"},{\"name\":\"tickLower\",\"type\":\"int24\",\"internalType\":\"int24\"},{\"name\":\"tickUpper\",\"type\":\"int24\",\"internalType\":\"int24\"},{\"name\":\"amount0Desired\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amount1Desired\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amount0Min\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amount1Min\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"recipient\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"outputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"liquidity\",\"type\":\"uint128\",\"internalType\":\"uint128\"},{\"name\":\"amount0\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"amount1\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"name\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"ownerOf\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"permit\",\"inputs\":[{\"name\":\"spender\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"positions\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"nonce\",\"type\":\"uint96\",\"internalType\":\"uint96\"},{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"token0\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"token1\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"fee\",\"type\":\"uint24\",\"internalType\":\"uint24\"},{\"name\":\"tickLower\",\"type\":\"int24\",\"internalType\":\"int24\"},{\"name\":\"tickUpper\",\"type\":\"int24\",\"internalType\":\"int24\"},{\"name\":\"liquidity\",\"type\":\"uint128\",\"internalType\":\"uint128\"},{\"name\":\"feeGrowthInside0LastX128\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"feeGrowthInside1LastX128\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"tokensOwed0\",\"type\":\"uint128\",\"internalType\":\"uint128\"},{\"name\":\"tokensOwed1\",\"type\":\"uint128\",\"internalType\":\"uint128\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"refundETH\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"safeTransferFrom\",\"inputs\":[{\"name\":\"from\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"safeTransferFrom\",\"inputs\":[{\"name\":\"from\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setApprovalForAll\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"_approved\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"supportsInterface\",\"inputs\":[{\"name\":\"interfaceId\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"sweepToken\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amountMinimum\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"recipient\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"symbol\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"tokenByIndex\",\"inputs\":[{\"name\":\"index\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"tokenOfOwnerByIndex\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"index\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"tokenURI\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"totalSupply\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"transferFrom\",\"inputs\":[{\"name\":\"from\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"unwrapWETH9\",\"inputs\":[{\"name\":\"amountMinimum\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"recipient\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"event\",\"name\":\"Approval\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"approved\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ApprovalForAll\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"operator\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"approved\",\"type\":\"bool\",\"indexed\":false,\"internalType\":\"bool\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Collect\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"recipient\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"amount0\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"amount1\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"DecreaseLiquidity\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"liquidity\",\"type\":\"uint128\",\"indexed\":false,\"internalType\":\"uint128\"},{\"name\":\"amount0\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"amount1\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"IncreaseLiquidity\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"liquidity\",\"type\":\"uint128\",\"indexed\":false,\"internalType\":\"uint128\"},{\"name\":\"amount0\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"amount1\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Transfer\",\"inputs\":[{\"name\":\"from\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"to\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"}],\"anonymous\":false}]",
 }
 
-// InonfungibleTokenABI is the input ABI used to generate the binding from.
-// Deprecated: Use InonfungibleTokenMetaData.ABI instead.
-var InonfungibleTokenABI = InonfungibleTokenMetaData.ABI
+// INonfungiblePositionManagerABI is the input ABI used to generate the binding from.
+// Deprecated: Use INonfungiblePositionManagerMetaData.ABI instead.
+var INonfungiblePositionManagerABI = INonfungiblePositionManagerMetaData.ABI
 
-// InonfungibleToken is an auto generated Go binding around an Ethereum contract.
-type InonfungibleToken struct {
-	InonfungibleTokenCaller     // Read-only binding to the contract
-	InonfungibleTokenTransactor // Write-only binding to the contract
-	InonfungibleTokenFilterer   // Log filterer for contract events
+// INonfungiblePositionManager is an auto generated Go binding around an Ethereum contract.
+type INonfungiblePositionManager struct {
+	INonfungiblePositionManagerCaller     // Read-only binding to the contract
+	INonfungiblePositionManagerTransactor // Write-only binding to the contract
+	INonfungiblePositionManagerFilterer   // Log filterer for contract events
 }
 
-// InonfungibleTokenCaller is an auto generated read-only Go binding around an Ethereum contract.
-type InonfungibleTokenCaller struct {
+// INonfungiblePositionManagerCaller is an auto generated read-only Go binding around an Ethereum contract.
+type INonfungiblePositionManagerCaller struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// InonfungibleTokenTransactor is an auto generated write-only Go binding around an Ethereum contract.
-type InonfungibleTokenTransactor struct {
+// INonfungiblePositionManagerTransactor is an auto generated write-only Go binding around an Ethereum contract.
+type INonfungiblePositionManagerTransactor struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// InonfungibleTokenFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
-type InonfungibleTokenFilterer struct {
+// INonfungiblePositionManagerFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
+type INonfungiblePositionManagerFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// InonfungibleTokenSession is an auto generated Go binding around an Ethereum contract,
+// INonfungiblePositionManagerSession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.
-type InonfungibleTokenSession struct {
-	Contract     *InonfungibleToken // Generic contract binding to set the session for
-	CallOpts     bind.CallOpts      // Call options to use throughout this session
-	TransactOpts bind.TransactOpts  // Transaction auth options to use throughout this session
-}
-
-// InonfungibleTokenCallerSession is an auto generated read-only Go binding around an Ethereum contract,
-// with pre-set call options.
-type InonfungibleTokenCallerSession struct {
-	Contract *InonfungibleTokenCaller // Generic contract caller binding to set the session for
-	CallOpts bind.CallOpts            // Call options to use throughout this session
-}
-
-// InonfungibleTokenTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
-// with pre-set transact options.
-type InonfungibleTokenTransactorSession struct {
-	Contract     *InonfungibleTokenTransactor // Generic contract transactor binding to set the session for
+type INonfungiblePositionManagerSession struct {
+	Contract     *INonfungiblePositionManager // Generic contract binding to set the session for
+	CallOpts     bind.CallOpts                // Call options to use throughout this session
 	TransactOpts bind.TransactOpts            // Transaction auth options to use throughout this session
 }
 
-// InonfungibleTokenRaw is an auto generated low-level Go binding around an Ethereum contract.
-type InonfungibleTokenRaw struct {
-	Contract *InonfungibleToken // Generic contract binding to access the raw methods on
+// INonfungiblePositionManagerCallerSession is an auto generated read-only Go binding around an Ethereum contract,
+// with pre-set call options.
+type INonfungiblePositionManagerCallerSession struct {
+	Contract *INonfungiblePositionManagerCaller // Generic contract caller binding to set the session for
+	CallOpts bind.CallOpts                      // Call options to use throughout this session
 }
 
-// InonfungibleTokenCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
-type InonfungibleTokenCallerRaw struct {
-	Contract *InonfungibleTokenCaller // Generic read-only contract binding to access the raw methods on
+// INonfungiblePositionManagerTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
+// with pre-set transact options.
+type INonfungiblePositionManagerTransactorSession struct {
+	Contract     *INonfungiblePositionManagerTransactor // Generic contract transactor binding to set the session for
+	TransactOpts bind.TransactOpts                      // Transaction auth options to use throughout this session
 }
 
-// InonfungibleTokenTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
-type InonfungibleTokenTransactorRaw struct {
-	Contract *InonfungibleTokenTransactor // Generic write-only contract binding to access the raw methods on
+// INonfungiblePositionManagerRaw is an auto generated low-level Go binding around an Ethereum contract.
+type INonfungiblePositionManagerRaw struct {
+	Contract *INonfungiblePositionManager // Generic contract binding to access the raw methods on
 }
 
-// NewInonfungibleToken creates a new instance of InonfungibleToken, bound to a specific deployed contract.
-func NewInonfungibleToken(address common.Address, backend bind.ContractBackend) (*InonfungibleToken, error) {
-	contract, err := bindInonfungibleToken(address, backend, backend, backend)
+// INonfungiblePositionManagerCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
+type INonfungiblePositionManagerCallerRaw struct {
+	Contract *INonfungiblePositionManagerCaller // Generic read-only contract binding to access the raw methods on
+}
+
+// INonfungiblePositionManagerTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
+type INonfungiblePositionManagerTransactorRaw struct {
+	Contract *INonfungiblePositionManagerTransactor // Generic write-only contract binding to access the raw methods on
+}
+
+// NewINonfungiblePositionManager creates a new instance of INonfungiblePositionManager, bound to a specific deployed contract.
+func NewINonfungiblePositionManager(address common.Address, backend bind.ContractBackend) (*INonfungiblePositionManager, error) {
+	contract, err := bindINonfungiblePositionManager(address, backend, backend, backend)
 	if err != nil {
 		return nil, err
 	}
-	return &InonfungibleToken{InonfungibleTokenCaller: InonfungibleTokenCaller{contract: contract}, InonfungibleTokenTransactor: InonfungibleTokenTransactor{contract: contract}, InonfungibleTokenFilterer: InonfungibleTokenFilterer{contract: contract}}, nil
+	return &INonfungiblePositionManager{INonfungiblePositionManagerCaller: INonfungiblePositionManagerCaller{contract: contract}, INonfungiblePositionManagerTransactor: INonfungiblePositionManagerTransactor{contract: contract}, INonfungiblePositionManagerFilterer: INonfungiblePositionManagerFilterer{contract: contract}}, nil
 }
 
-// NewInonfungibleTokenCaller creates a new read-only instance of InonfungibleToken, bound to a specific deployed contract.
-func NewInonfungibleTokenCaller(address common.Address, caller bind.ContractCaller) (*InonfungibleTokenCaller, error) {
-	contract, err := bindInonfungibleToken(address, caller, nil, nil)
+// NewINonfungiblePositionManagerCaller creates a new read-only instance of INonfungiblePositionManager, bound to a specific deployed contract.
+func NewINonfungiblePositionManagerCaller(address common.Address, caller bind.ContractCaller) (*INonfungiblePositionManagerCaller, error) {
+	contract, err := bindINonfungiblePositionManager(address, caller, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	return &InonfungibleTokenCaller{contract: contract}, nil
+	return &INonfungiblePositionManagerCaller{contract: contract}, nil
 }
 
-// NewInonfungibleTokenTransactor creates a new write-only instance of InonfungibleToken, bound to a specific deployed contract.
-func NewInonfungibleTokenTransactor(address common.Address, transactor bind.ContractTransactor) (*InonfungibleTokenTransactor, error) {
-	contract, err := bindInonfungibleToken(address, nil, transactor, nil)
+// NewINonfungiblePositionManagerTransactor creates a new write-only instance of INonfungiblePositionManager, bound to a specific deployed contract.
+func NewINonfungiblePositionManagerTransactor(address common.Address, transactor bind.ContractTransactor) (*INonfungiblePositionManagerTransactor, error) {
+	contract, err := bindINonfungiblePositionManager(address, nil, transactor, nil)
 	if err != nil {
 		return nil, err
 	}
-	return &InonfungibleTokenTransactor{contract: contract}, nil
+	return &INonfungiblePositionManagerTransactor{contract: contract}, nil
 }
 
-// NewInonfungibleTokenFilterer creates a new log filterer instance of InonfungibleToken, bound to a specific deployed contract.
-func NewInonfungibleTokenFilterer(address common.Address, filterer bind.ContractFilterer) (*InonfungibleTokenFilterer, error) {
-	contract, err := bindInonfungibleToken(address, nil, nil, filterer)
+// NewINonfungiblePositionManagerFilterer creates a new log filterer instance of INonfungiblePositionManager, bound to a specific deployed contract.
+func NewINonfungiblePositionManagerFilterer(address common.Address, filterer bind.ContractFilterer) (*INonfungiblePositionManagerFilterer, error) {
+	contract, err := bindINonfungiblePositionManager(address, nil, nil, filterer)
 	if err != nil {
 		return nil, err
 	}
-	return &InonfungibleTokenFilterer{contract: contract}, nil
+	return &INonfungiblePositionManagerFilterer{contract: contract}, nil
 }
 
-// bindInonfungibleToken binds a generic wrapper to an already deployed contract.
-func bindInonfungibleToken(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
-	parsed, err := InonfungibleTokenMetaData.GetAbi()
+// bindINonfungiblePositionManager binds a generic wrapper to an already deployed contract.
+func bindINonfungiblePositionManager(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
+	parsed, err := INonfungiblePositionManagerMetaData.GetAbi()
 	if err != nil {
 		return nil, err
 	}
@@ -188,46 +188,46 @@ func bindInonfungibleToken(address common.Address, caller bind.ContractCaller, t
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_InonfungibleToken *InonfungibleTokenRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
-	return _InonfungibleToken.Contract.InonfungibleTokenCaller.contract.Call(opts, result, method, params...)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
+	return _INonfungiblePositionManager.Contract.INonfungiblePositionManagerCaller.contract.Call(opts, result, method, params...)
 }
 
 // Transfer initiates a plain transaction to move funds to the contract, calling
 // its default method if one is available.
-func (_InonfungibleToken *InonfungibleTokenRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.InonfungibleTokenTransactor.contract.Transfer(opts)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.INonfungiblePositionManagerTransactor.contract.Transfer(opts)
 }
 
 // Transact invokes the (paid) contract method with params as input values.
-func (_InonfungibleToken *InonfungibleTokenRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.InonfungibleTokenTransactor.contract.Transact(opts, method, params...)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.INonfungiblePositionManagerTransactor.contract.Transact(opts, method, params...)
 }
 
 // Call invokes the (constant) contract method with params as input values and
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_InonfungibleToken *InonfungibleTokenCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
-	return _InonfungibleToken.Contract.contract.Call(opts, result, method, params...)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
+	return _INonfungiblePositionManager.Contract.contract.Call(opts, result, method, params...)
 }
 
 // Transfer initiates a plain transaction to move funds to the contract, calling
 // its default method if one is available.
-func (_InonfungibleToken *InonfungibleTokenTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.contract.Transfer(opts)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.contract.Transfer(opts)
 }
 
 // Transact invokes the (paid) contract method with params as input values.
-func (_InonfungibleToken *InonfungibleTokenTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.contract.Transact(opts, method, params...)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.contract.Transact(opts, method, params...)
 }
 
 // DOMAINSEPARATOR is a free data retrieval call binding the contract method 0x3644e515.
 //
 // Solidity: function DOMAIN_SEPARATOR() view returns(bytes32)
-func (_InonfungibleToken *InonfungibleTokenCaller) DOMAINSEPARATOR(opts *bind.CallOpts) ([32]byte, error) {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCaller) DOMAINSEPARATOR(opts *bind.CallOpts) ([32]byte, error) {
 	var out []interface{}
-	err := _InonfungibleToken.contract.Call(opts, &out, "DOMAIN_SEPARATOR")
+	err := _INonfungiblePositionManager.contract.Call(opts, &out, "DOMAIN_SEPARATOR")
 
 	if err != nil {
 		return *new([32]byte), err
@@ -242,23 +242,23 @@ func (_InonfungibleToken *InonfungibleTokenCaller) DOMAINSEPARATOR(opts *bind.Ca
 // DOMAINSEPARATOR is a free data retrieval call binding the contract method 0x3644e515.
 //
 // Solidity: function DOMAIN_SEPARATOR() view returns(bytes32)
-func (_InonfungibleToken *InonfungibleTokenSession) DOMAINSEPARATOR() ([32]byte, error) {
-	return _InonfungibleToken.Contract.DOMAINSEPARATOR(&_InonfungibleToken.CallOpts)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) DOMAINSEPARATOR() ([32]byte, error) {
+	return _INonfungiblePositionManager.Contract.DOMAINSEPARATOR(&_INonfungiblePositionManager.CallOpts)
 }
 
 // DOMAINSEPARATOR is a free data retrieval call binding the contract method 0x3644e515.
 //
 // Solidity: function DOMAIN_SEPARATOR() view returns(bytes32)
-func (_InonfungibleToken *InonfungibleTokenCallerSession) DOMAINSEPARATOR() ([32]byte, error) {
-	return _InonfungibleToken.Contract.DOMAINSEPARATOR(&_InonfungibleToken.CallOpts)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCallerSession) DOMAINSEPARATOR() ([32]byte, error) {
+	return _INonfungiblePositionManager.Contract.DOMAINSEPARATOR(&_INonfungiblePositionManager.CallOpts)
 }
 
 // PERMITTYPEHASH is a free data retrieval call binding the contract method 0x30adf81f.
 //
 // Solidity: function PERMIT_TYPEHASH() pure returns(bytes32)
-func (_InonfungibleToken *InonfungibleTokenCaller) PERMITTYPEHASH(opts *bind.CallOpts) ([32]byte, error) {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCaller) PERMITTYPEHASH(opts *bind.CallOpts) ([32]byte, error) {
 	var out []interface{}
-	err := _InonfungibleToken.contract.Call(opts, &out, "PERMIT_TYPEHASH")
+	err := _INonfungiblePositionManager.contract.Call(opts, &out, "PERMIT_TYPEHASH")
 
 	if err != nil {
 		return *new([32]byte), err
@@ -273,23 +273,23 @@ func (_InonfungibleToken *InonfungibleTokenCaller) PERMITTYPEHASH(opts *bind.Cal
 // PERMITTYPEHASH is a free data retrieval call binding the contract method 0x30adf81f.
 //
 // Solidity: function PERMIT_TYPEHASH() pure returns(bytes32)
-func (_InonfungibleToken *InonfungibleTokenSession) PERMITTYPEHASH() ([32]byte, error) {
-	return _InonfungibleToken.Contract.PERMITTYPEHASH(&_InonfungibleToken.CallOpts)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) PERMITTYPEHASH() ([32]byte, error) {
+	return _INonfungiblePositionManager.Contract.PERMITTYPEHASH(&_INonfungiblePositionManager.CallOpts)
 }
 
 // PERMITTYPEHASH is a free data retrieval call binding the contract method 0x30adf81f.
 //
 // Solidity: function PERMIT_TYPEHASH() pure returns(bytes32)
-func (_InonfungibleToken *InonfungibleTokenCallerSession) PERMITTYPEHASH() ([32]byte, error) {
-	return _InonfungibleToken.Contract.PERMITTYPEHASH(&_InonfungibleToken.CallOpts)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCallerSession) PERMITTYPEHASH() ([32]byte, error) {
+	return _INonfungiblePositionManager.Contract.PERMITTYPEHASH(&_INonfungiblePositionManager.CallOpts)
 }
 
 // WETH9 is a free data retrieval call binding the contract method 0x4aa4a4fc.
 //
 // Solidity: function WETH9() view returns(address)
-func (_InonfungibleToken *InonfungibleTokenCaller) WETH9(opts *bind.CallOpts) (common.Address, error) {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCaller) WETH9(opts *bind.CallOpts) (common.Address, error) {
 	var out []interface{}
-	err := _InonfungibleToken.contract.Call(opts, &out, "WETH9")
+	err := _INonfungiblePositionManager.contract.Call(opts, &out, "WETH9")
 
 	if err != nil {
 		return *new(common.Address), err
@@ -304,23 +304,23 @@ func (_InonfungibleToken *InonfungibleTokenCaller) WETH9(opts *bind.CallOpts) (c
 // WETH9 is a free data retrieval call binding the contract method 0x4aa4a4fc.
 //
 // Solidity: function WETH9() view returns(address)
-func (_InonfungibleToken *InonfungibleTokenSession) WETH9() (common.Address, error) {
-	return _InonfungibleToken.Contract.WETH9(&_InonfungibleToken.CallOpts)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) WETH9() (common.Address, error) {
+	return _INonfungiblePositionManager.Contract.WETH9(&_INonfungiblePositionManager.CallOpts)
 }
 
 // WETH9 is a free data retrieval call binding the contract method 0x4aa4a4fc.
 //
 // Solidity: function WETH9() view returns(address)
-func (_InonfungibleToken *InonfungibleTokenCallerSession) WETH9() (common.Address, error) {
-	return _InonfungibleToken.Contract.WETH9(&_InonfungibleToken.CallOpts)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCallerSession) WETH9() (common.Address, error) {
+	return _INonfungiblePositionManager.Contract.WETH9(&_INonfungiblePositionManager.CallOpts)
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
 // Solidity: function balanceOf(address owner) view returns(uint256 balance)
-func (_InonfungibleToken *InonfungibleTokenCaller) BalanceOf(opts *bind.CallOpts, owner common.Address) (*big.Int, error) {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCaller) BalanceOf(opts *bind.CallOpts, owner common.Address) (*big.Int, error) {
 	var out []interface{}
-	err := _InonfungibleToken.contract.Call(opts, &out, "balanceOf", owner)
+	err := _INonfungiblePositionManager.contract.Call(opts, &out, "balanceOf", owner)
 
 	if err != nil {
 		return *new(*big.Int), err
@@ -335,23 +335,23 @@ func (_InonfungibleToken *InonfungibleTokenCaller) BalanceOf(opts *bind.CallOpts
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
 // Solidity: function balanceOf(address owner) view returns(uint256 balance)
-func (_InonfungibleToken *InonfungibleTokenSession) BalanceOf(owner common.Address) (*big.Int, error) {
-	return _InonfungibleToken.Contract.BalanceOf(&_InonfungibleToken.CallOpts, owner)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) BalanceOf(owner common.Address) (*big.Int, error) {
+	return _INonfungiblePositionManager.Contract.BalanceOf(&_INonfungiblePositionManager.CallOpts, owner)
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
 // Solidity: function balanceOf(address owner) view returns(uint256 balance)
-func (_InonfungibleToken *InonfungibleTokenCallerSession) BalanceOf(owner common.Address) (*big.Int, error) {
-	return _InonfungibleToken.Contract.BalanceOf(&_InonfungibleToken.CallOpts, owner)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCallerSession) BalanceOf(owner common.Address) (*big.Int, error) {
+	return _INonfungiblePositionManager.Contract.BalanceOf(&_INonfungiblePositionManager.CallOpts, owner)
 }
 
 // Factory is a free data retrieval call binding the contract method 0xc45a0155.
 //
 // Solidity: function factory() view returns(address)
-func (_InonfungibleToken *InonfungibleTokenCaller) Factory(opts *bind.CallOpts) (common.Address, error) {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCaller) Factory(opts *bind.CallOpts) (common.Address, error) {
 	var out []interface{}
-	err := _InonfungibleToken.contract.Call(opts, &out, "factory")
+	err := _INonfungiblePositionManager.contract.Call(opts, &out, "factory")
 
 	if err != nil {
 		return *new(common.Address), err
@@ -366,23 +366,23 @@ func (_InonfungibleToken *InonfungibleTokenCaller) Factory(opts *bind.CallOpts) 
 // Factory is a free data retrieval call binding the contract method 0xc45a0155.
 //
 // Solidity: function factory() view returns(address)
-func (_InonfungibleToken *InonfungibleTokenSession) Factory() (common.Address, error) {
-	return _InonfungibleToken.Contract.Factory(&_InonfungibleToken.CallOpts)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) Factory() (common.Address, error) {
+	return _INonfungiblePositionManager.Contract.Factory(&_INonfungiblePositionManager.CallOpts)
 }
 
 // Factory is a free data retrieval call binding the contract method 0xc45a0155.
 //
 // Solidity: function factory() view returns(address)
-func (_InonfungibleToken *InonfungibleTokenCallerSession) Factory() (common.Address, error) {
-	return _InonfungibleToken.Contract.Factory(&_InonfungibleToken.CallOpts)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCallerSession) Factory() (common.Address, error) {
+	return _INonfungiblePositionManager.Contract.Factory(&_INonfungiblePositionManager.CallOpts)
 }
 
 // GetApproved is a free data retrieval call binding the contract method 0x081812fc.
 //
 // Solidity: function getApproved(uint256 tokenId) view returns(address operator)
-func (_InonfungibleToken *InonfungibleTokenCaller) GetApproved(opts *bind.CallOpts, tokenId *big.Int) (common.Address, error) {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCaller) GetApproved(opts *bind.CallOpts, tokenId *big.Int) (common.Address, error) {
 	var out []interface{}
-	err := _InonfungibleToken.contract.Call(opts, &out, "getApproved", tokenId)
+	err := _INonfungiblePositionManager.contract.Call(opts, &out, "getApproved", tokenId)
 
 	if err != nil {
 		return *new(common.Address), err
@@ -397,23 +397,23 @@ func (_InonfungibleToken *InonfungibleTokenCaller) GetApproved(opts *bind.CallOp
 // GetApproved is a free data retrieval call binding the contract method 0x081812fc.
 //
 // Solidity: function getApproved(uint256 tokenId) view returns(address operator)
-func (_InonfungibleToken *InonfungibleTokenSession) GetApproved(tokenId *big.Int) (common.Address, error) {
-	return _InonfungibleToken.Contract.GetApproved(&_InonfungibleToken.CallOpts, tokenId)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) GetApproved(tokenId *big.Int) (common.Address, error) {
+	return _INonfungiblePositionManager.Contract.GetApproved(&_INonfungiblePositionManager.CallOpts, tokenId)
 }
 
 // GetApproved is a free data retrieval call binding the contract method 0x081812fc.
 //
 // Solidity: function getApproved(uint256 tokenId) view returns(address operator)
-func (_InonfungibleToken *InonfungibleTokenCallerSession) GetApproved(tokenId *big.Int) (common.Address, error) {
-	return _InonfungibleToken.Contract.GetApproved(&_InonfungibleToken.CallOpts, tokenId)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCallerSession) GetApproved(tokenId *big.Int) (common.Address, error) {
+	return _INonfungiblePositionManager.Contract.GetApproved(&_INonfungiblePositionManager.CallOpts, tokenId)
 }
 
 // IsApprovedForAll is a free data retrieval call binding the contract method 0xe985e9c5.
 //
 // Solidity: function isApprovedForAll(address owner, address operator) view returns(bool)
-func (_InonfungibleToken *InonfungibleTokenCaller) IsApprovedForAll(opts *bind.CallOpts, owner common.Address, operator common.Address) (bool, error) {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCaller) IsApprovedForAll(opts *bind.CallOpts, owner common.Address, operator common.Address) (bool, error) {
 	var out []interface{}
-	err := _InonfungibleToken.contract.Call(opts, &out, "isApprovedForAll", owner, operator)
+	err := _INonfungiblePositionManager.contract.Call(opts, &out, "isApprovedForAll", owner, operator)
 
 	if err != nil {
 		return *new(bool), err
@@ -428,23 +428,23 @@ func (_InonfungibleToken *InonfungibleTokenCaller) IsApprovedForAll(opts *bind.C
 // IsApprovedForAll is a free data retrieval call binding the contract method 0xe985e9c5.
 //
 // Solidity: function isApprovedForAll(address owner, address operator) view returns(bool)
-func (_InonfungibleToken *InonfungibleTokenSession) IsApprovedForAll(owner common.Address, operator common.Address) (bool, error) {
-	return _InonfungibleToken.Contract.IsApprovedForAll(&_InonfungibleToken.CallOpts, owner, operator)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) IsApprovedForAll(owner common.Address, operator common.Address) (bool, error) {
+	return _INonfungiblePositionManager.Contract.IsApprovedForAll(&_INonfungiblePositionManager.CallOpts, owner, operator)
 }
 
 // IsApprovedForAll is a free data retrieval call binding the contract method 0xe985e9c5.
 //
 // Solidity: function isApprovedForAll(address owner, address operator) view returns(bool)
-func (_InonfungibleToken *InonfungibleTokenCallerSession) IsApprovedForAll(owner common.Address, operator common.Address) (bool, error) {
-	return _InonfungibleToken.Contract.IsApprovedForAll(&_InonfungibleToken.CallOpts, owner, operator)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCallerSession) IsApprovedForAll(owner common.Address, operator common.Address) (bool, error) {
+	return _INonfungiblePositionManager.Contract.IsApprovedForAll(&_INonfungiblePositionManager.CallOpts, owner, operator)
 }
 
 // Name is a free data retrieval call binding the contract method 0x06fdde03.
 //
 // Solidity: function name() view returns(string)
-func (_InonfungibleToken *InonfungibleTokenCaller) Name(opts *bind.CallOpts) (string, error) {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCaller) Name(opts *bind.CallOpts) (string, error) {
 	var out []interface{}
-	err := _InonfungibleToken.contract.Call(opts, &out, "name")
+	err := _INonfungiblePositionManager.contract.Call(opts, &out, "name")
 
 	if err != nil {
 		return *new(string), err
@@ -459,23 +459,23 @@ func (_InonfungibleToken *InonfungibleTokenCaller) Name(opts *bind.CallOpts) (st
 // Name is a free data retrieval call binding the contract method 0x06fdde03.
 //
 // Solidity: function name() view returns(string)
-func (_InonfungibleToken *InonfungibleTokenSession) Name() (string, error) {
-	return _InonfungibleToken.Contract.Name(&_InonfungibleToken.CallOpts)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) Name() (string, error) {
+	return _INonfungiblePositionManager.Contract.Name(&_INonfungiblePositionManager.CallOpts)
 }
 
 // Name is a free data retrieval call binding the contract method 0x06fdde03.
 //
 // Solidity: function name() view returns(string)
-func (_InonfungibleToken *InonfungibleTokenCallerSession) Name() (string, error) {
-	return _InonfungibleToken.Contract.Name(&_InonfungibleToken.CallOpts)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCallerSession) Name() (string, error) {
+	return _INonfungiblePositionManager.Contract.Name(&_INonfungiblePositionManager.CallOpts)
 }
 
 // OwnerOf is a free data retrieval call binding the contract method 0x6352211e.
 //
 // Solidity: function ownerOf(uint256 tokenId) view returns(address owner)
-func (_InonfungibleToken *InonfungibleTokenCaller) OwnerOf(opts *bind.CallOpts, tokenId *big.Int) (common.Address, error) {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCaller) OwnerOf(opts *bind.CallOpts, tokenId *big.Int) (common.Address, error) {
 	var out []interface{}
-	err := _InonfungibleToken.contract.Call(opts, &out, "ownerOf", tokenId)
+	err := _INonfungiblePositionManager.contract.Call(opts, &out, "ownerOf", tokenId)
 
 	if err != nil {
 		return *new(common.Address), err
@@ -490,21 +490,21 @@ func (_InonfungibleToken *InonfungibleTokenCaller) OwnerOf(opts *bind.CallOpts, 
 // OwnerOf is a free data retrieval call binding the contract method 0x6352211e.
 //
 // Solidity: function ownerOf(uint256 tokenId) view returns(address owner)
-func (_InonfungibleToken *InonfungibleTokenSession) OwnerOf(tokenId *big.Int) (common.Address, error) {
-	return _InonfungibleToken.Contract.OwnerOf(&_InonfungibleToken.CallOpts, tokenId)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) OwnerOf(tokenId *big.Int) (common.Address, error) {
+	return _INonfungiblePositionManager.Contract.OwnerOf(&_INonfungiblePositionManager.CallOpts, tokenId)
 }
 
 // OwnerOf is a free data retrieval call binding the contract method 0x6352211e.
 //
 // Solidity: function ownerOf(uint256 tokenId) view returns(address owner)
-func (_InonfungibleToken *InonfungibleTokenCallerSession) OwnerOf(tokenId *big.Int) (common.Address, error) {
-	return _InonfungibleToken.Contract.OwnerOf(&_InonfungibleToken.CallOpts, tokenId)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCallerSession) OwnerOf(tokenId *big.Int) (common.Address, error) {
+	return _INonfungiblePositionManager.Contract.OwnerOf(&_INonfungiblePositionManager.CallOpts, tokenId)
 }
 
 // Positions is a free data retrieval call binding the contract method 0x99fbab88.
 //
 // Solidity: function positions(uint256 tokenId) view returns(uint96 nonce, address operator, address token0, address token1, uint24 fee, int24 tickLower, int24 tickUpper, uint128 liquidity, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, uint128 tokensOwed0, uint128 tokensOwed1)
-func (_InonfungibleToken *InonfungibleTokenCaller) Positions(opts *bind.CallOpts, tokenId *big.Int) (struct {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCaller) Positions(opts *bind.CallOpts, tokenId *big.Int) (struct {
 	Nonce                    *big.Int
 	Operator                 common.Address
 	Token0                   common.Address
@@ -519,7 +519,7 @@ func (_InonfungibleToken *InonfungibleTokenCaller) Positions(opts *bind.CallOpts
 	TokensOwed1              *big.Int
 }, error) {
 	var out []interface{}
-	err := _InonfungibleToken.contract.Call(opts, &out, "positions", tokenId)
+	err := _INonfungiblePositionManager.contract.Call(opts, &out, "positions", tokenId)
 
 	outstruct := new(struct {
 		Nonce                    *big.Int
@@ -559,7 +559,7 @@ func (_InonfungibleToken *InonfungibleTokenCaller) Positions(opts *bind.CallOpts
 // Positions is a free data retrieval call binding the contract method 0x99fbab88.
 //
 // Solidity: function positions(uint256 tokenId) view returns(uint96 nonce, address operator, address token0, address token1, uint24 fee, int24 tickLower, int24 tickUpper, uint128 liquidity, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, uint128 tokensOwed0, uint128 tokensOwed1)
-func (_InonfungibleToken *InonfungibleTokenSession) Positions(tokenId *big.Int) (struct {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) Positions(tokenId *big.Int) (struct {
 	Nonce                    *big.Int
 	Operator                 common.Address
 	Token0                   common.Address
@@ -573,13 +573,13 @@ func (_InonfungibleToken *InonfungibleTokenSession) Positions(tokenId *big.Int) 
 	TokensOwed0              *big.Int
 	TokensOwed1              *big.Int
 }, error) {
-	return _InonfungibleToken.Contract.Positions(&_InonfungibleToken.CallOpts, tokenId)
+	return _INonfungiblePositionManager.Contract.Positions(&_INonfungiblePositionManager.CallOpts, tokenId)
 }
 
 // Positions is a free data retrieval call binding the contract method 0x99fbab88.
 //
 // Solidity: function positions(uint256 tokenId) view returns(uint96 nonce, address operator, address token0, address token1, uint24 fee, int24 tickLower, int24 tickUpper, uint128 liquidity, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, uint128 tokensOwed0, uint128 tokensOwed1)
-func (_InonfungibleToken *InonfungibleTokenCallerSession) Positions(tokenId *big.Int) (struct {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCallerSession) Positions(tokenId *big.Int) (struct {
 	Nonce                    *big.Int
 	Operator                 common.Address
 	Token0                   common.Address
@@ -593,15 +593,15 @@ func (_InonfungibleToken *InonfungibleTokenCallerSession) Positions(tokenId *big
 	TokensOwed0              *big.Int
 	TokensOwed1              *big.Int
 }, error) {
-	return _InonfungibleToken.Contract.Positions(&_InonfungibleToken.CallOpts, tokenId)
+	return _INonfungiblePositionManager.Contract.Positions(&_INonfungiblePositionManager.CallOpts, tokenId)
 }
 
 // SupportsInterface is a free data retrieval call binding the contract method 0x01ffc9a7.
 //
 // Solidity: function supportsInterface(bytes4 interfaceId) view returns(bool)
-func (_InonfungibleToken *InonfungibleTokenCaller) SupportsInterface(opts *bind.CallOpts, interfaceId [4]byte) (bool, error) {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCaller) SupportsInterface(opts *bind.CallOpts, interfaceId [4]byte) (bool, error) {
 	var out []interface{}
-	err := _InonfungibleToken.contract.Call(opts, &out, "supportsInterface", interfaceId)
+	err := _INonfungiblePositionManager.contract.Call(opts, &out, "supportsInterface", interfaceId)
 
 	if err != nil {
 		return *new(bool), err
@@ -616,23 +616,23 @@ func (_InonfungibleToken *InonfungibleTokenCaller) SupportsInterface(opts *bind.
 // SupportsInterface is a free data retrieval call binding the contract method 0x01ffc9a7.
 //
 // Solidity: function supportsInterface(bytes4 interfaceId) view returns(bool)
-func (_InonfungibleToken *InonfungibleTokenSession) SupportsInterface(interfaceId [4]byte) (bool, error) {
-	return _InonfungibleToken.Contract.SupportsInterface(&_InonfungibleToken.CallOpts, interfaceId)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) SupportsInterface(interfaceId [4]byte) (bool, error) {
+	return _INonfungiblePositionManager.Contract.SupportsInterface(&_INonfungiblePositionManager.CallOpts, interfaceId)
 }
 
 // SupportsInterface is a free data retrieval call binding the contract method 0x01ffc9a7.
 //
 // Solidity: function supportsInterface(bytes4 interfaceId) view returns(bool)
-func (_InonfungibleToken *InonfungibleTokenCallerSession) SupportsInterface(interfaceId [4]byte) (bool, error) {
-	return _InonfungibleToken.Contract.SupportsInterface(&_InonfungibleToken.CallOpts, interfaceId)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCallerSession) SupportsInterface(interfaceId [4]byte) (bool, error) {
+	return _INonfungiblePositionManager.Contract.SupportsInterface(&_INonfungiblePositionManager.CallOpts, interfaceId)
 }
 
 // Symbol is a free data retrieval call binding the contract method 0x95d89b41.
 //
 // Solidity: function symbol() view returns(string)
-func (_InonfungibleToken *InonfungibleTokenCaller) Symbol(opts *bind.CallOpts) (string, error) {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCaller) Symbol(opts *bind.CallOpts) (string, error) {
 	var out []interface{}
-	err := _InonfungibleToken.contract.Call(opts, &out, "symbol")
+	err := _INonfungiblePositionManager.contract.Call(opts, &out, "symbol")
 
 	if err != nil {
 		return *new(string), err
@@ -647,23 +647,23 @@ func (_InonfungibleToken *InonfungibleTokenCaller) Symbol(opts *bind.CallOpts) (
 // Symbol is a free data retrieval call binding the contract method 0x95d89b41.
 //
 // Solidity: function symbol() view returns(string)
-func (_InonfungibleToken *InonfungibleTokenSession) Symbol() (string, error) {
-	return _InonfungibleToken.Contract.Symbol(&_InonfungibleToken.CallOpts)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) Symbol() (string, error) {
+	return _INonfungiblePositionManager.Contract.Symbol(&_INonfungiblePositionManager.CallOpts)
 }
 
 // Symbol is a free data retrieval call binding the contract method 0x95d89b41.
 //
 // Solidity: function symbol() view returns(string)
-func (_InonfungibleToken *InonfungibleTokenCallerSession) Symbol() (string, error) {
-	return _InonfungibleToken.Contract.Symbol(&_InonfungibleToken.CallOpts)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCallerSession) Symbol() (string, error) {
+	return _INonfungiblePositionManager.Contract.Symbol(&_INonfungiblePositionManager.CallOpts)
 }
 
 // TokenByIndex is a free data retrieval call binding the contract method 0x4f6ccce7.
 //
 // Solidity: function tokenByIndex(uint256 index) view returns(uint256)
-func (_InonfungibleToken *InonfungibleTokenCaller) TokenByIndex(opts *bind.CallOpts, index *big.Int) (*big.Int, error) {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCaller) TokenByIndex(opts *bind.CallOpts, index *big.Int) (*big.Int, error) {
 	var out []interface{}
-	err := _InonfungibleToken.contract.Call(opts, &out, "tokenByIndex", index)
+	err := _INonfungiblePositionManager.contract.Call(opts, &out, "tokenByIndex", index)
 
 	if err != nil {
 		return *new(*big.Int), err
@@ -678,23 +678,23 @@ func (_InonfungibleToken *InonfungibleTokenCaller) TokenByIndex(opts *bind.CallO
 // TokenByIndex is a free data retrieval call binding the contract method 0x4f6ccce7.
 //
 // Solidity: function tokenByIndex(uint256 index) view returns(uint256)
-func (_InonfungibleToken *InonfungibleTokenSession) TokenByIndex(index *big.Int) (*big.Int, error) {
-	return _InonfungibleToken.Contract.TokenByIndex(&_InonfungibleToken.CallOpts, index)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) TokenByIndex(index *big.Int) (*big.Int, error) {
+	return _INonfungiblePositionManager.Contract.TokenByIndex(&_INonfungiblePositionManager.CallOpts, index)
 }
 
 // TokenByIndex is a free data retrieval call binding the contract method 0x4f6ccce7.
 //
 // Solidity: function tokenByIndex(uint256 index) view returns(uint256)
-func (_InonfungibleToken *InonfungibleTokenCallerSession) TokenByIndex(index *big.Int) (*big.Int, error) {
-	return _InonfungibleToken.Contract.TokenByIndex(&_InonfungibleToken.CallOpts, index)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCallerSession) TokenByIndex(index *big.Int) (*big.Int, error) {
+	return _INonfungiblePositionManager.Contract.TokenByIndex(&_INonfungiblePositionManager.CallOpts, index)
 }
 
 // TokenOfOwnerByIndex is a free data retrieval call binding the contract method 0x2f745c59.
 //
 // Solidity: function tokenOfOwnerByIndex(address owner, uint256 index) view returns(uint256)
-func (_InonfungibleToken *InonfungibleTokenCaller) TokenOfOwnerByIndex(opts *bind.CallOpts, owner common.Address, index *big.Int) (*big.Int, error) {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCaller) TokenOfOwnerByIndex(opts *bind.CallOpts, owner common.Address, index *big.Int) (*big.Int, error) {
 	var out []interface{}
-	err := _InonfungibleToken.contract.Call(opts, &out, "tokenOfOwnerByIndex", owner, index)
+	err := _INonfungiblePositionManager.contract.Call(opts, &out, "tokenOfOwnerByIndex", owner, index)
 
 	if err != nil {
 		return *new(*big.Int), err
@@ -709,23 +709,23 @@ func (_InonfungibleToken *InonfungibleTokenCaller) TokenOfOwnerByIndex(opts *bin
 // TokenOfOwnerByIndex is a free data retrieval call binding the contract method 0x2f745c59.
 //
 // Solidity: function tokenOfOwnerByIndex(address owner, uint256 index) view returns(uint256)
-func (_InonfungibleToken *InonfungibleTokenSession) TokenOfOwnerByIndex(owner common.Address, index *big.Int) (*big.Int, error) {
-	return _InonfungibleToken.Contract.TokenOfOwnerByIndex(&_InonfungibleToken.CallOpts, owner, index)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) TokenOfOwnerByIndex(owner common.Address, index *big.Int) (*big.Int, error) {
+	return _INonfungiblePositionManager.Contract.TokenOfOwnerByIndex(&_INonfungiblePositionManager.CallOpts, owner, index)
 }
 
 // TokenOfOwnerByIndex is a free data retrieval call binding the contract method 0x2f745c59.
 //
 // Solidity: function tokenOfOwnerByIndex(address owner, uint256 index) view returns(uint256)
-func (_InonfungibleToken *InonfungibleTokenCallerSession) TokenOfOwnerByIndex(owner common.Address, index *big.Int) (*big.Int, error) {
-	return _InonfungibleToken.Contract.TokenOfOwnerByIndex(&_InonfungibleToken.CallOpts, owner, index)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCallerSession) TokenOfOwnerByIndex(owner common.Address, index *big.Int) (*big.Int, error) {
+	return _INonfungiblePositionManager.Contract.TokenOfOwnerByIndex(&_INonfungiblePositionManager.CallOpts, owner, index)
 }
 
 // TokenURI is a free data retrieval call binding the contract method 0xc87b56dd.
 //
 // Solidity: function tokenURI(uint256 tokenId) view returns(string)
-func (_InonfungibleToken *InonfungibleTokenCaller) TokenURI(opts *bind.CallOpts, tokenId *big.Int) (string, error) {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCaller) TokenURI(opts *bind.CallOpts, tokenId *big.Int) (string, error) {
 	var out []interface{}
-	err := _InonfungibleToken.contract.Call(opts, &out, "tokenURI", tokenId)
+	err := _INonfungiblePositionManager.contract.Call(opts, &out, "tokenURI", tokenId)
 
 	if err != nil {
 		return *new(string), err
@@ -740,23 +740,23 @@ func (_InonfungibleToken *InonfungibleTokenCaller) TokenURI(opts *bind.CallOpts,
 // TokenURI is a free data retrieval call binding the contract method 0xc87b56dd.
 //
 // Solidity: function tokenURI(uint256 tokenId) view returns(string)
-func (_InonfungibleToken *InonfungibleTokenSession) TokenURI(tokenId *big.Int) (string, error) {
-	return _InonfungibleToken.Contract.TokenURI(&_InonfungibleToken.CallOpts, tokenId)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) TokenURI(tokenId *big.Int) (string, error) {
+	return _INonfungiblePositionManager.Contract.TokenURI(&_INonfungiblePositionManager.CallOpts, tokenId)
 }
 
 // TokenURI is a free data retrieval call binding the contract method 0xc87b56dd.
 //
 // Solidity: function tokenURI(uint256 tokenId) view returns(string)
-func (_InonfungibleToken *InonfungibleTokenCallerSession) TokenURI(tokenId *big.Int) (string, error) {
-	return _InonfungibleToken.Contract.TokenURI(&_InonfungibleToken.CallOpts, tokenId)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCallerSession) TokenURI(tokenId *big.Int) (string, error) {
+	return _INonfungiblePositionManager.Contract.TokenURI(&_INonfungiblePositionManager.CallOpts, tokenId)
 }
 
 // TotalSupply is a free data retrieval call binding the contract method 0x18160ddd.
 //
 // Solidity: function totalSupply() view returns(uint256)
-func (_InonfungibleToken *InonfungibleTokenCaller) TotalSupply(opts *bind.CallOpts) (*big.Int, error) {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCaller) TotalSupply(opts *bind.CallOpts) (*big.Int, error) {
 	var out []interface{}
-	err := _InonfungibleToken.contract.Call(opts, &out, "totalSupply")
+	err := _INonfungiblePositionManager.contract.Call(opts, &out, "totalSupply")
 
 	if err != nil {
 		return *new(*big.Int), err
@@ -771,335 +771,356 @@ func (_InonfungibleToken *InonfungibleTokenCaller) TotalSupply(opts *bind.CallOp
 // TotalSupply is a free data retrieval call binding the contract method 0x18160ddd.
 //
 // Solidity: function totalSupply() view returns(uint256)
-func (_InonfungibleToken *InonfungibleTokenSession) TotalSupply() (*big.Int, error) {
-	return _InonfungibleToken.Contract.TotalSupply(&_InonfungibleToken.CallOpts)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) TotalSupply() (*big.Int, error) {
+	return _INonfungiblePositionManager.Contract.TotalSupply(&_INonfungiblePositionManager.CallOpts)
 }
 
 // TotalSupply is a free data retrieval call binding the contract method 0x18160ddd.
 //
 // Solidity: function totalSupply() view returns(uint256)
-func (_InonfungibleToken *InonfungibleTokenCallerSession) TotalSupply() (*big.Int, error) {
-	return _InonfungibleToken.Contract.TotalSupply(&_InonfungibleToken.CallOpts)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerCallerSession) TotalSupply() (*big.Int, error) {
+	return _INonfungiblePositionManager.Contract.TotalSupply(&_INonfungiblePositionManager.CallOpts)
 }
 
 // Approve is a paid mutator transaction binding the contract method 0x095ea7b3.
 //
 // Solidity: function approve(address to, uint256 tokenId) returns()
-func (_InonfungibleToken *InonfungibleTokenTransactor) Approve(opts *bind.TransactOpts, to common.Address, tokenId *big.Int) (*types.Transaction, error) {
-	return _InonfungibleToken.contract.Transact(opts, "approve", to, tokenId)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactor) Approve(opts *bind.TransactOpts, to common.Address, tokenId *big.Int) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.contract.Transact(opts, "approve", to, tokenId)
 }
 
 // Approve is a paid mutator transaction binding the contract method 0x095ea7b3.
 //
 // Solidity: function approve(address to, uint256 tokenId) returns()
-func (_InonfungibleToken *InonfungibleTokenSession) Approve(to common.Address, tokenId *big.Int) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.Approve(&_InonfungibleToken.TransactOpts, to, tokenId)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) Approve(to common.Address, tokenId *big.Int) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.Approve(&_INonfungiblePositionManager.TransactOpts, to, tokenId)
 }
 
 // Approve is a paid mutator transaction binding the contract method 0x095ea7b3.
 //
 // Solidity: function approve(address to, uint256 tokenId) returns()
-func (_InonfungibleToken *InonfungibleTokenTransactorSession) Approve(to common.Address, tokenId *big.Int) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.Approve(&_InonfungibleToken.TransactOpts, to, tokenId)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactorSession) Approve(to common.Address, tokenId *big.Int) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.Approve(&_INonfungiblePositionManager.TransactOpts, to, tokenId)
 }
 
 // Burn is a paid mutator transaction binding the contract method 0x42966c68.
 //
 // Solidity: function burn(uint256 tokenId) payable returns()
-func (_InonfungibleToken *InonfungibleTokenTransactor) Burn(opts *bind.TransactOpts, tokenId *big.Int) (*types.Transaction, error) {
-	return _InonfungibleToken.contract.Transact(opts, "burn", tokenId)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactor) Burn(opts *bind.TransactOpts, tokenId *big.Int) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.contract.Transact(opts, "burn", tokenId)
 }
 
 // Burn is a paid mutator transaction binding the contract method 0x42966c68.
 //
 // Solidity: function burn(uint256 tokenId) payable returns()
-func (_InonfungibleToken *InonfungibleTokenSession) Burn(tokenId *big.Int) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.Burn(&_InonfungibleToken.TransactOpts, tokenId)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) Burn(tokenId *big.Int) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.Burn(&_INonfungiblePositionManager.TransactOpts, tokenId)
 }
 
 // Burn is a paid mutator transaction binding the contract method 0x42966c68.
 //
 // Solidity: function burn(uint256 tokenId) payable returns()
-func (_InonfungibleToken *InonfungibleTokenTransactorSession) Burn(tokenId *big.Int) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.Burn(&_InonfungibleToken.TransactOpts, tokenId)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactorSession) Burn(tokenId *big.Int) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.Burn(&_INonfungiblePositionManager.TransactOpts, tokenId)
 }
 
 // Collect is a paid mutator transaction binding the contract method 0xfc6f7865.
 //
 // Solidity: function collect((uint256,address,uint128,uint128) params) payable returns(uint256 amount0, uint256 amount1)
-func (_InonfungibleToken *InonfungibleTokenTransactor) Collect(opts *bind.TransactOpts, params INonfungiblePositionManagerCollectParams) (*types.Transaction, error) {
-	return _InonfungibleToken.contract.Transact(opts, "collect", params)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactor) Collect(opts *bind.TransactOpts, params INonfungiblePositionManagerCollectParams) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.contract.Transact(opts, "collect", params)
 }
 
 // Collect is a paid mutator transaction binding the contract method 0xfc6f7865.
 //
 // Solidity: function collect((uint256,address,uint128,uint128) params) payable returns(uint256 amount0, uint256 amount1)
-func (_InonfungibleToken *InonfungibleTokenSession) Collect(params INonfungiblePositionManagerCollectParams) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.Collect(&_InonfungibleToken.TransactOpts, params)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) Collect(params INonfungiblePositionManagerCollectParams) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.Collect(&_INonfungiblePositionManager.TransactOpts, params)
 }
 
 // Collect is a paid mutator transaction binding the contract method 0xfc6f7865.
 //
 // Solidity: function collect((uint256,address,uint128,uint128) params) payable returns(uint256 amount0, uint256 amount1)
-func (_InonfungibleToken *InonfungibleTokenTransactorSession) Collect(params INonfungiblePositionManagerCollectParams) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.Collect(&_InonfungibleToken.TransactOpts, params)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactorSession) Collect(params INonfungiblePositionManagerCollectParams) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.Collect(&_INonfungiblePositionManager.TransactOpts, params)
 }
 
 // CreateAndInitializePoolIfNecessary is a paid mutator transaction binding the contract method 0x13ead562.
 //
 // Solidity: function createAndInitializePoolIfNecessary(address token0, address token1, uint24 fee, uint160 sqrtPriceX96) payable returns(address pool)
-func (_InonfungibleToken *InonfungibleTokenTransactor) CreateAndInitializePoolIfNecessary(opts *bind.TransactOpts, token0 common.Address, token1 common.Address, fee *big.Int, sqrtPriceX96 *big.Int) (*types.Transaction, error) {
-	return _InonfungibleToken.contract.Transact(opts, "createAndInitializePoolIfNecessary", token0, token1, fee, sqrtPriceX96)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactor) CreateAndInitializePoolIfNecessary(opts *bind.TransactOpts, token0 common.Address, token1 common.Address, fee *big.Int, sqrtPriceX96 *big.Int) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.contract.Transact(opts, "createAndInitializePoolIfNecessary", token0, token1, fee, sqrtPriceX96)
 }
 
 // CreateAndInitializePoolIfNecessary is a paid mutator transaction binding the contract method 0x13ead562.
 //
 // Solidity: function createAndInitializePoolIfNecessary(address token0, address token1, uint24 fee, uint160 sqrtPriceX96) payable returns(address pool)
-func (_InonfungibleToken *InonfungibleTokenSession) CreateAndInitializePoolIfNecessary(token0 common.Address, token1 common.Address, fee *big.Int, sqrtPriceX96 *big.Int) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.CreateAndInitializePoolIfNecessary(&_InonfungibleToken.TransactOpts, token0, token1, fee, sqrtPriceX96)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) CreateAndInitializePoolIfNecessary(token0 common.Address, token1 common.Address, fee *big.Int, sqrtPriceX96 *big.Int) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.CreateAndInitializePoolIfNecessary(&_INonfungiblePositionManager.TransactOpts, token0, token1, fee, sqrtPriceX96)
 }
 
 // CreateAndInitializePoolIfNecessary is a paid mutator transaction binding the contract method 0x13ead562.
 //
 // Solidity: function createAndInitializePoolIfNecessary(address token0, address token1, uint24 fee, uint160 sqrtPriceX96) payable returns(address pool)
-func (_InonfungibleToken *InonfungibleTokenTransactorSession) CreateAndInitializePoolIfNecessary(token0 common.Address, token1 common.Address, fee *big.Int, sqrtPriceX96 *big.Int) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.CreateAndInitializePoolIfNecessary(&_InonfungibleToken.TransactOpts, token0, token1, fee, sqrtPriceX96)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactorSession) CreateAndInitializePoolIfNecessary(token0 common.Address, token1 common.Address, fee *big.Int, sqrtPriceX96 *big.Int) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.CreateAndInitializePoolIfNecessary(&_INonfungiblePositionManager.TransactOpts, token0, token1, fee, sqrtPriceX96)
 }
 
 // DecreaseLiquidity is a paid mutator transaction binding the contract method 0x0c49ccbe.
 //
 // Solidity: function decreaseLiquidity((uint256,uint128,uint256,uint256,uint256) params) payable returns(uint256 amount0, uint256 amount1)
-func (_InonfungibleToken *InonfungibleTokenTransactor) DecreaseLiquidity(opts *bind.TransactOpts, params INonfungiblePositionManagerDecreaseLiquidityParams) (*types.Transaction, error) {
-	return _InonfungibleToken.contract.Transact(opts, "decreaseLiquidity", params)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactor) DecreaseLiquidity(opts *bind.TransactOpts, params INonfungiblePositionManagerDecreaseLiquidityParams) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.contract.Transact(opts, "decreaseLiquidity", params)
 }
 
 // DecreaseLiquidity is a paid mutator transaction binding the contract method 0x0c49ccbe.
 //
 // Solidity: function decreaseLiquidity((uint256,uint128,uint256,uint256,uint256) params) payable returns(uint256 amount0, uint256 amount1)
-func (_InonfungibleToken *InonfungibleTokenSession) DecreaseLiquidity(params INonfungiblePositionManagerDecreaseLiquidityParams) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.DecreaseLiquidity(&_InonfungibleToken.TransactOpts, params)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) DecreaseLiquidity(params INonfungiblePositionManagerDecreaseLiquidityParams) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.DecreaseLiquidity(&_INonfungiblePositionManager.TransactOpts, params)
 }
 
 // DecreaseLiquidity is a paid mutator transaction binding the contract method 0x0c49ccbe.
 //
 // Solidity: function decreaseLiquidity((uint256,uint128,uint256,uint256,uint256) params) payable returns(uint256 amount0, uint256 amount1)
-func (_InonfungibleToken *InonfungibleTokenTransactorSession) DecreaseLiquidity(params INonfungiblePositionManagerDecreaseLiquidityParams) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.DecreaseLiquidity(&_InonfungibleToken.TransactOpts, params)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactorSession) DecreaseLiquidity(params INonfungiblePositionManagerDecreaseLiquidityParams) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.DecreaseLiquidity(&_INonfungiblePositionManager.TransactOpts, params)
 }
 
 // IncreaseLiquidity is a paid mutator transaction binding the contract method 0x219f5d17.
 //
 // Solidity: function increaseLiquidity((uint256,uint256,uint256,uint256,uint256,uint256) params) payable returns(uint128 liquidity, uint256 amount0, uint256 amount1)
-func (_InonfungibleToken *InonfungibleTokenTransactor) IncreaseLiquidity(opts *bind.TransactOpts, params INonfungiblePositionManagerIncreaseLiquidityParams) (*types.Transaction, error) {
-	return _InonfungibleToken.contract.Transact(opts, "increaseLiquidity", params)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactor) IncreaseLiquidity(opts *bind.TransactOpts, params INonfungiblePositionManagerIncreaseLiquidityParams) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.contract.Transact(opts, "increaseLiquidity", params)
 }
 
 // IncreaseLiquidity is a paid mutator transaction binding the contract method 0x219f5d17.
 //
 // Solidity: function increaseLiquidity((uint256,uint256,uint256,uint256,uint256,uint256) params) payable returns(uint128 liquidity, uint256 amount0, uint256 amount1)
-func (_InonfungibleToken *InonfungibleTokenSession) IncreaseLiquidity(params INonfungiblePositionManagerIncreaseLiquidityParams) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.IncreaseLiquidity(&_InonfungibleToken.TransactOpts, params)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) IncreaseLiquidity(params INonfungiblePositionManagerIncreaseLiquidityParams) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.IncreaseLiquidity(&_INonfungiblePositionManager.TransactOpts, params)
 }
 
 // IncreaseLiquidity is a paid mutator transaction binding the contract method 0x219f5d17.
 //
 // Solidity: function increaseLiquidity((uint256,uint256,uint256,uint256,uint256,uint256) params) payable returns(uint128 liquidity, uint256 amount0, uint256 amount1)
-func (_InonfungibleToken *InonfungibleTokenTransactorSession) IncreaseLiquidity(params INonfungiblePositionManagerIncreaseLiquidityParams) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.IncreaseLiquidity(&_InonfungibleToken.TransactOpts, params)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactorSession) IncreaseLiquidity(params INonfungiblePositionManagerIncreaseLiquidityParams) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.IncreaseLiquidity(&_INonfungiblePositionManager.TransactOpts, params)
+}
+
+// InitPoolHelper is a paid mutator transaction binding the contract method 0xac059426.
+//
+// Solidity: function initPoolHelper((address,address,uint24,int24,int24,uint256,uint256,uint256,uint256,address,uint256) params, string token0Name, string token1Name, uint256 sqrtpCur) returns()
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactor) InitPoolHelper(opts *bind.TransactOpts, params INonfungiblePositionManagerMintParams, token0Name string, token1Name string, sqrtpCur *big.Int) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.contract.Transact(opts, "initPoolHelper", params, token0Name, token1Name, sqrtpCur)
+}
+
+// InitPoolHelper is a paid mutator transaction binding the contract method 0xac059426.
+//
+// Solidity: function initPoolHelper((address,address,uint24,int24,int24,uint256,uint256,uint256,uint256,address,uint256) params, string token0Name, string token1Name, uint256 sqrtpCur) returns()
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) InitPoolHelper(params INonfungiblePositionManagerMintParams, token0Name string, token1Name string, sqrtpCur *big.Int) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.InitPoolHelper(&_INonfungiblePositionManager.TransactOpts, params, token0Name, token1Name, sqrtpCur)
+}
+
+// InitPoolHelper is a paid mutator transaction binding the contract method 0xac059426.
+//
+// Solidity: function initPoolHelper((address,address,uint24,int24,int24,uint256,uint256,uint256,uint256,address,uint256) params, string token0Name, string token1Name, uint256 sqrtpCur) returns()
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactorSession) InitPoolHelper(params INonfungiblePositionManagerMintParams, token0Name string, token1Name string, sqrtpCur *big.Int) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.InitPoolHelper(&_INonfungiblePositionManager.TransactOpts, params, token0Name, token1Name, sqrtpCur)
 }
 
 // Mint is a paid mutator transaction binding the contract method 0x88316456.
 //
 // Solidity: function mint((address,address,uint24,int24,int24,uint256,uint256,uint256,uint256,address,uint256) params) payable returns(uint256 tokenId, uint128 liquidity, uint256 amount0, uint256 amount1)
-func (_InonfungibleToken *InonfungibleTokenTransactor) Mint(opts *bind.TransactOpts, params INonfungiblePositionManagerMintParams) (*types.Transaction, error) {
-	return _InonfungibleToken.contract.Transact(opts, "mint", params)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactor) Mint(opts *bind.TransactOpts, params INonfungiblePositionManagerMintParams) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.contract.Transact(opts, "mint", params)
 }
 
 // Mint is a paid mutator transaction binding the contract method 0x88316456.
 //
 // Solidity: function mint((address,address,uint24,int24,int24,uint256,uint256,uint256,uint256,address,uint256) params) payable returns(uint256 tokenId, uint128 liquidity, uint256 amount0, uint256 amount1)
-func (_InonfungibleToken *InonfungibleTokenSession) Mint(params INonfungiblePositionManagerMintParams) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.Mint(&_InonfungibleToken.TransactOpts, params)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) Mint(params INonfungiblePositionManagerMintParams) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.Mint(&_INonfungiblePositionManager.TransactOpts, params)
 }
 
 // Mint is a paid mutator transaction binding the contract method 0x88316456.
 //
 // Solidity: function mint((address,address,uint24,int24,int24,uint256,uint256,uint256,uint256,address,uint256) params) payable returns(uint256 tokenId, uint128 liquidity, uint256 amount0, uint256 amount1)
-func (_InonfungibleToken *InonfungibleTokenTransactorSession) Mint(params INonfungiblePositionManagerMintParams) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.Mint(&_InonfungibleToken.TransactOpts, params)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactorSession) Mint(params INonfungiblePositionManagerMintParams) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.Mint(&_INonfungiblePositionManager.TransactOpts, params)
 }
 
 // Permit is a paid mutator transaction binding the contract method 0x7ac2ff7b.
 //
 // Solidity: function permit(address spender, uint256 tokenId, uint256 deadline, uint8 v, bytes32 r, bytes32 s) payable returns()
-func (_InonfungibleToken *InonfungibleTokenTransactor) Permit(opts *bind.TransactOpts, spender common.Address, tokenId *big.Int, deadline *big.Int, v uint8, r [32]byte, s [32]byte) (*types.Transaction, error) {
-	return _InonfungibleToken.contract.Transact(opts, "permit", spender, tokenId, deadline, v, r, s)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactor) Permit(opts *bind.TransactOpts, spender common.Address, tokenId *big.Int, deadline *big.Int, v uint8, r [32]byte, s [32]byte) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.contract.Transact(opts, "permit", spender, tokenId, deadline, v, r, s)
 }
 
 // Permit is a paid mutator transaction binding the contract method 0x7ac2ff7b.
 //
 // Solidity: function permit(address spender, uint256 tokenId, uint256 deadline, uint8 v, bytes32 r, bytes32 s) payable returns()
-func (_InonfungibleToken *InonfungibleTokenSession) Permit(spender common.Address, tokenId *big.Int, deadline *big.Int, v uint8, r [32]byte, s [32]byte) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.Permit(&_InonfungibleToken.TransactOpts, spender, tokenId, deadline, v, r, s)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) Permit(spender common.Address, tokenId *big.Int, deadline *big.Int, v uint8, r [32]byte, s [32]byte) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.Permit(&_INonfungiblePositionManager.TransactOpts, spender, tokenId, deadline, v, r, s)
 }
 
 // Permit is a paid mutator transaction binding the contract method 0x7ac2ff7b.
 //
 // Solidity: function permit(address spender, uint256 tokenId, uint256 deadline, uint8 v, bytes32 r, bytes32 s) payable returns()
-func (_InonfungibleToken *InonfungibleTokenTransactorSession) Permit(spender common.Address, tokenId *big.Int, deadline *big.Int, v uint8, r [32]byte, s [32]byte) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.Permit(&_InonfungibleToken.TransactOpts, spender, tokenId, deadline, v, r, s)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactorSession) Permit(spender common.Address, tokenId *big.Int, deadline *big.Int, v uint8, r [32]byte, s [32]byte) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.Permit(&_INonfungiblePositionManager.TransactOpts, spender, tokenId, deadline, v, r, s)
 }
 
 // RefundETH is a paid mutator transaction binding the contract method 0x12210e8a.
 //
 // Solidity: function refundETH() payable returns()
-func (_InonfungibleToken *InonfungibleTokenTransactor) RefundETH(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _InonfungibleToken.contract.Transact(opts, "refundETH")
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactor) RefundETH(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.contract.Transact(opts, "refundETH")
 }
 
 // RefundETH is a paid mutator transaction binding the contract method 0x12210e8a.
 //
 // Solidity: function refundETH() payable returns()
-func (_InonfungibleToken *InonfungibleTokenSession) RefundETH() (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.RefundETH(&_InonfungibleToken.TransactOpts)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) RefundETH() (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.RefundETH(&_INonfungiblePositionManager.TransactOpts)
 }
 
 // RefundETH is a paid mutator transaction binding the contract method 0x12210e8a.
 //
 // Solidity: function refundETH() payable returns()
-func (_InonfungibleToken *InonfungibleTokenTransactorSession) RefundETH() (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.RefundETH(&_InonfungibleToken.TransactOpts)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactorSession) RefundETH() (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.RefundETH(&_INonfungiblePositionManager.TransactOpts)
 }
 
 // SafeTransferFrom is a paid mutator transaction binding the contract method 0x42842e0e.
 //
 // Solidity: function safeTransferFrom(address from, address to, uint256 tokenId) returns()
-func (_InonfungibleToken *InonfungibleTokenTransactor) SafeTransferFrom(opts *bind.TransactOpts, from common.Address, to common.Address, tokenId *big.Int) (*types.Transaction, error) {
-	return _InonfungibleToken.contract.Transact(opts, "safeTransferFrom", from, to, tokenId)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactor) SafeTransferFrom(opts *bind.TransactOpts, from common.Address, to common.Address, tokenId *big.Int) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.contract.Transact(opts, "safeTransferFrom", from, to, tokenId)
 }
 
 // SafeTransferFrom is a paid mutator transaction binding the contract method 0x42842e0e.
 //
 // Solidity: function safeTransferFrom(address from, address to, uint256 tokenId) returns()
-func (_InonfungibleToken *InonfungibleTokenSession) SafeTransferFrom(from common.Address, to common.Address, tokenId *big.Int) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.SafeTransferFrom(&_InonfungibleToken.TransactOpts, from, to, tokenId)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) SafeTransferFrom(from common.Address, to common.Address, tokenId *big.Int) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.SafeTransferFrom(&_INonfungiblePositionManager.TransactOpts, from, to, tokenId)
 }
 
 // SafeTransferFrom is a paid mutator transaction binding the contract method 0x42842e0e.
 //
 // Solidity: function safeTransferFrom(address from, address to, uint256 tokenId) returns()
-func (_InonfungibleToken *InonfungibleTokenTransactorSession) SafeTransferFrom(from common.Address, to common.Address, tokenId *big.Int) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.SafeTransferFrom(&_InonfungibleToken.TransactOpts, from, to, tokenId)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactorSession) SafeTransferFrom(from common.Address, to common.Address, tokenId *big.Int) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.SafeTransferFrom(&_INonfungiblePositionManager.TransactOpts, from, to, tokenId)
 }
 
 // SafeTransferFrom0 is a paid mutator transaction binding the contract method 0xb88d4fde.
 //
 // Solidity: function safeTransferFrom(address from, address to, uint256 tokenId, bytes data) returns()
-func (_InonfungibleToken *InonfungibleTokenTransactor) SafeTransferFrom0(opts *bind.TransactOpts, from common.Address, to common.Address, tokenId *big.Int, data []byte) (*types.Transaction, error) {
-	return _InonfungibleToken.contract.Transact(opts, "safeTransferFrom0", from, to, tokenId, data)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactor) SafeTransferFrom0(opts *bind.TransactOpts, from common.Address, to common.Address, tokenId *big.Int, data []byte) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.contract.Transact(opts, "safeTransferFrom0", from, to, tokenId, data)
 }
 
 // SafeTransferFrom0 is a paid mutator transaction binding the contract method 0xb88d4fde.
 //
 // Solidity: function safeTransferFrom(address from, address to, uint256 tokenId, bytes data) returns()
-func (_InonfungibleToken *InonfungibleTokenSession) SafeTransferFrom0(from common.Address, to common.Address, tokenId *big.Int, data []byte) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.SafeTransferFrom0(&_InonfungibleToken.TransactOpts, from, to, tokenId, data)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) SafeTransferFrom0(from common.Address, to common.Address, tokenId *big.Int, data []byte) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.SafeTransferFrom0(&_INonfungiblePositionManager.TransactOpts, from, to, tokenId, data)
 }
 
 // SafeTransferFrom0 is a paid mutator transaction binding the contract method 0xb88d4fde.
 //
 // Solidity: function safeTransferFrom(address from, address to, uint256 tokenId, bytes data) returns()
-func (_InonfungibleToken *InonfungibleTokenTransactorSession) SafeTransferFrom0(from common.Address, to common.Address, tokenId *big.Int, data []byte) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.SafeTransferFrom0(&_InonfungibleToken.TransactOpts, from, to, tokenId, data)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactorSession) SafeTransferFrom0(from common.Address, to common.Address, tokenId *big.Int, data []byte) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.SafeTransferFrom0(&_INonfungiblePositionManager.TransactOpts, from, to, tokenId, data)
 }
 
 // SetApprovalForAll is a paid mutator transaction binding the contract method 0xa22cb465.
 //
 // Solidity: function setApprovalForAll(address operator, bool _approved) returns()
-func (_InonfungibleToken *InonfungibleTokenTransactor) SetApprovalForAll(opts *bind.TransactOpts, operator common.Address, _approved bool) (*types.Transaction, error) {
-	return _InonfungibleToken.contract.Transact(opts, "setApprovalForAll", operator, _approved)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactor) SetApprovalForAll(opts *bind.TransactOpts, operator common.Address, _approved bool) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.contract.Transact(opts, "setApprovalForAll", operator, _approved)
 }
 
 // SetApprovalForAll is a paid mutator transaction binding the contract method 0xa22cb465.
 //
 // Solidity: function setApprovalForAll(address operator, bool _approved) returns()
-func (_InonfungibleToken *InonfungibleTokenSession) SetApprovalForAll(operator common.Address, _approved bool) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.SetApprovalForAll(&_InonfungibleToken.TransactOpts, operator, _approved)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) SetApprovalForAll(operator common.Address, _approved bool) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.SetApprovalForAll(&_INonfungiblePositionManager.TransactOpts, operator, _approved)
 }
 
 // SetApprovalForAll is a paid mutator transaction binding the contract method 0xa22cb465.
 //
 // Solidity: function setApprovalForAll(address operator, bool _approved) returns()
-func (_InonfungibleToken *InonfungibleTokenTransactorSession) SetApprovalForAll(operator common.Address, _approved bool) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.SetApprovalForAll(&_InonfungibleToken.TransactOpts, operator, _approved)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactorSession) SetApprovalForAll(operator common.Address, _approved bool) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.SetApprovalForAll(&_INonfungiblePositionManager.TransactOpts, operator, _approved)
 }
 
 // SweepToken is a paid mutator transaction binding the contract method 0xdf2ab5bb.
 //
 // Solidity: function sweepToken(address token, uint256 amountMinimum, address recipient) payable returns()
-func (_InonfungibleToken *InonfungibleTokenTransactor) SweepToken(opts *bind.TransactOpts, token common.Address, amountMinimum *big.Int, recipient common.Address) (*types.Transaction, error) {
-	return _InonfungibleToken.contract.Transact(opts, "sweepToken", token, amountMinimum, recipient)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactor) SweepToken(opts *bind.TransactOpts, token common.Address, amountMinimum *big.Int, recipient common.Address) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.contract.Transact(opts, "sweepToken", token, amountMinimum, recipient)
 }
 
 // SweepToken is a paid mutator transaction binding the contract method 0xdf2ab5bb.
 //
 // Solidity: function sweepToken(address token, uint256 amountMinimum, address recipient) payable returns()
-func (_InonfungibleToken *InonfungibleTokenSession) SweepToken(token common.Address, amountMinimum *big.Int, recipient common.Address) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.SweepToken(&_InonfungibleToken.TransactOpts, token, amountMinimum, recipient)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) SweepToken(token common.Address, amountMinimum *big.Int, recipient common.Address) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.SweepToken(&_INonfungiblePositionManager.TransactOpts, token, amountMinimum, recipient)
 }
 
 // SweepToken is a paid mutator transaction binding the contract method 0xdf2ab5bb.
 //
 // Solidity: function sweepToken(address token, uint256 amountMinimum, address recipient) payable returns()
-func (_InonfungibleToken *InonfungibleTokenTransactorSession) SweepToken(token common.Address, amountMinimum *big.Int, recipient common.Address) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.SweepToken(&_InonfungibleToken.TransactOpts, token, amountMinimum, recipient)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactorSession) SweepToken(token common.Address, amountMinimum *big.Int, recipient common.Address) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.SweepToken(&_INonfungiblePositionManager.TransactOpts, token, amountMinimum, recipient)
 }
 
 // TransferFrom is a paid mutator transaction binding the contract method 0x23b872dd.
 //
 // Solidity: function transferFrom(address from, address to, uint256 tokenId) returns()
-func (_InonfungibleToken *InonfungibleTokenTransactor) TransferFrom(opts *bind.TransactOpts, from common.Address, to common.Address, tokenId *big.Int) (*types.Transaction, error) {
-	return _InonfungibleToken.contract.Transact(opts, "transferFrom", from, to, tokenId)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactor) TransferFrom(opts *bind.TransactOpts, from common.Address, to common.Address, tokenId *big.Int) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.contract.Transact(opts, "transferFrom", from, to, tokenId)
 }
 
 // TransferFrom is a paid mutator transaction binding the contract method 0x23b872dd.
 //
 // Solidity: function transferFrom(address from, address to, uint256 tokenId) returns()
-func (_InonfungibleToken *InonfungibleTokenSession) TransferFrom(from common.Address, to common.Address, tokenId *big.Int) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.TransferFrom(&_InonfungibleToken.TransactOpts, from, to, tokenId)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) TransferFrom(from common.Address, to common.Address, tokenId *big.Int) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.TransferFrom(&_INonfungiblePositionManager.TransactOpts, from, to, tokenId)
 }
 
 // TransferFrom is a paid mutator transaction binding the contract method 0x23b872dd.
 //
 // Solidity: function transferFrom(address from, address to, uint256 tokenId) returns()
-func (_InonfungibleToken *InonfungibleTokenTransactorSession) TransferFrom(from common.Address, to common.Address, tokenId *big.Int) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.TransferFrom(&_InonfungibleToken.TransactOpts, from, to, tokenId)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactorSession) TransferFrom(from common.Address, to common.Address, tokenId *big.Int) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.TransferFrom(&_INonfungiblePositionManager.TransactOpts, from, to, tokenId)
 }
 
 // UnwrapWETH9 is a paid mutator transaction binding the contract method 0x49404b7c.
 //
 // Solidity: function unwrapWETH9(uint256 amountMinimum, address recipient) payable returns()
-func (_InonfungibleToken *InonfungibleTokenTransactor) UnwrapWETH9(opts *bind.TransactOpts, amountMinimum *big.Int, recipient common.Address) (*types.Transaction, error) {
-	return _InonfungibleToken.contract.Transact(opts, "unwrapWETH9", amountMinimum, recipient)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactor) UnwrapWETH9(opts *bind.TransactOpts, amountMinimum *big.Int, recipient common.Address) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.contract.Transact(opts, "unwrapWETH9", amountMinimum, recipient)
 }
 
 // UnwrapWETH9 is a paid mutator transaction binding the contract method 0x49404b7c.
 //
 // Solidity: function unwrapWETH9(uint256 amountMinimum, address recipient) payable returns()
-func (_InonfungibleToken *InonfungibleTokenSession) UnwrapWETH9(amountMinimum *big.Int, recipient common.Address) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.UnwrapWETH9(&_InonfungibleToken.TransactOpts, amountMinimum, recipient)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerSession) UnwrapWETH9(amountMinimum *big.Int, recipient common.Address) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.UnwrapWETH9(&_INonfungiblePositionManager.TransactOpts, amountMinimum, recipient)
 }
 
 // UnwrapWETH9 is a paid mutator transaction binding the contract method 0x49404b7c.
 //
 // Solidity: function unwrapWETH9(uint256 amountMinimum, address recipient) payable returns()
-func (_InonfungibleToken *InonfungibleTokenTransactorSession) UnwrapWETH9(amountMinimum *big.Int, recipient common.Address) (*types.Transaction, error) {
-	return _InonfungibleToken.Contract.UnwrapWETH9(&_InonfungibleToken.TransactOpts, amountMinimum, recipient)
+func (_INonfungiblePositionManager *INonfungiblePositionManagerTransactorSession) UnwrapWETH9(amountMinimum *big.Int, recipient common.Address) (*types.Transaction, error) {
+	return _INonfungiblePositionManager.Contract.UnwrapWETH9(&_INonfungiblePositionManager.TransactOpts, amountMinimum, recipient)
 }
 
-// InonfungibleTokenApprovalIterator is returned from FilterApproval and is used to iterate over the raw logs and unpacked data for Approval events raised by the InonfungibleToken contract.
-type InonfungibleTokenApprovalIterator struct {
-	Event *InonfungibleTokenApproval // Event containing the contract specifics and raw log
+// INonfungiblePositionManagerApprovalIterator is returned from FilterApproval and is used to iterate over the raw logs and unpacked data for Approval events raised by the INonfungiblePositionManager contract.
+type INonfungiblePositionManagerApprovalIterator struct {
+	Event *INonfungiblePositionManagerApproval // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -1113,7 +1134,7 @@ type InonfungibleTokenApprovalIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *InonfungibleTokenApprovalIterator) Next() bool {
+func (it *INonfungiblePositionManagerApprovalIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -1122,7 +1143,7 @@ func (it *InonfungibleTokenApprovalIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(InonfungibleTokenApproval)
+			it.Event = new(INonfungiblePositionManagerApproval)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -1137,7 +1158,7 @@ func (it *InonfungibleTokenApprovalIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(InonfungibleTokenApproval)
+		it.Event = new(INonfungiblePositionManagerApproval)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -1153,19 +1174,19 @@ func (it *InonfungibleTokenApprovalIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *InonfungibleTokenApprovalIterator) Error() error {
+func (it *INonfungiblePositionManagerApprovalIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *InonfungibleTokenApprovalIterator) Close() error {
+func (it *INonfungiblePositionManagerApprovalIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// InonfungibleTokenApproval represents a Approval event raised by the InonfungibleToken contract.
-type InonfungibleTokenApproval struct {
+// INonfungiblePositionManagerApproval represents a Approval event raised by the INonfungiblePositionManager contract.
+type INonfungiblePositionManagerApproval struct {
 	Owner    common.Address
 	Approved common.Address
 	TokenId  *big.Int
@@ -1175,7 +1196,7 @@ type InonfungibleTokenApproval struct {
 // FilterApproval is a free log retrieval operation binding the contract event 0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925.
 //
 // Solidity: event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId)
-func (_InonfungibleToken *InonfungibleTokenFilterer) FilterApproval(opts *bind.FilterOpts, owner []common.Address, approved []common.Address, tokenId []*big.Int) (*InonfungibleTokenApprovalIterator, error) {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerFilterer) FilterApproval(opts *bind.FilterOpts, owner []common.Address, approved []common.Address, tokenId []*big.Int) (*INonfungiblePositionManagerApprovalIterator, error) {
 
 	var ownerRule []interface{}
 	for _, ownerItem := range owner {
@@ -1190,17 +1211,17 @@ func (_InonfungibleToken *InonfungibleTokenFilterer) FilterApproval(opts *bind.F
 		tokenIdRule = append(tokenIdRule, tokenIdItem)
 	}
 
-	logs, sub, err := _InonfungibleToken.contract.FilterLogs(opts, "Approval", ownerRule, approvedRule, tokenIdRule)
+	logs, sub, err := _INonfungiblePositionManager.contract.FilterLogs(opts, "Approval", ownerRule, approvedRule, tokenIdRule)
 	if err != nil {
 		return nil, err
 	}
-	return &InonfungibleTokenApprovalIterator{contract: _InonfungibleToken.contract, event: "Approval", logs: logs, sub: sub}, nil
+	return &INonfungiblePositionManagerApprovalIterator{contract: _INonfungiblePositionManager.contract, event: "Approval", logs: logs, sub: sub}, nil
 }
 
 // WatchApproval is a free log subscription operation binding the contract event 0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925.
 //
 // Solidity: event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId)
-func (_InonfungibleToken *InonfungibleTokenFilterer) WatchApproval(opts *bind.WatchOpts, sink chan<- *InonfungibleTokenApproval, owner []common.Address, approved []common.Address, tokenId []*big.Int) (event.Subscription, error) {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerFilterer) WatchApproval(opts *bind.WatchOpts, sink chan<- *INonfungiblePositionManagerApproval, owner []common.Address, approved []common.Address, tokenId []*big.Int) (event.Subscription, error) {
 
 	var ownerRule []interface{}
 	for _, ownerItem := range owner {
@@ -1215,7 +1236,7 @@ func (_InonfungibleToken *InonfungibleTokenFilterer) WatchApproval(opts *bind.Wa
 		tokenIdRule = append(tokenIdRule, tokenIdItem)
 	}
 
-	logs, sub, err := _InonfungibleToken.contract.WatchLogs(opts, "Approval", ownerRule, approvedRule, tokenIdRule)
+	logs, sub, err := _INonfungiblePositionManager.contract.WatchLogs(opts, "Approval", ownerRule, approvedRule, tokenIdRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1225,8 +1246,8 @@ func (_InonfungibleToken *InonfungibleTokenFilterer) WatchApproval(opts *bind.Wa
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(InonfungibleTokenApproval)
-				if err := _InonfungibleToken.contract.UnpackLog(event, "Approval", log); err != nil {
+				event := new(INonfungiblePositionManagerApproval)
+				if err := _INonfungiblePositionManager.contract.UnpackLog(event, "Approval", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -1250,18 +1271,18 @@ func (_InonfungibleToken *InonfungibleTokenFilterer) WatchApproval(opts *bind.Wa
 // ParseApproval is a log parse operation binding the contract event 0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925.
 //
 // Solidity: event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId)
-func (_InonfungibleToken *InonfungibleTokenFilterer) ParseApproval(log types.Log) (*InonfungibleTokenApproval, error) {
-	event := new(InonfungibleTokenApproval)
-	if err := _InonfungibleToken.contract.UnpackLog(event, "Approval", log); err != nil {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerFilterer) ParseApproval(log types.Log) (*INonfungiblePositionManagerApproval, error) {
+	event := new(INonfungiblePositionManagerApproval)
+	if err := _INonfungiblePositionManager.contract.UnpackLog(event, "Approval", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
 	return event, nil
 }
 
-// InonfungibleTokenApprovalForAllIterator is returned from FilterApprovalForAll and is used to iterate over the raw logs and unpacked data for ApprovalForAll events raised by the InonfungibleToken contract.
-type InonfungibleTokenApprovalForAllIterator struct {
-	Event *InonfungibleTokenApprovalForAll // Event containing the contract specifics and raw log
+// INonfungiblePositionManagerApprovalForAllIterator is returned from FilterApprovalForAll and is used to iterate over the raw logs and unpacked data for ApprovalForAll events raised by the INonfungiblePositionManager contract.
+type INonfungiblePositionManagerApprovalForAllIterator struct {
+	Event *INonfungiblePositionManagerApprovalForAll // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -1275,7 +1296,7 @@ type InonfungibleTokenApprovalForAllIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *InonfungibleTokenApprovalForAllIterator) Next() bool {
+func (it *INonfungiblePositionManagerApprovalForAllIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -1284,7 +1305,7 @@ func (it *InonfungibleTokenApprovalForAllIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(InonfungibleTokenApprovalForAll)
+			it.Event = new(INonfungiblePositionManagerApprovalForAll)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -1299,7 +1320,7 @@ func (it *InonfungibleTokenApprovalForAllIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(InonfungibleTokenApprovalForAll)
+		it.Event = new(INonfungiblePositionManagerApprovalForAll)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -1315,19 +1336,19 @@ func (it *InonfungibleTokenApprovalForAllIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *InonfungibleTokenApprovalForAllIterator) Error() error {
+func (it *INonfungiblePositionManagerApprovalForAllIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *InonfungibleTokenApprovalForAllIterator) Close() error {
+func (it *INonfungiblePositionManagerApprovalForAllIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// InonfungibleTokenApprovalForAll represents a ApprovalForAll event raised by the InonfungibleToken contract.
-type InonfungibleTokenApprovalForAll struct {
+// INonfungiblePositionManagerApprovalForAll represents a ApprovalForAll event raised by the INonfungiblePositionManager contract.
+type INonfungiblePositionManagerApprovalForAll struct {
 	Owner    common.Address
 	Operator common.Address
 	Approved bool
@@ -1337,7 +1358,7 @@ type InonfungibleTokenApprovalForAll struct {
 // FilterApprovalForAll is a free log retrieval operation binding the contract event 0x17307eab39ab6107e8899845ad3d59bd9653f200f220920489ca2b5937696c31.
 //
 // Solidity: event ApprovalForAll(address indexed owner, address indexed operator, bool approved)
-func (_InonfungibleToken *InonfungibleTokenFilterer) FilterApprovalForAll(opts *bind.FilterOpts, owner []common.Address, operator []common.Address) (*InonfungibleTokenApprovalForAllIterator, error) {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerFilterer) FilterApprovalForAll(opts *bind.FilterOpts, owner []common.Address, operator []common.Address) (*INonfungiblePositionManagerApprovalForAllIterator, error) {
 
 	var ownerRule []interface{}
 	for _, ownerItem := range owner {
@@ -1348,17 +1369,17 @@ func (_InonfungibleToken *InonfungibleTokenFilterer) FilterApprovalForAll(opts *
 		operatorRule = append(operatorRule, operatorItem)
 	}
 
-	logs, sub, err := _InonfungibleToken.contract.FilterLogs(opts, "ApprovalForAll", ownerRule, operatorRule)
+	logs, sub, err := _INonfungiblePositionManager.contract.FilterLogs(opts, "ApprovalForAll", ownerRule, operatorRule)
 	if err != nil {
 		return nil, err
 	}
-	return &InonfungibleTokenApprovalForAllIterator{contract: _InonfungibleToken.contract, event: "ApprovalForAll", logs: logs, sub: sub}, nil
+	return &INonfungiblePositionManagerApprovalForAllIterator{contract: _INonfungiblePositionManager.contract, event: "ApprovalForAll", logs: logs, sub: sub}, nil
 }
 
 // WatchApprovalForAll is a free log subscription operation binding the contract event 0x17307eab39ab6107e8899845ad3d59bd9653f200f220920489ca2b5937696c31.
 //
 // Solidity: event ApprovalForAll(address indexed owner, address indexed operator, bool approved)
-func (_InonfungibleToken *InonfungibleTokenFilterer) WatchApprovalForAll(opts *bind.WatchOpts, sink chan<- *InonfungibleTokenApprovalForAll, owner []common.Address, operator []common.Address) (event.Subscription, error) {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerFilterer) WatchApprovalForAll(opts *bind.WatchOpts, sink chan<- *INonfungiblePositionManagerApprovalForAll, owner []common.Address, operator []common.Address) (event.Subscription, error) {
 
 	var ownerRule []interface{}
 	for _, ownerItem := range owner {
@@ -1369,7 +1390,7 @@ func (_InonfungibleToken *InonfungibleTokenFilterer) WatchApprovalForAll(opts *b
 		operatorRule = append(operatorRule, operatorItem)
 	}
 
-	logs, sub, err := _InonfungibleToken.contract.WatchLogs(opts, "ApprovalForAll", ownerRule, operatorRule)
+	logs, sub, err := _INonfungiblePositionManager.contract.WatchLogs(opts, "ApprovalForAll", ownerRule, operatorRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1379,8 +1400,8 @@ func (_InonfungibleToken *InonfungibleTokenFilterer) WatchApprovalForAll(opts *b
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(InonfungibleTokenApprovalForAll)
-				if err := _InonfungibleToken.contract.UnpackLog(event, "ApprovalForAll", log); err != nil {
+				event := new(INonfungiblePositionManagerApprovalForAll)
+				if err := _INonfungiblePositionManager.contract.UnpackLog(event, "ApprovalForAll", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -1404,18 +1425,18 @@ func (_InonfungibleToken *InonfungibleTokenFilterer) WatchApprovalForAll(opts *b
 // ParseApprovalForAll is a log parse operation binding the contract event 0x17307eab39ab6107e8899845ad3d59bd9653f200f220920489ca2b5937696c31.
 //
 // Solidity: event ApprovalForAll(address indexed owner, address indexed operator, bool approved)
-func (_InonfungibleToken *InonfungibleTokenFilterer) ParseApprovalForAll(log types.Log) (*InonfungibleTokenApprovalForAll, error) {
-	event := new(InonfungibleTokenApprovalForAll)
-	if err := _InonfungibleToken.contract.UnpackLog(event, "ApprovalForAll", log); err != nil {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerFilterer) ParseApprovalForAll(log types.Log) (*INonfungiblePositionManagerApprovalForAll, error) {
+	event := new(INonfungiblePositionManagerApprovalForAll)
+	if err := _INonfungiblePositionManager.contract.UnpackLog(event, "ApprovalForAll", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
 	return event, nil
 }
 
-// InonfungibleTokenCollectIterator is returned from FilterCollect and is used to iterate over the raw logs and unpacked data for Collect events raised by the InonfungibleToken contract.
-type InonfungibleTokenCollectIterator struct {
-	Event *InonfungibleTokenCollect // Event containing the contract specifics and raw log
+// INonfungiblePositionManagerCollectIterator is returned from FilterCollect and is used to iterate over the raw logs and unpacked data for Collect events raised by the INonfungiblePositionManager contract.
+type INonfungiblePositionManagerCollectIterator struct {
+	Event *INonfungiblePositionManagerCollect // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -1429,7 +1450,7 @@ type InonfungibleTokenCollectIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *InonfungibleTokenCollectIterator) Next() bool {
+func (it *INonfungiblePositionManagerCollectIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -1438,7 +1459,7 @@ func (it *InonfungibleTokenCollectIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(InonfungibleTokenCollect)
+			it.Event = new(INonfungiblePositionManagerCollect)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -1453,7 +1474,7 @@ func (it *InonfungibleTokenCollectIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(InonfungibleTokenCollect)
+		it.Event = new(INonfungiblePositionManagerCollect)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -1469,19 +1490,19 @@ func (it *InonfungibleTokenCollectIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *InonfungibleTokenCollectIterator) Error() error {
+func (it *INonfungiblePositionManagerCollectIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *InonfungibleTokenCollectIterator) Close() error {
+func (it *INonfungiblePositionManagerCollectIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// InonfungibleTokenCollect represents a Collect event raised by the InonfungibleToken contract.
-type InonfungibleTokenCollect struct {
+// INonfungiblePositionManagerCollect represents a Collect event raised by the INonfungiblePositionManager contract.
+type INonfungiblePositionManagerCollect struct {
 	TokenId   *big.Int
 	Recipient common.Address
 	Amount0   *big.Int
@@ -1492,31 +1513,31 @@ type InonfungibleTokenCollect struct {
 // FilterCollect is a free log retrieval operation binding the contract event 0x40d0efd1a53d60ecbf40971b9daf7dc90178c3aadc7aab1765632738fa8b8f01.
 //
 // Solidity: event Collect(uint256 indexed tokenId, address recipient, uint256 amount0, uint256 amount1)
-func (_InonfungibleToken *InonfungibleTokenFilterer) FilterCollect(opts *bind.FilterOpts, tokenId []*big.Int) (*InonfungibleTokenCollectIterator, error) {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerFilterer) FilterCollect(opts *bind.FilterOpts, tokenId []*big.Int) (*INonfungiblePositionManagerCollectIterator, error) {
 
 	var tokenIdRule []interface{}
 	for _, tokenIdItem := range tokenId {
 		tokenIdRule = append(tokenIdRule, tokenIdItem)
 	}
 
-	logs, sub, err := _InonfungibleToken.contract.FilterLogs(opts, "Collect", tokenIdRule)
+	logs, sub, err := _INonfungiblePositionManager.contract.FilterLogs(opts, "Collect", tokenIdRule)
 	if err != nil {
 		return nil, err
 	}
-	return &InonfungibleTokenCollectIterator{contract: _InonfungibleToken.contract, event: "Collect", logs: logs, sub: sub}, nil
+	return &INonfungiblePositionManagerCollectIterator{contract: _INonfungiblePositionManager.contract, event: "Collect", logs: logs, sub: sub}, nil
 }
 
 // WatchCollect is a free log subscription operation binding the contract event 0x40d0efd1a53d60ecbf40971b9daf7dc90178c3aadc7aab1765632738fa8b8f01.
 //
 // Solidity: event Collect(uint256 indexed tokenId, address recipient, uint256 amount0, uint256 amount1)
-func (_InonfungibleToken *InonfungibleTokenFilterer) WatchCollect(opts *bind.WatchOpts, sink chan<- *InonfungibleTokenCollect, tokenId []*big.Int) (event.Subscription, error) {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerFilterer) WatchCollect(opts *bind.WatchOpts, sink chan<- *INonfungiblePositionManagerCollect, tokenId []*big.Int) (event.Subscription, error) {
 
 	var tokenIdRule []interface{}
 	for _, tokenIdItem := range tokenId {
 		tokenIdRule = append(tokenIdRule, tokenIdItem)
 	}
 
-	logs, sub, err := _InonfungibleToken.contract.WatchLogs(opts, "Collect", tokenIdRule)
+	logs, sub, err := _INonfungiblePositionManager.contract.WatchLogs(opts, "Collect", tokenIdRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1526,8 +1547,8 @@ func (_InonfungibleToken *InonfungibleTokenFilterer) WatchCollect(opts *bind.Wat
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(InonfungibleTokenCollect)
-				if err := _InonfungibleToken.contract.UnpackLog(event, "Collect", log); err != nil {
+				event := new(INonfungiblePositionManagerCollect)
+				if err := _INonfungiblePositionManager.contract.UnpackLog(event, "Collect", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -1551,18 +1572,18 @@ func (_InonfungibleToken *InonfungibleTokenFilterer) WatchCollect(opts *bind.Wat
 // ParseCollect is a log parse operation binding the contract event 0x40d0efd1a53d60ecbf40971b9daf7dc90178c3aadc7aab1765632738fa8b8f01.
 //
 // Solidity: event Collect(uint256 indexed tokenId, address recipient, uint256 amount0, uint256 amount1)
-func (_InonfungibleToken *InonfungibleTokenFilterer) ParseCollect(log types.Log) (*InonfungibleTokenCollect, error) {
-	event := new(InonfungibleTokenCollect)
-	if err := _InonfungibleToken.contract.UnpackLog(event, "Collect", log); err != nil {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerFilterer) ParseCollect(log types.Log) (*INonfungiblePositionManagerCollect, error) {
+	event := new(INonfungiblePositionManagerCollect)
+	if err := _INonfungiblePositionManager.contract.UnpackLog(event, "Collect", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
 	return event, nil
 }
 
-// InonfungibleTokenDecreaseLiquidityIterator is returned from FilterDecreaseLiquidity and is used to iterate over the raw logs and unpacked data for DecreaseLiquidity events raised by the InonfungibleToken contract.
-type InonfungibleTokenDecreaseLiquidityIterator struct {
-	Event *InonfungibleTokenDecreaseLiquidity // Event containing the contract specifics and raw log
+// INonfungiblePositionManagerDecreaseLiquidityIterator is returned from FilterDecreaseLiquidity and is used to iterate over the raw logs and unpacked data for DecreaseLiquidity events raised by the INonfungiblePositionManager contract.
+type INonfungiblePositionManagerDecreaseLiquidityIterator struct {
+	Event *INonfungiblePositionManagerDecreaseLiquidity // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -1576,7 +1597,7 @@ type InonfungibleTokenDecreaseLiquidityIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *InonfungibleTokenDecreaseLiquidityIterator) Next() bool {
+func (it *INonfungiblePositionManagerDecreaseLiquidityIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -1585,7 +1606,7 @@ func (it *InonfungibleTokenDecreaseLiquidityIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(InonfungibleTokenDecreaseLiquidity)
+			it.Event = new(INonfungiblePositionManagerDecreaseLiquidity)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -1600,7 +1621,7 @@ func (it *InonfungibleTokenDecreaseLiquidityIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(InonfungibleTokenDecreaseLiquidity)
+		it.Event = new(INonfungiblePositionManagerDecreaseLiquidity)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -1616,19 +1637,19 @@ func (it *InonfungibleTokenDecreaseLiquidityIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *InonfungibleTokenDecreaseLiquidityIterator) Error() error {
+func (it *INonfungiblePositionManagerDecreaseLiquidityIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *InonfungibleTokenDecreaseLiquidityIterator) Close() error {
+func (it *INonfungiblePositionManagerDecreaseLiquidityIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// InonfungibleTokenDecreaseLiquidity represents a DecreaseLiquidity event raised by the InonfungibleToken contract.
-type InonfungibleTokenDecreaseLiquidity struct {
+// INonfungiblePositionManagerDecreaseLiquidity represents a DecreaseLiquidity event raised by the INonfungiblePositionManager contract.
+type INonfungiblePositionManagerDecreaseLiquidity struct {
 	TokenId   *big.Int
 	Liquidity *big.Int
 	Amount0   *big.Int
@@ -1639,31 +1660,31 @@ type InonfungibleTokenDecreaseLiquidity struct {
 // FilterDecreaseLiquidity is a free log retrieval operation binding the contract event 0x26f6a048ee9138f2c0ce266f322cb99228e8d619ae2bff30c67f8dcf9d2377b4.
 //
 // Solidity: event DecreaseLiquidity(uint256 indexed tokenId, uint128 liquidity, uint256 amount0, uint256 amount1)
-func (_InonfungibleToken *InonfungibleTokenFilterer) FilterDecreaseLiquidity(opts *bind.FilterOpts, tokenId []*big.Int) (*InonfungibleTokenDecreaseLiquidityIterator, error) {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerFilterer) FilterDecreaseLiquidity(opts *bind.FilterOpts, tokenId []*big.Int) (*INonfungiblePositionManagerDecreaseLiquidityIterator, error) {
 
 	var tokenIdRule []interface{}
 	for _, tokenIdItem := range tokenId {
 		tokenIdRule = append(tokenIdRule, tokenIdItem)
 	}
 
-	logs, sub, err := _InonfungibleToken.contract.FilterLogs(opts, "DecreaseLiquidity", tokenIdRule)
+	logs, sub, err := _INonfungiblePositionManager.contract.FilterLogs(opts, "DecreaseLiquidity", tokenIdRule)
 	if err != nil {
 		return nil, err
 	}
-	return &InonfungibleTokenDecreaseLiquidityIterator{contract: _InonfungibleToken.contract, event: "DecreaseLiquidity", logs: logs, sub: sub}, nil
+	return &INonfungiblePositionManagerDecreaseLiquidityIterator{contract: _INonfungiblePositionManager.contract, event: "DecreaseLiquidity", logs: logs, sub: sub}, nil
 }
 
 // WatchDecreaseLiquidity is a free log subscription operation binding the contract event 0x26f6a048ee9138f2c0ce266f322cb99228e8d619ae2bff30c67f8dcf9d2377b4.
 //
 // Solidity: event DecreaseLiquidity(uint256 indexed tokenId, uint128 liquidity, uint256 amount0, uint256 amount1)
-func (_InonfungibleToken *InonfungibleTokenFilterer) WatchDecreaseLiquidity(opts *bind.WatchOpts, sink chan<- *InonfungibleTokenDecreaseLiquidity, tokenId []*big.Int) (event.Subscription, error) {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerFilterer) WatchDecreaseLiquidity(opts *bind.WatchOpts, sink chan<- *INonfungiblePositionManagerDecreaseLiquidity, tokenId []*big.Int) (event.Subscription, error) {
 
 	var tokenIdRule []interface{}
 	for _, tokenIdItem := range tokenId {
 		tokenIdRule = append(tokenIdRule, tokenIdItem)
 	}
 
-	logs, sub, err := _InonfungibleToken.contract.WatchLogs(opts, "DecreaseLiquidity", tokenIdRule)
+	logs, sub, err := _INonfungiblePositionManager.contract.WatchLogs(opts, "DecreaseLiquidity", tokenIdRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1673,8 +1694,8 @@ func (_InonfungibleToken *InonfungibleTokenFilterer) WatchDecreaseLiquidity(opts
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(InonfungibleTokenDecreaseLiquidity)
-				if err := _InonfungibleToken.contract.UnpackLog(event, "DecreaseLiquidity", log); err != nil {
+				event := new(INonfungiblePositionManagerDecreaseLiquidity)
+				if err := _INonfungiblePositionManager.contract.UnpackLog(event, "DecreaseLiquidity", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -1698,18 +1719,18 @@ func (_InonfungibleToken *InonfungibleTokenFilterer) WatchDecreaseLiquidity(opts
 // ParseDecreaseLiquidity is a log parse operation binding the contract event 0x26f6a048ee9138f2c0ce266f322cb99228e8d619ae2bff30c67f8dcf9d2377b4.
 //
 // Solidity: event DecreaseLiquidity(uint256 indexed tokenId, uint128 liquidity, uint256 amount0, uint256 amount1)
-func (_InonfungibleToken *InonfungibleTokenFilterer) ParseDecreaseLiquidity(log types.Log) (*InonfungibleTokenDecreaseLiquidity, error) {
-	event := new(InonfungibleTokenDecreaseLiquidity)
-	if err := _InonfungibleToken.contract.UnpackLog(event, "DecreaseLiquidity", log); err != nil {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerFilterer) ParseDecreaseLiquidity(log types.Log) (*INonfungiblePositionManagerDecreaseLiquidity, error) {
+	event := new(INonfungiblePositionManagerDecreaseLiquidity)
+	if err := _INonfungiblePositionManager.contract.UnpackLog(event, "DecreaseLiquidity", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
 	return event, nil
 }
 
-// InonfungibleTokenIncreaseLiquidityIterator is returned from FilterIncreaseLiquidity and is used to iterate over the raw logs and unpacked data for IncreaseLiquidity events raised by the InonfungibleToken contract.
-type InonfungibleTokenIncreaseLiquidityIterator struct {
-	Event *InonfungibleTokenIncreaseLiquidity // Event containing the contract specifics and raw log
+// INonfungiblePositionManagerIncreaseLiquidityIterator is returned from FilterIncreaseLiquidity and is used to iterate over the raw logs and unpacked data for IncreaseLiquidity events raised by the INonfungiblePositionManager contract.
+type INonfungiblePositionManagerIncreaseLiquidityIterator struct {
+	Event *INonfungiblePositionManagerIncreaseLiquidity // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -1723,7 +1744,7 @@ type InonfungibleTokenIncreaseLiquidityIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *InonfungibleTokenIncreaseLiquidityIterator) Next() bool {
+func (it *INonfungiblePositionManagerIncreaseLiquidityIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -1732,7 +1753,7 @@ func (it *InonfungibleTokenIncreaseLiquidityIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(InonfungibleTokenIncreaseLiquidity)
+			it.Event = new(INonfungiblePositionManagerIncreaseLiquidity)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -1747,7 +1768,7 @@ func (it *InonfungibleTokenIncreaseLiquidityIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(InonfungibleTokenIncreaseLiquidity)
+		it.Event = new(INonfungiblePositionManagerIncreaseLiquidity)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -1763,19 +1784,19 @@ func (it *InonfungibleTokenIncreaseLiquidityIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *InonfungibleTokenIncreaseLiquidityIterator) Error() error {
+func (it *INonfungiblePositionManagerIncreaseLiquidityIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *InonfungibleTokenIncreaseLiquidityIterator) Close() error {
+func (it *INonfungiblePositionManagerIncreaseLiquidityIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// InonfungibleTokenIncreaseLiquidity represents a IncreaseLiquidity event raised by the InonfungibleToken contract.
-type InonfungibleTokenIncreaseLiquidity struct {
+// INonfungiblePositionManagerIncreaseLiquidity represents a IncreaseLiquidity event raised by the INonfungiblePositionManager contract.
+type INonfungiblePositionManagerIncreaseLiquidity struct {
 	TokenId   *big.Int
 	Liquidity *big.Int
 	Amount0   *big.Int
@@ -1786,31 +1807,31 @@ type InonfungibleTokenIncreaseLiquidity struct {
 // FilterIncreaseLiquidity is a free log retrieval operation binding the contract event 0x3067048beee31b25b2f1681f88dac838c8bba36af25bfb2b7cf7473a5847e35f.
 //
 // Solidity: event IncreaseLiquidity(uint256 indexed tokenId, uint128 liquidity, uint256 amount0, uint256 amount1)
-func (_InonfungibleToken *InonfungibleTokenFilterer) FilterIncreaseLiquidity(opts *bind.FilterOpts, tokenId []*big.Int) (*InonfungibleTokenIncreaseLiquidityIterator, error) {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerFilterer) FilterIncreaseLiquidity(opts *bind.FilterOpts, tokenId []*big.Int) (*INonfungiblePositionManagerIncreaseLiquidityIterator, error) {
 
 	var tokenIdRule []interface{}
 	for _, tokenIdItem := range tokenId {
 		tokenIdRule = append(tokenIdRule, tokenIdItem)
 	}
 
-	logs, sub, err := _InonfungibleToken.contract.FilterLogs(opts, "IncreaseLiquidity", tokenIdRule)
+	logs, sub, err := _INonfungiblePositionManager.contract.FilterLogs(opts, "IncreaseLiquidity", tokenIdRule)
 	if err != nil {
 		return nil, err
 	}
-	return &InonfungibleTokenIncreaseLiquidityIterator{contract: _InonfungibleToken.contract, event: "IncreaseLiquidity", logs: logs, sub: sub}, nil
+	return &INonfungiblePositionManagerIncreaseLiquidityIterator{contract: _INonfungiblePositionManager.contract, event: "IncreaseLiquidity", logs: logs, sub: sub}, nil
 }
 
 // WatchIncreaseLiquidity is a free log subscription operation binding the contract event 0x3067048beee31b25b2f1681f88dac838c8bba36af25bfb2b7cf7473a5847e35f.
 //
 // Solidity: event IncreaseLiquidity(uint256 indexed tokenId, uint128 liquidity, uint256 amount0, uint256 amount1)
-func (_InonfungibleToken *InonfungibleTokenFilterer) WatchIncreaseLiquidity(opts *bind.WatchOpts, sink chan<- *InonfungibleTokenIncreaseLiquidity, tokenId []*big.Int) (event.Subscription, error) {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerFilterer) WatchIncreaseLiquidity(opts *bind.WatchOpts, sink chan<- *INonfungiblePositionManagerIncreaseLiquidity, tokenId []*big.Int) (event.Subscription, error) {
 
 	var tokenIdRule []interface{}
 	for _, tokenIdItem := range tokenId {
 		tokenIdRule = append(tokenIdRule, tokenIdItem)
 	}
 
-	logs, sub, err := _InonfungibleToken.contract.WatchLogs(opts, "IncreaseLiquidity", tokenIdRule)
+	logs, sub, err := _INonfungiblePositionManager.contract.WatchLogs(opts, "IncreaseLiquidity", tokenIdRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1820,8 +1841,8 @@ func (_InonfungibleToken *InonfungibleTokenFilterer) WatchIncreaseLiquidity(opts
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(InonfungibleTokenIncreaseLiquidity)
-				if err := _InonfungibleToken.contract.UnpackLog(event, "IncreaseLiquidity", log); err != nil {
+				event := new(INonfungiblePositionManagerIncreaseLiquidity)
+				if err := _INonfungiblePositionManager.contract.UnpackLog(event, "IncreaseLiquidity", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -1845,18 +1866,18 @@ func (_InonfungibleToken *InonfungibleTokenFilterer) WatchIncreaseLiquidity(opts
 // ParseIncreaseLiquidity is a log parse operation binding the contract event 0x3067048beee31b25b2f1681f88dac838c8bba36af25bfb2b7cf7473a5847e35f.
 //
 // Solidity: event IncreaseLiquidity(uint256 indexed tokenId, uint128 liquidity, uint256 amount0, uint256 amount1)
-func (_InonfungibleToken *InonfungibleTokenFilterer) ParseIncreaseLiquidity(log types.Log) (*InonfungibleTokenIncreaseLiquidity, error) {
-	event := new(InonfungibleTokenIncreaseLiquidity)
-	if err := _InonfungibleToken.contract.UnpackLog(event, "IncreaseLiquidity", log); err != nil {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerFilterer) ParseIncreaseLiquidity(log types.Log) (*INonfungiblePositionManagerIncreaseLiquidity, error) {
+	event := new(INonfungiblePositionManagerIncreaseLiquidity)
+	if err := _INonfungiblePositionManager.contract.UnpackLog(event, "IncreaseLiquidity", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
 	return event, nil
 }
 
-// InonfungibleTokenTransferIterator is returned from FilterTransfer and is used to iterate over the raw logs and unpacked data for Transfer events raised by the InonfungibleToken contract.
-type InonfungibleTokenTransferIterator struct {
-	Event *InonfungibleTokenTransfer // Event containing the contract specifics and raw log
+// INonfungiblePositionManagerTransferIterator is returned from FilterTransfer and is used to iterate over the raw logs and unpacked data for Transfer events raised by the INonfungiblePositionManager contract.
+type INonfungiblePositionManagerTransferIterator struct {
+	Event *INonfungiblePositionManagerTransfer // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -1870,7 +1891,7 @@ type InonfungibleTokenTransferIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *InonfungibleTokenTransferIterator) Next() bool {
+func (it *INonfungiblePositionManagerTransferIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -1879,7 +1900,7 @@ func (it *InonfungibleTokenTransferIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(InonfungibleTokenTransfer)
+			it.Event = new(INonfungiblePositionManagerTransfer)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -1894,7 +1915,7 @@ func (it *InonfungibleTokenTransferIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(InonfungibleTokenTransfer)
+		it.Event = new(INonfungiblePositionManagerTransfer)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -1910,19 +1931,19 @@ func (it *InonfungibleTokenTransferIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *InonfungibleTokenTransferIterator) Error() error {
+func (it *INonfungiblePositionManagerTransferIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *InonfungibleTokenTransferIterator) Close() error {
+func (it *INonfungiblePositionManagerTransferIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// InonfungibleTokenTransfer represents a Transfer event raised by the InonfungibleToken contract.
-type InonfungibleTokenTransfer struct {
+// INonfungiblePositionManagerTransfer represents a Transfer event raised by the INonfungiblePositionManager contract.
+type INonfungiblePositionManagerTransfer struct {
 	From    common.Address
 	To      common.Address
 	TokenId *big.Int
@@ -1932,7 +1953,7 @@ type InonfungibleTokenTransfer struct {
 // FilterTransfer is a free log retrieval operation binding the contract event 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef.
 //
 // Solidity: event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)
-func (_InonfungibleToken *InonfungibleTokenFilterer) FilterTransfer(opts *bind.FilterOpts, from []common.Address, to []common.Address, tokenId []*big.Int) (*InonfungibleTokenTransferIterator, error) {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerFilterer) FilterTransfer(opts *bind.FilterOpts, from []common.Address, to []common.Address, tokenId []*big.Int) (*INonfungiblePositionManagerTransferIterator, error) {
 
 	var fromRule []interface{}
 	for _, fromItem := range from {
@@ -1947,17 +1968,17 @@ func (_InonfungibleToken *InonfungibleTokenFilterer) FilterTransfer(opts *bind.F
 		tokenIdRule = append(tokenIdRule, tokenIdItem)
 	}
 
-	logs, sub, err := _InonfungibleToken.contract.FilterLogs(opts, "Transfer", fromRule, toRule, tokenIdRule)
+	logs, sub, err := _INonfungiblePositionManager.contract.FilterLogs(opts, "Transfer", fromRule, toRule, tokenIdRule)
 	if err != nil {
 		return nil, err
 	}
-	return &InonfungibleTokenTransferIterator{contract: _InonfungibleToken.contract, event: "Transfer", logs: logs, sub: sub}, nil
+	return &INonfungiblePositionManagerTransferIterator{contract: _INonfungiblePositionManager.contract, event: "Transfer", logs: logs, sub: sub}, nil
 }
 
 // WatchTransfer is a free log subscription operation binding the contract event 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef.
 //
 // Solidity: event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)
-func (_InonfungibleToken *InonfungibleTokenFilterer) WatchTransfer(opts *bind.WatchOpts, sink chan<- *InonfungibleTokenTransfer, from []common.Address, to []common.Address, tokenId []*big.Int) (event.Subscription, error) {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerFilterer) WatchTransfer(opts *bind.WatchOpts, sink chan<- *INonfungiblePositionManagerTransfer, from []common.Address, to []common.Address, tokenId []*big.Int) (event.Subscription, error) {
 
 	var fromRule []interface{}
 	for _, fromItem := range from {
@@ -1972,7 +1993,7 @@ func (_InonfungibleToken *InonfungibleTokenFilterer) WatchTransfer(opts *bind.Wa
 		tokenIdRule = append(tokenIdRule, tokenIdItem)
 	}
 
-	logs, sub, err := _InonfungibleToken.contract.WatchLogs(opts, "Transfer", fromRule, toRule, tokenIdRule)
+	logs, sub, err := _INonfungiblePositionManager.contract.WatchLogs(opts, "Transfer", fromRule, toRule, tokenIdRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1982,8 +2003,8 @@ func (_InonfungibleToken *InonfungibleTokenFilterer) WatchTransfer(opts *bind.Wa
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(InonfungibleTokenTransfer)
-				if err := _InonfungibleToken.contract.UnpackLog(event, "Transfer", log); err != nil {
+				event := new(INonfungiblePositionManagerTransfer)
+				if err := _INonfungiblePositionManager.contract.UnpackLog(event, "Transfer", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -2007,9 +2028,9 @@ func (_InonfungibleToken *InonfungibleTokenFilterer) WatchTransfer(opts *bind.Wa
 // ParseTransfer is a log parse operation binding the contract event 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef.
 //
 // Solidity: event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)
-func (_InonfungibleToken *InonfungibleTokenFilterer) ParseTransfer(log types.Log) (*InonfungibleTokenTransfer, error) {
-	event := new(InonfungibleTokenTransfer)
-	if err := _InonfungibleToken.contract.UnpackLog(event, "Transfer", log); err != nil {
+func (_INonfungiblePositionManager *INonfungiblePositionManagerFilterer) ParseTransfer(log types.Log) (*INonfungiblePositionManagerTransfer, error) {
+	event := new(INonfungiblePositionManagerTransfer)
+	if err := _INonfungiblePositionManager.contract.UnpackLog(event, "Transfer", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
