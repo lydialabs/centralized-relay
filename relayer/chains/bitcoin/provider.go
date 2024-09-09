@@ -160,8 +160,8 @@ func (p *Provider) CallSlaves(slaveRequestData []byte) [][][]byte {
 		var wg sync.WaitGroup
 		wg.Add(2)
 
-		go requestPartialSign(p.cfg.SlaveServer1, slaveRequestData, responses, &wg)
-		go requestPartialSign(p.cfg.SlaveServer2, slaveRequestData, responses, &wg)
+		go requestPartialSign(p.cfg.ApiKey, p.cfg.SlaveServer1, slaveRequestData, responses, &wg)
+		go requestPartialSign(p.cfg.ApiKey, p.cfg.SlaveServer2, slaveRequestData, responses, &wg)
 
 		go func() {
 			wg.Wait()

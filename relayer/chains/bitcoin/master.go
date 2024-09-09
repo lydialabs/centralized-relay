@@ -93,11 +93,10 @@ func handleExecute(w http.ResponseWriter, r *http.Request) {
 // 	}
 // }
 
-func requestPartialSign(url string, slaveRequestData []byte, responses chan<- [][]byte, wg *sync.WaitGroup) {
+func requestPartialSign(apiKey string, url string, slaveRequestData []byte, responses chan<- [][]byte, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	client := &http.Client{}
-	apiKeyHeader := os.Getenv("API_KEY")
 	payload := bytes.NewBuffer(slaveRequestData)
 	req, err := http.NewRequest("POST", url, payload)
 
@@ -105,7 +104,7 @@ func requestPartialSign(url string, slaveRequestData []byte, responses chan<- []
 		log.Fatalf("Failed to create request: %v", err)
 	}
 
-	req.Header.Add("x-api-key", apiKeyHeader)
+	req.Header.Add("x-api-key", apiKey)
 
 	resp, err := client.Do(req)
 
