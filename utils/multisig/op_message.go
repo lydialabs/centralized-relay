@@ -9,6 +9,7 @@ import (
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/holiman/uint256"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/icon-project/goloop/common/codec"
 )
 
@@ -41,6 +42,8 @@ type RadFiProvideLiquidityDetail struct {
 	Min1		uint16
 	Amount0Desired	*uint256.Int
 	Amount1Desired	*uint256.Int
+	Token0	common.Address
+	Token1	common.Address
 }
 
 type RadFiProvideLiquidityMsg struct {
@@ -54,6 +57,7 @@ type RadFiSwapMsg struct {
 	IsExactInOut	bool
 	TokenOutIndex	uint32
 	Fee uint64 // todo: ram look into
+	Path []byte
 	// exact in
 	AmountIn *uint256.Int // todo:
 	AmountOutMinimum *uint256.Int // todo:

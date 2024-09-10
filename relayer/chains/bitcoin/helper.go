@@ -53,7 +53,7 @@ func GetRuneTxIndex(endpoint, method, bearToken, txId string, index int) (*RuneT
 	return resp, nil
 }
 
-func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []string, requester, token0, token1 common.Address) ([]byte, error) {
+func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []string, requester common.Address) ([]byte, error) {
 	var res, calldata []byte
 	bitcoinStateAbi, _ := abi.JSON(strings.NewReader(bitcoinABI.BitcoinStateMetaData.ABI))
 	nonfungibleABI, _ := abi.JSON(strings.NewReader(bitcoinABI.INonfungiblePositionManagerMetaData.ABI))
@@ -74,15 +74,15 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 	case multisig.RadFiProvideLiquidityMsg:
 		dataMint := data.(multisig.RadFiProvideLiquidityMsg)
 		mintParams := bitcoinABI.INonfungiblePositionManagerMintParams{
-			Token0:         token0,
-			Token1:         token1,
+			Token0:         dataMint.Detail.Token0,
+			Token1:         dataMint.Detail.Token1,
 			Fee:            big.NewInt(int64(dataMint.Detail.Fee) * 100),
 			TickLower:      big.NewInt(int64(dataMint.Detail.LowerTick)),
 			TickUpper:      big.NewInt(int64(dataMint.Detail.UpperTick)),
 			Amount0Desired: dataMint.Detail.Amount0Desired.ToBig(),
 			Amount1Desired: dataMint.Detail.Amount1Desired.ToBig(),
 			Recipient:      common.HexToAddress(to),
-			Deadline:       big.NewInt(1000000000),
+			Deadline:       big.NewInt(10000000000),
 		}
 
 		mintParams.Amount0Min = mulDiv(mintParams.Amount0Desired, big.NewInt(int64(dataMint.Detail.Min0)), big.NewInt(1e4))
@@ -113,21 +113,16 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 			Amount0Min: withdrawLiquidityInfo.Amount0Min.ToBig(),
 			Amount1Min: withdrawLiquidityInfo.Amount1Min.ToBig(),
 			Liquidity: withdrawLiquidityInfo.LiquidityValue.ToBig(),
-			Deadline: big.NewInt(1000000000),
+			Deadline: big.NewInt(10000000000),
 		}
 
 		decreaseLiquidityCalldata, err := nonfungibleABI.Pack("decreaseLiquidity", decreaseLiquidityData)
 		if err != nil {
 			return nil, err
 		}
-
 		uint8Ty, _ := abi.NewType("uint8", "", nil)
 		bytes32Ty, _ := abi.NewType("bytes32", "", nil)
-	
 		withdrawLiquidityArgs := abi.Arguments{
-			{
-				Type: addressTy,
-			},
 			{
 				Type: bytes,
 			},
@@ -137,17 +132,24 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 			{
 				Type: bytes32Ty,
 			},
+			{
+				Type: bytes32Ty,
+			},
 		}
 
 		calldata, _ = withdrawLiquidityArgs.Pack(decreaseLiquidityCalldata, withdrawLiquidityInfo.V, withdrawLiquidityInfo.R, withdrawLiquidityInfo.S)
-
+		calldata, err = bitcoinStateAbi.Pack("removeLiquidity", calldata)
+		if err != nil {
+			return nil, err
+		}
+		
 	case multisig.RadFiIncreaseLiquidityMsg:
 		increaseLiquidityInfo := data.(multisig.RadFiIncreaseLiquidityMsg)
 		increaseLiquidityData := bitcoinABI.INonfungiblePositionManagerIncreaseLiquidityParams{
 			TokenId: increaseLiquidityInfo.NftId.ToBig(),
 			Amount0Desired: increaseLiquidityInfo.Amount0Desired.ToBig(), //todo fill in	
 			Amount1Desired: increaseLiquidityInfo.Amount1Desired.ToBig(), //todo fill in
-			Deadline: big.NewInt(1000000000),
+			Deadline: big.NewInt(10000000000),
 			Amount0Min: increaseLiquidityInfo.Amount0Min.ToBig(),
 			Amount1Min: increaseLiquidityInfo.Amount1Min.ToBig(),
 		}
@@ -160,19 +162,15 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 
 	case multisig.RadFiSwapMsg:
 		swapInfo := data.(multisig.RadFiSwapMsg)
-		path, err := buildPath([]common.Address{token0, token1}, []int64{int64(swapInfo.TokenOutIndex)})
-		if err != nil {
-			return nil, err
-		}
-
+		var err error
 		if swapInfo.IsExactInOut {
 			//exact in
 			swapExactInData := bitcoinABI.ISwapRouterExactInputParams{
-				Path: path,
+				Path: swapInfo.Path,
 				AmountIn: swapInfo.AmountIn.ToBig(), // todo:
 				AmountOutMinimum: swapInfo.AmountOutMinimum.ToBig(), // todo:
 				Recipient: common.HexToAddress(to),
-				Deadline: big.NewInt(1000000000),
+				Deadline: big.NewInt(10000000000),
 			}
 
 			calldata, err = routerABI.Pack("exactInput", swapExactInData)
@@ -183,9 +181,9 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 		} else {
 			//exact out	
 			swapExactOutData := bitcoinABI.ISwapRouterExactOutputParams{
-				Path: path,
+				Path: swapInfo.Path,
 				Recipient: common.HexToAddress(to), // todo: review
-				Deadline: big.NewInt(1000000000),
+				Deadline: big.NewInt(10000000000),
 				AmountInMaximum: swapInfo.AmountInMaximum.ToBig(), // todo:
 				AmountOut: swapInfo.AmountIn.ToBig(),
 			}
@@ -199,9 +197,9 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 	case multisig.RadFiCollectFeesMsg:
 		collectInfo := data.(multisig.RadFiCollectFeesMsg)
 		collectParams := bitcoinABI.INonfungiblePositionManagerCollectParams{
-			TokenId: collectInfo.NftId.ToBig(), // todo:
-			Amount0Max: new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 128), big.NewInt(1)), // todo:
-			Amount1Max: new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 128), big.NewInt(1)), // todo:
+			TokenId: collectInfo.NftId.ToBig(),
+			Amount0Max: new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 128), big.NewInt(1)),
+			Amount1Max: new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 128), big.NewInt(1)),
 			Recipient: common.HexToAddress(to), // todo:
 		}
 		
@@ -215,9 +213,6 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 	
 		collectLiquidityArgs := abi.Arguments{
 			{
-				Type: addressTy,
-			},
-			{
 				Type: bytes,
 			},
 			{
@@ -226,9 +221,17 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 			{
 				Type: bytes32Ty,
 			},
+			{
+				Type: bytes32Ty,
+			},
 		}
 
 		calldata, err = collectLiquidityArgs.Pack(collectCalldata, collectInfo.V, collectInfo.R, collectInfo.S)
+		if err != nil {
+			return nil, err
+		}
+
+		calldata, err = bitcoinStateAbi.Pack("removeLiquidity", calldata)
 		if err != nil {
 			return nil, err
 		}
@@ -242,7 +245,6 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 	if err != nil {
 		return nil, err
 	}
-
 	// encode to xcall format
 	res, err = XcallFormat(calldataWithRequester, from, to, sn, protocols)
 	if err != nil {
@@ -287,7 +289,7 @@ func mulDiv(a, nNumerator, nDenominator *big.Int) *big.Int {
 	return big.NewInt(0).Div(big.NewInt(0).Mul(a, nNumerator), nDenominator)
 }
 
-func buildPath(paths []common.Address, fees []int64) ([]byte, error) {
+func BuildPath(paths []common.Address, fees []int64) ([]byte, error) {
 	var temp []byte
 	for i := 0; i < len(fees); i++ {
 		temp = append(temp, paths[i].Bytes()...)
