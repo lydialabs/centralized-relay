@@ -3,6 +3,7 @@ package bitcoin
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/btcsuite/btcd/btcjson"
@@ -28,6 +29,7 @@ type IClient interface {
 	GetFee(ctx context.Context) (uint64, error)
 	DecodeAddress(btcAddr string) ([]byte, error)
 	TxSearch(ctx context.Context, param TxSearchParam) ([]*TxSearchRes, error)
+	SendRawTransaction(ctx context.Context, rawMsg []json.RawMessage) (string, error)
 }
 
 // grouped rpc api clients
@@ -177,4 +179,16 @@ func (c *Client) DecodeAddress(btcAddr string) ([]byte, error) {
 	}
 
 	return destinationAddrByte, nil
+}
+
+func (c *Client) SendRawTransaction(ctx context.Context, rawMsg []json.RawMessage) (string, error) {
+
+	// Send the raw transaction using RawRequest
+	txHash, err := c.client.RawRequest("sendrawtransaction", rawMsg)
+	if err != nil {
+		c.log.Error("failed to send transaction", zap.Error(err))
+		return "", err
+	}
+
+	return string(txHash), nil
 }

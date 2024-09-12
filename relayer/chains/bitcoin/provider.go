@@ -18,7 +18,6 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
-	sdkTypes "github.com/cosmos/cosmos-sdk/types"
 
 	"path/filepath"
 
@@ -363,7 +362,8 @@ func (p *Provider) CreateBitcoinMultisigTx(
 	}
 	// add withdraw output
 	if err == nil {
-		amount := new(big.Int).SetBytes(decodedData.Amount).Uint64()
+		//TODO: remove after testing
+		amount := new(big.Int).SetBytes(decodedData.Amount).Uint64() * 1000
 		if decodedData.Action == MethodWithdrawTo {
 			if decodedData.TokenAddress == BTCToken {
 				// transfer btc
@@ -501,7 +501,8 @@ func (p *Provider) Route(ctx context.Context, message *relayTypes.Message, callb
 			value, _ := json.Marshal(message)
 			err := p.db.Put(key, value, nil)
 			if err != nil {
-				return fmt.Errorf("failed to store message in LevelDB: %v", err)
+				p.logger.Error("failed to store message in LevelDB: %v", zap.Error(err))
+				return err
 			}
 
 			p.logger.Info("Message stored in LevelDB", zap.String("key", string(key)))
@@ -521,11 +522,29 @@ func (p *Provider) Route(ctx context.Context, message *relayTypes.Message, callb
 			totalSigs = append(totalSigs, slaveSigs...)
 			// combine sigs
 			signedMsgTx, err := multisig.CombineMultisigSigs(msgTx, inputs, relayersMultisigWallet, 0, relayersMultisigWallet, 0, totalSigs)
+
 			if err != nil {
-				fmt.Println("err combine tx: ", err)
+				p.logger.Error("err combine tx: ", zap.Error(err))
 			}
 			// TODO: Broadcast transaction to bitcoin network
-			fmt.Println("signedMsgTx:", signedMsgTx)
+			p.logger.Info("signedMsgTx", zap.Any("transaction", signedMsgTx))
+			var buf bytes.Buffer
+			err = signedMsgTx.Serialize(&buf)
+
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			signedMsgTxHex := hex.EncodeToString(buf.Bytes())
+			p.logger.Info("signedMsgTxHex", zap.String("transaction_hex", signedMsgTxHex))
+			txHash, err := p.client.SendRawTransaction(ctx, []json.RawMessage{json.RawMessage(`"` + signedMsgTxHex + `"`)})
+
+			if err != nil {
+				p.logger.Error("failed to send raw transaction", zap.Error(err))
+				return err
+			}
+
+			p.logger.Info("txHash", zap.String("transaction_hash", txHash))
 			// TODO: After successful broadcast, request slaves to remove the message from LevelDB if it exists
 		}
 	}
@@ -538,45 +557,12 @@ func (p *Provider) Route(ctx context.Context, message *relayTypes.Message, callb
 
 // call the smart contract to send the message
 func (p *Provider) call(ctx context.Context, message *relayTypes.Message) (string, error) {
-	// rawMsg, err := p.getRawContractMessage(message)
-	// if err != nil {
-	// 	return nil, err
-	// }
 
-	// var contract string
-
-	// switch message.EventType {
-	// case events.EmitMessage, events.RevertMessage, events.SetAdmin, events.ClaimFee, events.SetFee:
-	// 	//contract = p.cfg.Contracts[relayTypes.ConnectionContract]
-	// case events.CallMessage, events.RollbackMessage:
-	// 	//contract = p.cfg.Contracts[relayTypes.XcallContract]
-	// default:
-	// 	return nil, fmt.Errorf("unknown event type: %s ", message.EventType)
-	// }
-
-	// msg := &wasmTypes.MsgExecuteContract{
-	// 	Sender:   p.Wallet().String(),
-	// 	Contract: contract,
-	// 	Msg:      rawMsg,
-	// }
-
-	// msgs := []sdkTypes.Msg{msg}
-
-	// res, err := p.sendMessage(ctx, msgs...)
-	// if err != nil {
-	// 	if strings.Contains(err.Error(), errors.ErrWrongSequence.Error()) {
-	// 		if mmErr := p.handleSequence(ctx); mmErr != nil {
-	// 			return res, fmt.Errorf("failed to handle sequence mismatch error: %v || %v", mmErr, err)
-	// 		}
-	// 		return p.sendMessage(ctx, msgs...)
-	// 	}
-	// }
 	return "", nil
 }
 
-func (p *Provider) sendMessage(ctx context.Context, msgs ...sdkTypes.Msg) (string, error) {
+func (p *Provider) sendTx(ctx context.Context, signedMsg *wire.MsgTx) (string, error) {
 
-	// return p.prepareAndPushTxToMemPool(ctx, p.wallet.GetAccountNumber(), p.wallet.GetSequence(), msgs...)
 	return "", nil
 }
 
@@ -598,11 +584,6 @@ func (p *Provider) logTxSuccess(height uint64, txHash string) {
 		zap.String("chain_id", p.cfg.NID),
 		zap.String("tx_hash", txHash),
 	)
-}
-
-func (p *Provider) prepareAndPushTxToMemPool(ctx context.Context, acc, seq uint64, msgs ...sdkTypes.Msg) (*sdkTypes.TxResponse, error) {
-
-	return nil, nil
 }
 
 func (p *Provider) waitForTxResult(ctx context.Context, mk *relayTypes.MessageKey, txHash string, callback relayTypes.TxResponseFunc) {
