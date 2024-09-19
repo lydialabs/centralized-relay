@@ -43,6 +43,7 @@ var (
 	MasterMode       = "master"
 	SlaveMode        = "slave"
 	BtcDB            = "btc.db"
+	MinSatsRequired  = 1000
 )
 
 var chainIdToName = map[uint8]string{
@@ -365,7 +366,7 @@ func (p *Provider) CreateBitcoinMultisigTx(
 ) ([]*multisig.UTXO, *wire.MsgTx, string, *txscript.TxSigHashes, error) {
 	// ----- BUILD OUTPUTS -----
 	outputs := []*multisig.OutputTx{}
-	var bitcoinAmountRequired uint64 = 1000
+	var bitcoinAmountRequired uint64 = uint64(MinSatsRequired)
 	var runeAmountRequired uint64
 	var runeRequired multisig.Rune
 	decodedData, opreturnData, err := decodeWithdrawToMessage(messageData)
@@ -408,7 +409,7 @@ func (p *Provider) CreateBitcoinMultisigTx(
 				})
 				outputs = append(outputs, &multisig.OutputTx{
 					ReceiverAddress: decodedData.To,
-					Amount:          1000,
+					Amount:          uint64(MinSatsRequired),
 				})
 				runeAmountRequired = amount
 			}
@@ -422,7 +423,7 @@ func (p *Provider) CreateBitcoinMultisigTx(
 	}
 	msAddressStr := rlMsAddress.String()
 
-	inputs, estFee, err := p.calculateFee(feeRate, bitcoinAmountRequired, runeAmountRequired, decodedData.TokenAddress, msAddressStr, runeRequired, outputs, chainParam, msWallet)
+	inputs, estFee, err := p.computeTx(feeRate, bitcoinAmountRequired, runeAmountRequired, decodedData.TokenAddress, msAddressStr, runeRequired, outputs, chainParam, msWallet)
 	if err != nil {
 		return nil, nil, "", nil, err
 	}
@@ -448,31 +449,43 @@ func (p *Provider) calculateTxSize(inputs []*multisig.UTXO, outputs []*multisig.
 	return txSize, nil
 }
 
-func (p *Provider) calculateFee(feeRate, satsToSend, runeToSend uint64, runeId, changeAddress string, runeRequired multisig.Rune, outputs []*multisig.OutputTx, chainParam *chaincfg.Params, msWallet *multisig.MultisigWallet) ([]*multisig.UTXO, uint64, error) {
-	inputs, err := p.selectUnspentOutputs(feeRate, satsToSend, runeToSend, runeId, runeRequired, outputs, changeAddress)
+func (p *Provider) computeTx(feeRate, satsToSend, runeToSend uint64, runeId, changeAddress string, runeRequired multisig.Rune, outputs []*multisig.OutputTx, chainParam *chaincfg.Params, msWallet *multisig.MultisigWallet) ([]*multisig.UTXO, uint64, error) {
+
+	outputsCopy := make([]*multisig.OutputTx, len(outputs))
+	copy(outputsCopy, outputs)
+
+	inputs, err := p.selectUnspentOutputs(satsToSend, runeToSend, runeId, runeRequired, outputsCopy, changeAddress)
 	sumSelectedOutputs := multisig.SumInputsSat(inputs)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	txSize, err := p.calculateTxSize(inputs, outputs, 0, changeAddress, chainParam, msWallet)
+	txSize, err := p.calculateTxSize(inputs, outputsCopy, 0, changeAddress, chainParam, msWallet)
 	if err != nil {
 		return nil, 0, err
 	}
 
 	estFee := uint64(txSize) * feeRate
 	count := 0
+	loopEntered := false
+	var iterationOutputs []*multisig.OutputTx
+
 	for sumSelectedOutputs < satsToSend+estFee {
+		loopEntered = true
+		// Create a fresh copy of outputs for each iteration
+		iterationOutputs := make([]*multisig.OutputTx, len(outputs))
+		copy(iterationOutputs, outputs)
+
 		newSatsToSend := satsToSend + estFee
 		var err error
-		selectedUnspentOutputs, err := p.selectUnspentOutputs(feeRate, newSatsToSend, runeToSend, runeId, runeRequired, outputs, changeAddress)
+		selectedUnspentOutputs, err := p.selectUnspentOutputs(newSatsToSend, runeToSend, runeId, runeRequired, iterationOutputs, changeAddress)
 		if err != nil {
 			return nil, 0, err
 		}
 
 		sumSelectedOutputs = multisig.SumInputsSat(selectedUnspentOutputs)
 
-		txSize, err := p.calculateTxSize(selectedUnspentOutputs, outputs, estFee, changeAddress, chainParam, msWallet)
+		txSize, err := p.calculateTxSize(selectedUnspentOutputs, iterationOutputs, estFee, changeAddress, chainParam, msWallet)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -481,17 +494,21 @@ func (p *Provider) calculateFee(feeRate, satsToSend, runeToSend uint64, runeId, 
 
 		count += 1
 		if count > 500 {
-			return nil, 0, fmt.Errorf("not enough sats for fee")
+			return nil, 0, fmt.Errorf("Not enough sats for fee")
 		}
+	}
+	// Need to do that cause avoid the same outputs being used for multiple transactions
+	outputs = outputsCopy
+	if loopEntered {
+		outputs = iterationOutputs
 	}
 
 	return inputs, estFee, nil
 }
 
-func (p *Provider) selectUnspentOutputs(feeRate uint64, satToSend uint64, runeToSend uint64, runeId string, runeRequired multisig.Rune, outputs []*multisig.OutputTx, changeAddress string) ([]*multisig.UTXO, error) {
+func (p *Provider) selectUnspentOutputs(satToSend uint64, runeToSend uint64, runeId string, runeRequired multisig.Rune, outputs []*multisig.OutputTx, changeAddress string) ([]*multisig.UTXO, error) {
 	// add tx fee the the required bitcoin amount
 	inputs := []*multisig.UTXO{}
-	var inputsSatNeeded uint64
 	if runeToSend != 0 {
 		// query rune UTXOs from unisat
 		runeInputs, runeChangeAmount, err := GetRuneUTXOs(p.cfg.UniSatURL, changeAddress, runeId, runeToSend, 3)
@@ -510,13 +527,13 @@ func (p *Provider) selectUnspentOutputs(feeRate uint64, satToSend uint64, runeTo
 		})
 		outputs = append(outputs, &multisig.OutputTx{
 			ReceiverAddress: changeAddress,
-			Amount:          1000,
+			Amount:          uint64(MinSatsRequired),
 		})
 	}
 
 	// TODO: cover case rune UTXOs have big enough dust amount to cover inputsSatNeeded, can store rune and bitcoin in the same utxo
 	// query bitcoin UTXOs from unisat
-	bitcoinInputs, err := p.GetBitcoinUTXOs(p.cfg.UniSatURL, changeAddress, inputsSatNeeded, 3)
+	bitcoinInputs, err := p.GetBitcoinUTXOs(p.cfg.UniSatURL, changeAddress, satToSend, 3)
 	if err != nil {
 		return nil, err
 	}
@@ -623,6 +640,8 @@ func (p *Provider) Route(ctx context.Context, message *relayTypes.Message, callb
 				log.Fatal(err)
 			}
 
+			txSize := len(buf.Bytes())
+			p.logger.Info("--------------------txSize--------------------", zap.Int("size", txSize))
 			signedMsgTxHex := hex.EncodeToString(buf.Bytes())
 			p.logger.Info("signedMsgTxHex", zap.String("transaction_hex", signedMsgTxHex))
 			txHash, err := p.client.SendRawTransaction(ctx, []json.RawMessage{json.RawMessage(`"` + signedMsgTxHex + `"`)})
@@ -909,7 +928,6 @@ func (p *Provider) ExecuteRollback(ctx context.Context, sn *big.Int) error {
 	return nil
 }
 
-// todo:
 func (p *Provider) getStartHeight(latestHeight, lastSavedHeight uint64) (uint64, error) {
 	startHeight := lastSavedHeight
 	if p.cfg.StartHeight > 0 && p.cfg.StartHeight < latestHeight {
@@ -1022,9 +1040,9 @@ func (p *Provider) parseMessageFromTx(tx *TxSearchRes) (*relayTypes.Message, err
 		amount.SetBytes(messageInfo.Amount)
 		destContract := messageInfo.To
 
-		fmt.Println(tokenId)
-		fmt.Println(amount.String())
-		fmt.Println(destContract)
+		p.logger.Info("tokenId", zap.String("tokenId", tokenId))
+		p.logger.Info("amount", zap.String("amount", amount.String()))
+		p.logger.Info("destContract", zap.String("destContract", destContract))
 
 		// call api to verify the data
 		// https://docs.unisat.io/dev/unisat-developer-center/runes/get-utxo-runes-balance
@@ -1180,6 +1198,7 @@ func (p *Provider) getRawContractMessage(message *relayTypes.Message) (wasmTypes
 		// Create a revert transaction based on the original message
 		revertTx, err := p.createRevertTransaction(&originalMessage)
 		if err != nil {
+			p.logger.Error("failed to create revert transaction", zap.Error(err))
 			return nil, fmt.Errorf("failed to create revert transaction: %v", err)
 		}
 

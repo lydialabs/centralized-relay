@@ -53,7 +53,7 @@ func TestCreateBitcoinMultisigTx(t *testing.T) {
 	_, relayersMultisigInfo := multisig.RandomMultisigInfo(3, 3, chainParam, []int{0, 1, 2}, 0, 1)
 	relayersMultisigWallet, _ := multisig.BuildMultisigWallet(relayersMultisigInfo)
 
-	_, _, hexRawTx, _, err := provider.CreateBitcoinMultisigTx(dataBytes, 5000, relayersMultisigWallet, chainParam, UNISAT_DEFAULT_TESTNET)
+	_, _, hexRawTx, _, err := provider.CreateBitcoinMultisigTx(dataBytes, 5000, relayersMultisigWallet, chainParam)
 	fmt.Println("err: ", err)
 	fmt.Println("hexRawTx: ", hexRawTx)
 }
