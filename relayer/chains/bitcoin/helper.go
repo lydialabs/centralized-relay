@@ -120,25 +120,8 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 		if err != nil {
 			return nil, err
 		}
-		uint8Ty, _ := abi.NewType("uint8", "", nil)
-		bytes32Ty, _ := abi.NewType("bytes32", "", nil)
-		withdrawLiquidityArgs := abi.Arguments{
-			{
-				Type: bytes,
-			},
-			{
-				Type: uint8Ty,
-			},
-			{
-				Type: bytes32Ty,
-			},
-			{
-				Type: bytes32Ty,
-			},
-		}
 
-		calldata, _ = withdrawLiquidityArgs.Pack(decreaseLiquidityCalldata, withdrawLiquidityInfo.V, withdrawLiquidityInfo.R, withdrawLiquidityInfo.S)
-		calldata, err = bitcoinStateAbi.Pack("removeLiquidity", calldata)
+		calldata, err = bitcoinStateAbi.Pack("removeLiquidity", decreaseLiquidityCalldata)
 		if err != nil {
 			return nil, err
 		}
@@ -207,31 +190,8 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 		if err != nil {
 			return nil, err
 		}
-		
-		uint8Ty, _ := abi.NewType("uint8", "", nil)
-		bytes32Ty, _ := abi.NewType("bytes32", "", nil)
-	
-		collectLiquidityArgs := abi.Arguments{
-			{
-				Type: bytes,
-			},
-			{
-				Type: uint8Ty,
-			},
-			{
-				Type: bytes32Ty,
-			},
-			{
-				Type: bytes32Ty,
-			},
-		}
 
-		calldata, err = collectLiquidityArgs.Pack(collectCalldata, collectInfo.V, collectInfo.R, collectInfo.S)
-		if err != nil {
-			return nil, err
-		}
-
-		calldata, err = bitcoinStateAbi.Pack("removeLiquidity", calldata)
+		calldata, err = bitcoinStateAbi.Pack("removeLiquidity", collectCalldata)
 		if err != nil {
 			return nil, err
 		}

@@ -74,17 +74,11 @@ type RadFiWithdrawLiquidityMsg struct {
 	NftId			*uint256.Int
 	Amount0Min		*uint256.Int
 	Amount1Min		*uint256.Int
-	V				uint8
-	R				[32]byte
-	S				[32]byte
 }
 
 type RadFiCollectFeesMsg struct {
 	RecipientIndex	uint32
 	NftId			*uint256.Int
-	V				uint8
-	R				[32]byte
-	S				[32]byte
 }
 
 type RadFiIncreaseLiquidityMsg struct {
