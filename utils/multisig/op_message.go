@@ -25,11 +25,6 @@ const (
 	OP_RADFI_INCREASE_LIQUIDITY	= txscript.OP_5
 )
 
-type TokenId struct {
-	BlockNumber uint64
-	TxIndex     uint32
-}
-
 type XCallMessage struct {
 	Action       string
 	TokenAddress string
@@ -54,8 +49,8 @@ type RadFiProvideLiquidityMsg struct {
 	Amount1Desired	uint128.Uint128
 	InitPrice		uint128.Uint128
 	// other outputs data
-	Token0Id		string
-	Token1Id		string
+	Token0Id		runestone.RuneId
+	Token1Id		runestone.RuneId
 	// smart contract data
 	Token0Addr		common.Address
 	Token1Addr		common.Address
@@ -69,7 +64,7 @@ type RadFiSwapMsg struct {
 	AmountIn 		uint128.Uint128
 	AmountOut 		uint128.Uint128
 	Fees 			[]uint32
-	Tokens			[]TokenId
+	Tokens			[]runestone.RuneId
 }
 
 type RadFiWithdrawLiquidityMsg struct {
@@ -103,6 +98,13 @@ type RadFiDecodedMsg struct {
 	WithdrawLiquidityMsg	*RadFiWithdrawLiquidityMsg
 	CollectFeesMsg			*RadFiCollectFeesMsg
 	IncreaseLiquidityMsg	*RadFiIncreaseLiquidityMsg
+}
+
+func BitcoinRuneId() (runestone.RuneId) {
+	return runestone.RuneId{
+		Block:	0,
+		Tx:		0,
+	}
 }
 
 func integers(payload []byte) ([]uint128.Uint128, error) {
@@ -201,8 +203,8 @@ func CreateSwapScript(msg *RadFiSwapMsg) ([]byte, error) {
 		data = append(data, runestone.EncodeUint32(fee)...)
 	}
 	for _, token := range msg.Tokens {
-		data = append(data, runestone.EncodeUint64(token.BlockNumber)...)
-		data = append(data, runestone.EncodeUint32(token.TxIndex)...)
+		data = append(data, runestone.EncodeUint64(token.Block)...)
+		data = append(data, runestone.EncodeUint32(token.Tx)...)
 	}
 
 	return builder.AddData(data).Script()
@@ -280,9 +282,16 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 		break
 	}
 
+	// Decipher runestone
+	r := &runestone.Runestone{}
+	runeArtifact, err := r.Decipher(transaction)
+	if err != nil {
+		return nil, fmt.Errorf("could not decipher runestone - Error %v", err)
+	}
+
 	var integersStart uint
 	if flag == OP_RADFI_PROVIDE_LIQUIDITY {
-		integersStart = 16
+		integersStart = 8
 	} else if flag == OP_RADFI_SWAP {
 		integersStart = 1
 	} else {
@@ -302,6 +311,17 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 			if err := binary.Read(r, binary.BigEndian, &ticks); err != nil {
 				return nil, fmt.Errorf("OP_RADFI_PROVIDE_LIQUIDITY could not read ticks data - Error %v", err)
 			}
+			var token0Id, token1Id runestone.RuneId
+			switch len(runeArtifact.Runestone.Edicts) {
+				case 1:
+					token0Id = BitcoinRuneId()
+					token1Id = runeArtifact.Runestone.Edicts[0].ID
+				case 2:
+					token0Id = runeArtifact.Runestone.Edicts[0].ID
+					token1Id = runeArtifact.Runestone.Edicts[1].ID
+				default:
+					return nil, fmt.Errorf("invalid numbers of Rune edicts")
+			}
 			// TODO: check if integers overflow
 			return &RadFiDecodedMsg {
 				Flag:					flag,
@@ -313,6 +333,8 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 					Amount0Desired:	integers[3],
 					Amount1Desired:	integers[4],
 					InitPrice:		integers[5],
+					Token0Id:		token0Id,
+					Token1Id:		token1Id,
 				},
 			}, nil
 
@@ -324,11 +346,11 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 			for _, fee := range(integers[3:3+poolsCount]) {
 				fees = append(fees, uint32(fee.Lo))
 			}
-			tokens := []TokenId{}
+			tokens := []runestone.RuneId{}
 			for i := 3+int(poolsCount); i < len(integers) ; i += 2 {
-				tokens = append(tokens, TokenId{
-					BlockNumber: integers[i].Lo,
-					TxIndex: uint32(integers[i+1].Lo),
+				tokens = append(tokens, runestone.RuneId{
+					Block: integers[i].Lo,
+					Tx: uint32(integers[i+1].Lo),
 				})
 			}
 			// TODO: check if integers overflow

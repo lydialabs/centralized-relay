@@ -47,3 +47,16 @@ type TapSigParams struct {
 	UserPKScript		[]byte `bson:"user_PK_script" json:"userPKScript"`
 	UserTapLeaf			txscript.TapLeaf `bson:"user_tap_leaf" json:"userTapLeaf"`
 }
+
+type Input struct {
+	TxHash			string
+	OutputIdx		uint32
+	OutputAmount	int64
+	PkScript		[]byte
+	Sigs			[][]byte
+}
+
+type TapSigInfo struct {
+	PkScript		[]byte
+	TapLeaf			txscript.TapLeaf
+}
