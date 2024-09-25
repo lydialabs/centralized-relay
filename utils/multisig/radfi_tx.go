@@ -61,7 +61,6 @@ func CreateRadFiTxInitPool(
 	inputs []*Input,
 	relayerPkScript []byte,
 	userPkScript []byte,
-	changePkScript []byte,
 	txFee int64,
 ) (*wire.MsgTx, error) {
 	radfiScript, _ := CreateProvideLiquidityScript(msg)
@@ -109,9 +108,14 @@ func CreateRadFiTxInitPool(
 			Value: 0,
 			PkScript: runeScript,
 		},
+		// rune change output
+		{
+			Value: DUST_UTXO_AMOUNT,
+			PkScript: userPkScript,
+		},
 	}
 
-	return CreateRadFiTx(inputs, outputs, changePkScript, txFee, 0)
+	return CreateRadFiTx(inputs, outputs, userPkScript, txFee, 0)
 }
 
 func SignTapMultisig(
