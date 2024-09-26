@@ -54,6 +54,7 @@ type Input struct {
 	OutputAmount	int64
 	PkScript		[]byte
 	Sigs			[][]byte
+	Runes			[]*runestone.Edict
 }
 
 type TapSigInfo struct {

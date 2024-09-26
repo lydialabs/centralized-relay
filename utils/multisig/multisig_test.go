@@ -322,37 +322,38 @@ func TestRadFiInitPoolBitcoinRune(t *testing.T) {
 		Fee:	30,
 		Min0:	0,
 		Min1:	10000,
-		Amount0Desired: uint128.From64(12345),
-		Amount1Desired: uint128.From64(987654321),
+		Amount0Desired: uint128.From64(10000),
+		Amount1Desired: uint128.From64(1000000),
 		InitPrice: uint128.From64(123456),
 		Token0Id: runestone.RuneId{ Block: 0, Tx: 0},
 		Token1Id: runestone.RuneId{ Block: 678, Tx: 90},
 	}
 
 	inputs := []*Input{
-		// bitcoin UTXO
+		// user bitcoin UTXO to add liquidity and pay tx fee
 		{
 			TxHash:			"d316231a8aa1f74472ed9cc0f1ed0e36b9b290254cf6b2c377f0d92b299868bf",
 			OutputIdx:		4,
 			OutputAmount:	1929000,
 			PkScript:		userMultisigWallet.PKScript,
 		},
-		// rune UTXO
+		// user rune UTXO to add liquidity
 		{
 			TxHash:			"647a499a394bdb2a477f29b9f0515ed186e57a469a732be362a172cde4ea67a5",
 			OutputIdx:		0,
-			OutputAmount:	1000,
+			OutputAmount:	DUST_UTXO_AMOUNT,
 			PkScript:		userMultisigWallet.PKScript,
 		},
 	}
 	// create tx
-	msgTx, _ := CreateRadFiTxInitPool(
+	msgTx, err := CreateRadFiTxInitPool(
 		&radfiMsg,
 		inputs,
 		relayersMultisigWallet.PKScript,
 		userMultisigWallet.PKScript,
 		TX_FEE,
 	)
+	fmt.Println("err: ", err)
 	// sign tx
 	totalSigs := [][][]byte{}
 	// trading wallet admin sign tx
@@ -411,29 +412,29 @@ func TestRadFiInitPoolRuneRune(t *testing.T) {
 		Fee:	30,
 		Min0:	0,
 		Min1:	10000,
-		Amount0Desired: uint128.From64(12345),
-		Amount1Desired: uint128.From64(987654321),
+		Amount0Desired: uint128.From64(1000000),
+		Amount1Desired: uint128.From64(2000000),
 		InitPrice: uint128.From64(123456),
 		Token0Id: runestone.RuneId{ Block: 123, Tx: 321},
 		Token1Id: runestone.RuneId{ Block: 678, Tx: 90},
 	}
 
 	inputs := []*Input{
-		// rune0 UTXO
+		// user rune0 UTXO to add liquidity
 		{
 			TxHash:			"3aa9c4b9a71fe19560c467cdddce932eae8a10e28123a09acb27701123f2a8f7",
 			OutputIdx:		6,
-			OutputAmount:	1000,
+			OutputAmount:	DUST_UTXO_AMOUNT,
 			PkScript:		userMultisigWallet.PKScript,
 		},
-		// rune1 UTXO
+		// user rune1 UTXO to add liquidity
 		{
 			TxHash:			"647a499a394bdb2a477f29b9f0515ed186e57a469a732be362a172cde4ea67a5",
 			OutputIdx:		0,
-			OutputAmount:	1000,
+			OutputAmount:	DUST_UTXO_AMOUNT,
 			PkScript:		userMultisigWallet.PKScript,
 		},
-		// bitcoin UTXO to pay tx fee
+		// user bitcoin UTXO to pay tx fee
 		{
 			TxHash:			"d316231a8aa1f74472ed9cc0f1ed0e36b9b290254cf6b2c377f0d92b299868bf",
 			OutputIdx:		4,
@@ -442,13 +443,14 @@ func TestRadFiInitPoolRuneRune(t *testing.T) {
 		},
 	}
 	// create tx
-	msgTx, _ := CreateRadFiTxInitPool(
+	msgTx, err := CreateRadFiTxInitPool(
 		&radfiMsg,
 		inputs,
 		relayersMultisigWallet.PKScript,
 		userMultisigWallet.PKScript,
 		TX_FEE,
 	)
+	fmt.Println("err: ", err)
 	// sign tx
 	totalSigs := [][][]byte{}
 	// trading wallet admin sign tx
@@ -460,6 +462,239 @@ func TestRadFiInitPoolRuneRune(t *testing.T) {
 
 	// COMBINE SIGN
 	signedMsgTx, _ := CombineTapMultisig(totalSigs, msgTx, inputs, userMultisigWallet, 0)
+
+	var signedTx bytes.Buffer
+	signedMsgTx.Serialize(&signedTx)
+	hexSignedTx := hex.EncodeToString(signedTx.Bytes())
+	signedMsgTxID := signedMsgTx.TxHash().String()
+
+	fmt.Println("hexSignedTx: ", hexSignedTx)
+	fmt.Println("signedMsgTxID: ", signedMsgTxID)
+
+	// Decipher runestone
+	r := &runestone.Runestone{}
+	artifact, err := r.Decipher(signedMsgTx)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	a, _ := json.Marshal(artifact)
+	fmt.Printf("Artifact: %s\n", string(a))
+
+	// Decode Radfi message
+	decodedRadFiMessage, err := ReadRadFiMessage(signedMsgTx)
+	fmt.Println("err decode: ", err)
+	fmt.Println("decoded message - Flag     : ", decodedRadFiMessage.Flag)
+	fmt.Println("decoded message - UpperTick: ", decodedRadFiMessage.ProvideLiquidityMsg.Ticks.UpperTick)
+	fmt.Println("decoded message - LowerTick: ", decodedRadFiMessage.ProvideLiquidityMsg.Ticks.LowerTick)
+	fmt.Println("decoded message - Fee      : ", decodedRadFiMessage.ProvideLiquidityMsg.Fee)
+	fmt.Println("decoded message - Min0     : ", decodedRadFiMessage.ProvideLiquidityMsg.Min0)
+	fmt.Println("decoded message - Min1     : ", decodedRadFiMessage.ProvideLiquidityMsg.Min1)
+	fmt.Println("decoded message - Amount0  : ", decodedRadFiMessage.ProvideLiquidityMsg.Amount0Desired)
+	fmt.Println("decoded message - Amount1  : ", decodedRadFiMessage.ProvideLiquidityMsg.Amount1Desired)
+	fmt.Println("decoded message - InitPrice: ", decodedRadFiMessage.ProvideLiquidityMsg.InitPrice)
+	fmt.Println("decoded message - Token0Id: ", decodedRadFiMessage.ProvideLiquidityMsg.Token0Id)
+	fmt.Println("decoded message - Token1Id: ", decodedRadFiMessage.ProvideLiquidityMsg.Token1Id)
+}
+
+func TestRadFiProvideLiquidityPoolBitcoinRune(t *testing.T) {
+	chainParam := &chaincfg.TestNet3Params
+	relayerPrivKeys, relayersMultisigInfo := RandomMultisigInfo(3, 3, chainParam, []int{0, 1, 2}, 0, 1)
+	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo)
+	userPrivKeys, userMultisigInfo := RandomMultisigInfo(2, 2, chainParam, []int{0, 3}, 1, 1)
+	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo)
+
+	radfiMsg := RadFiProvideLiquidityMsg{
+		Ticks: 	RadFiProvideLiquidityTicks{ UpperTick: 12345, LowerTick: -12345 },
+		Fee:	30,
+		Min0:	0,
+		Min1:	10000,
+		Amount0Desired: uint128.From64(1000),
+		Amount1Desired: uint128.From64(100000),
+		InitPrice: uint128.From64(0),
+		Token0Id: runestone.RuneId{ Block: 0, Tx: 0},
+		Token1Id: runestone.RuneId{ Block: 678, Tx: 90},
+	}
+
+	inputs := []*Input{
+		// pool current sequence number
+		{
+			TxHash:			"dfa3fc22b6436fdfaaf96bca443270cf1b6b50c24f2f2aff9ceaf668e2b1ed26",
+			OutputIdx:		0,
+			OutputAmount:	10000,
+			PkScript:		relayersMultisigWallet.PKScript,
+			Runes:			[]*runestone.Edict{
+								{
+									ID:		runestone.RuneId{ Block: 678, Tx: 90 },
+									Amount:	uint128.From64(1000000),
+								},
+							},
+		},
+		// user bitcoin UTXO to add liquidity and pay tx fee
+		{
+			TxHash:			"d316231a8aa1f74472ed9cc0f1ed0e36b9b290254cf6b2c377f0d92b299868bf",
+			OutputIdx:		4,
+			OutputAmount:	1929000,
+			PkScript:		userMultisigWallet.PKScript,
+		},
+		// user rune UTXO to add liquidity
+		{
+			TxHash:			"647a499a394bdb2a477f29b9f0515ed186e57a469a732be362a172cde4ea67a5",
+			OutputIdx:		0,
+			OutputAmount:	DUST_UTXO_AMOUNT,
+			PkScript:		userMultisigWallet.PKScript,
+		},
+	}
+	// create tx
+	msgTx, err := CreateRadFiTxProvideLiquidity(
+		&radfiMsg,
+		inputs,
+		relayersMultisigWallet.PKScript,
+		userMultisigWallet.PKScript,
+		TX_FEE,
+	)
+	fmt.Println("err: ", err)
+	// sign tx
+	totalSigs := [][][]byte{}
+	totalSigsRelayer := [][][]byte{}
+	// trading wallet admin sign tx
+	adminSigs, _ := SignTapMultisig(userPrivKeys[0], msgTx, inputs, userMultisigWallet, 0)
+	totalSigs = append(totalSigs, adminSigs)
+	// user sign tx
+	userSigs, _ := SignTapMultisig(userPrivKeys[1], msgTx, inputs, userMultisigWallet, 0)
+	totalSigs = append(totalSigs, userSigs)
+	// relayers sign tx
+	masterRelayerSigs, _ := SignTapMultisig(relayerPrivKeys[0], msgTx, inputs, relayersMultisigWallet, 0)
+	totalSigsRelayer = append(totalSigsRelayer, masterRelayerSigs)
+	slaveRelayer1Sigs, _ := SignTapMultisig(relayerPrivKeys[1], msgTx, inputs, relayersMultisigWallet, 0)
+	totalSigsRelayer = append(totalSigsRelayer, slaveRelayer1Sigs)
+	slaveRelayer2Sigs, _ := SignTapMultisig(relayerPrivKeys[2], msgTx, inputs, relayersMultisigWallet, 0)
+	totalSigsRelayer = append(totalSigsRelayer, slaveRelayer2Sigs)
+	// COMBINE SIGN
+	signedMsgTx, _ := CombineTapMultisig(totalSigs, msgTx, inputs, userMultisigWallet, 0)
+	signedMsgTx, _ = CombineTapMultisig(totalSigsRelayer, signedMsgTx, inputs, relayersMultisigWallet, 0)
+
+	var signedTx bytes.Buffer
+	signedMsgTx.Serialize(&signedTx)
+	hexSignedTx := hex.EncodeToString(signedTx.Bytes())
+	signedMsgTxID := signedMsgTx.TxHash().String()
+
+	fmt.Println("hexSignedTx: ", hexSignedTx)
+	fmt.Println("signedMsgTxID: ", signedMsgTxID)
+
+	// Decipher runestone
+	r := &runestone.Runestone{}
+	artifact, err := r.Decipher(signedMsgTx)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	a, _ := json.Marshal(artifact)
+	fmt.Printf("Artifact: %s\n", string(a))
+
+	// Decode Radfi message
+	decodedRadFiMessage, err := ReadRadFiMessage(signedMsgTx)
+	fmt.Println("err decode: ", err)
+	fmt.Println("decoded message - Flag     : ", decodedRadFiMessage.Flag)
+	fmt.Println("decoded message - UpperTick: ", decodedRadFiMessage.ProvideLiquidityMsg.Ticks.UpperTick)
+	fmt.Println("decoded message - LowerTick: ", decodedRadFiMessage.ProvideLiquidityMsg.Ticks.LowerTick)
+	fmt.Println("decoded message - Fee      : ", decodedRadFiMessage.ProvideLiquidityMsg.Fee)
+	fmt.Println("decoded message - Min0     : ", decodedRadFiMessage.ProvideLiquidityMsg.Min0)
+	fmt.Println("decoded message - Min1     : ", decodedRadFiMessage.ProvideLiquidityMsg.Min1)
+	fmt.Println("decoded message - Amount0  : ", decodedRadFiMessage.ProvideLiquidityMsg.Amount0Desired)
+	fmt.Println("decoded message - Amount1  : ", decodedRadFiMessage.ProvideLiquidityMsg.Amount1Desired)
+	fmt.Println("decoded message - InitPrice: ", decodedRadFiMessage.ProvideLiquidityMsg.InitPrice)
+	fmt.Println("decoded message - Token0Id: ", decodedRadFiMessage.ProvideLiquidityMsg.Token0Id)
+	fmt.Println("decoded message - Token1Id: ", decodedRadFiMessage.ProvideLiquidityMsg.Token1Id)
+}
+
+func TestRadFiProvideLiquidityPoolRuneRune(t *testing.T) {
+	chainParam := &chaincfg.TestNet3Params
+	relayerPrivKeys, relayersMultisigInfo := RandomMultisigInfo(3, 3, chainParam, []int{0, 1, 2}, 0, 1)
+	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo)
+	userPrivKeys, userMultisigInfo := RandomMultisigInfo(2, 2, chainParam, []int{0, 3}, 1, 1)
+	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo)
+
+	radfiMsg := RadFiProvideLiquidityMsg{
+		Ticks: 	RadFiProvideLiquidityTicks{ UpperTick: 12345, LowerTick: -12345 },
+		Fee:	30,
+		Min0:	0,
+		Min1:	10000,
+		Amount0Desired: uint128.From64(100000),
+		Amount1Desired: uint128.From64(200000),
+		InitPrice: uint128.Zero,
+		Token0Id: runestone.RuneId{ Block: 123, Tx: 321},
+		Token1Id: runestone.RuneId{ Block: 678, Tx: 90},
+	}
+
+	inputs := []*Input{
+		// pool current sequence number
+		{
+			TxHash:			"a9287ff640a9a06748100f6334f0e50a8c6a055aabff742443a5b1692d3dd0dc",
+			OutputIdx:		0,
+			OutputAmount:	DUST_UTXO_AMOUNT,
+			PkScript:		relayersMultisigWallet.PKScript,
+			Runes:			[]*runestone.Edict{
+								{
+									ID:		runestone.RuneId{ Block: 123, Tx: 321 },
+									Amount:	uint128.From64(1000000),
+								},
+								{
+									ID:		runestone.RuneId{ Block: 678, Tx: 90 },
+									Amount:	uint128.From64(2000000),
+								},
+							},
+		},
+		// user rune0 UTXO to add liquidity
+		{
+			TxHash:			"3aa9c4b9a71fe19560c467cdddce932eae8a10e28123a09acb27701123f2a8f7",
+			OutputIdx:		6,
+			OutputAmount:	DUST_UTXO_AMOUNT,
+			PkScript:		userMultisigWallet.PKScript,
+		},
+		// user rune1 UTXO to add liquidity
+		{
+			TxHash:			"647a499a394bdb2a477f29b9f0515ed186e57a469a732be362a172cde4ea67a5",
+			OutputIdx:		0,
+			OutputAmount:	DUST_UTXO_AMOUNT,
+			PkScript:		userMultisigWallet.PKScript,
+		},
+		// user bitcoin UTXO to pay tx fee
+		{
+			TxHash:			"d316231a8aa1f74472ed9cc0f1ed0e36b9b290254cf6b2c377f0d92b299868bf",
+			OutputIdx:		4,
+			OutputAmount:	1929000,
+			PkScript:		userMultisigWallet.PKScript,
+		},
+	}
+	// create tx
+	msgTx, err := CreateRadFiTxProvideLiquidity(
+		&radfiMsg,
+		inputs,
+		relayersMultisigWallet.PKScript,
+		userMultisigWallet.PKScript,
+		TX_FEE,
+	)
+	fmt.Println("err: ", err)
+	// sign tx
+	totalSigs := [][][]byte{}
+	totalSigsRelayer := [][][]byte{}
+	// trading wallet admin sign tx
+	adminSigs, _ := SignTapMultisig(userPrivKeys[0], msgTx, inputs, userMultisigWallet, 0)
+	totalSigs = append(totalSigs, adminSigs)
+	// user sign tx
+	userSigs, _ := SignTapMultisig(userPrivKeys[1], msgTx, inputs, userMultisigWallet, 0)
+	totalSigs = append(totalSigs, userSigs)
+	// relayers sign tx
+	masterRelayerSigs, _ := SignTapMultisig(relayerPrivKeys[0], msgTx, inputs, relayersMultisigWallet, 0)
+	totalSigsRelayer = append(totalSigsRelayer, masterRelayerSigs)
+	slaveRelayer1Sigs, _ := SignTapMultisig(relayerPrivKeys[1], msgTx, inputs, relayersMultisigWallet, 0)
+	totalSigsRelayer = append(totalSigsRelayer, slaveRelayer1Sigs)
+	slaveRelayer2Sigs, _ := SignTapMultisig(relayerPrivKeys[2], msgTx, inputs, relayersMultisigWallet, 0)
+	totalSigsRelayer = append(totalSigsRelayer, slaveRelayer2Sigs)
+	// COMBINE SIGN
+	signedMsgTx, _ := CombineTapMultisig(totalSigs, msgTx, inputs, userMultisigWallet, 0)
+	signedMsgTx, _ = CombineTapMultisig(totalSigsRelayer, signedMsgTx, inputs, relayersMultisigWallet, 0)
 
 	var signedTx bytes.Buffer
 	signedMsgTx.Serialize(&signedTx)
