@@ -60,11 +60,12 @@ type RadFiSwapMsg struct {
 	// OP_RETURN output data
 	IsExactIn		bool
 	PoolsCount		uint8
-	TokenOutIndex	uint32
 	AmountIn 		uint128.Uint128
 	AmountOut 		uint128.Uint128
 	Fees 			[]uint32
-	Tokens			[]runestone.RuneId
+	Tokens			[]*runestone.RuneId
+	// TokenOutIndex = PoolsCount + 2 (does not included in OP_RETURN)
+	TokenOutIndex	uint32
 }
 
 type RadFiWithdrawLiquidityMsg struct {
@@ -177,13 +178,6 @@ func CreateProvideLiquidityScript(msg *RadFiProvideLiquidityMsg) ([]byte, error)
 }
 
 func CreateSwapScript(msg *RadFiSwapMsg) ([]byte, error) {
-	if msg.PoolsCount > 127 {
-		return nil, fmt.Errorf("max pools for swap route is 127")
-	}
-	if msg.PoolsCount != uint8(len(msg.Fees)) || msg.PoolsCount != uint8(len(msg.Tokens) - 1) {
-		return nil, fmt.Errorf("fees and tokens array length mismatch with pools count")
-	}
-
 	builder := txscript.NewScriptBuilder()
 	builder.AddOp(txscript.OP_RETURN)
 	builder.AddOp(OP_RADFI_IDENT)
@@ -196,7 +190,6 @@ func CreateSwapScript(msg *RadFiSwapMsg) ([]byte, error) {
 	singleByte := byte((isExactInUint8 << 7) ^ msg.PoolsCount) // 1 byte contain both IsExactIn and PoolsCount
 
 	data := []byte{singleByte}
-	data = append(data, runestone.EncodeUint32(msg.TokenOutIndex)...)
 	data = append(data, runestone.EncodeUint128(msg.AmountIn)...)
 	data = append(data, runestone.EncodeUint128(msg.AmountOut)...)
 	for _, fee := range msg.Fees {
@@ -343,12 +336,12 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 			isExactIn := (singleByte >> 7) != 0
 			poolsCount := singleByte << 1 >> 1
 			fees := []uint32{}
-			for _, fee := range(integers[3:3+poolsCount]) {
+			for _, fee := range(integers[2:2+poolsCount]) {
 				fees = append(fees, uint32(fee.Lo))
 			}
-			tokens := []runestone.RuneId{}
-			for i := 3+int(poolsCount); i < len(integers) ; i += 2 {
-				tokens = append(tokens, runestone.RuneId{
+			tokens := []*runestone.RuneId{}
+			for i := 2+int(poolsCount); i < len(integers)-1 ; i += 2 {
+				tokens = append(tokens, &runestone.RuneId{
 					Block: integers[i].Lo,
 					Tx: uint32(integers[i+1].Lo),
 				})
@@ -359,11 +352,11 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 				SwapMsg:	&RadFiSwapMsg{
 					IsExactIn:		isExactIn,
 					PoolsCount:		poolsCount,
-					TokenOutIndex:	uint32(integers[0].Lo),
-					AmountIn:		integers[1],
-					AmountOut:		integers[2],
+					AmountIn:		integers[0],
+					AmountOut:		integers[1],
 					Fees:			fees,
 					Tokens:			tokens,
+					TokenOutIndex:	uint32(poolsCount) + 2,
 				},
 			}, nil
 

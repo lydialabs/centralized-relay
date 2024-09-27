@@ -213,6 +213,93 @@ func CreateRadFiTxProvideLiquidity(
 	return CreateRadFiTx(inputs, outputs, userPkScript, txFee, 0)
 }
 
+func CreateRadFiTxSwap(
+	msg *RadFiSwapMsg,
+	inputs []*Input,
+	newPoolBalances []*PoolBalance,
+	relayerPkScript []byte,
+	userPkScript []byte,
+	txFee int64,
+) (*wire.MsgTx, error) {
+	if msg.PoolsCount < 1 || msg.PoolsCount > 127 {
+		return nil, fmt.Errorf("pools count should be in the range of [1; 127]")
+	}
+	if msg.PoolsCount != uint8(len(msg.Fees)) || msg.PoolsCount != uint8(len(msg.Tokens) - 1) || msg.PoolsCount != uint8(len(newPoolBalances)) {
+		return nil, fmt.Errorf("params array length mismatch with pools count")
+	}
+	// the first inputs should be the pool's current sequence number that contain pool's liquidity
+	for idx, input := range inputs[:msg.PoolsCount] {
+		if !bytes.Equal(input.PkScript, relayerPkScript) {
+			return nil, fmt.Errorf("the input %v should be from relayer wallet", idx)
+		}
+	}
+	// the remain inputs should be from trading wallet
+	for idx, input := range inputs[msg.PoolsCount:] {
+		if !bytes.Equal(input.PkScript, userPkScript) {
+			return nil, fmt.Errorf("the input %v should be from trading wallet", int(msg.PoolsCount)+idx)
+		}
+	}
+	radfiScript, _ := CreateSwapScript(msg)
+
+	runeOutput := &runestone.Runestone{
+		Edicts: []runestone.Edict{},
+		Pointer: &msg.TokenOutIndex,
+	}
+	// sequence number outputs
+	outputs := []*wire.TxOut{}
+	for idx, poolBalance := range newPoolBalances {
+		sequenceNumberAmount := DUST_UTXO_AMOUNT
+		if poolBalance.Token1Id == BitcoinRuneId() {
+			return nil, fmt.Errorf("the second token in the pair can only be rune")
+		}
+		if poolBalance.Token0Id == BitcoinRuneId() {
+			sequenceNumberAmount = int64(poolBalance.Token0Amount.Lo)
+
+		} else {
+			runeOutput.Edicts = append(runeOutput.Edicts, runestone.Edict{
+				ID:	poolBalance.Token0Id,
+				Amount: poolBalance.Token0Amount,
+				Output: uint32(idx),
+			})
+		}
+		runeOutput.Edicts = append(runeOutput.Edicts, runestone.Edict{
+			ID:	poolBalance.Token1Id,
+			Amount: poolBalance.Token1Amount,
+			Output: uint32(idx),
+		})
+		outputs = append(outputs, &wire.TxOut{
+			Value: sequenceNumberAmount,
+			PkScript: relayerPkScript,
+		})
+	}
+	runeScript, _ := runeOutput.Encipher()
+
+	userTokenOutBitcoin := DUST_UTXO_AMOUNT
+	if *msg.Tokens[len(msg.Tokens)-1] == BitcoinRuneId() {
+		userTokenOutBitcoin = int64(msg.AmountOut.Lo)
+	}
+	// add remain outputs
+	outputs = append(outputs, []*wire.TxOut{
+		// radfi OP_RETRN
+		{
+			Value: 0,
+			PkScript: radfiScript,
+		},
+		// rune OP_RETURN
+		{
+			Value: 0,
+			PkScript: runeScript,
+		},
+		// user token out output
+		{
+			Value: userTokenOutBitcoin,
+			PkScript: userPkScript,
+		},
+	}...)
+
+	return CreateRadFiTx(inputs, outputs, userPkScript, txFee, 0)
+}
+
 func SignTapMultisig(
 	privKey string,
 	msgTx *wire.MsgTx,

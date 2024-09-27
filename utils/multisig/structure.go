@@ -5,6 +5,7 @@ import (
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/bxelab/runestone"
+	"lukechampine.com/uint128"
 )
 
 type MultisigInfo struct {
@@ -60,4 +61,11 @@ type Input struct {
 type TapSigInfo struct {
 	PkScript		[]byte
 	TapLeaf			txscript.TapLeaf
+}
+
+type PoolBalance struct {
+	Token0Id		runestone.RuneId
+	Token1Id		runestone.RuneId
+	Token0Amount	uint128.Uint128
+	Token1Amount	uint128.Uint128
 }
