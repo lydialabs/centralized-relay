@@ -70,11 +70,11 @@ type RadFiSwapMsg struct {
 
 type RadFiWithdrawLiquidityMsg struct {
 	// OP_RETURN output data
-	RecipientIndex	uint32
 	LiquidityValue	uint128.Uint128
 	NftId			uint128.Uint128
 	Amount0			uint128.Uint128
 	Amount1			uint128.Uint128
+	// RecipientIndex = 3
 }
 
 type RadFiCollectFeesMsg struct {
@@ -209,8 +209,7 @@ func CreateWithdrawLiquidityScript(msg *RadFiWithdrawLiquidityMsg) ([]byte, erro
 	builder.AddOp(OP_RADFI_IDENT)
 	builder.AddOp(OP_RADFI_WITHDRAW_LIQUIDITY)
 	// encode message content
-	data := runestone.EncodeUint32(msg.RecipientIndex)
-	data = append(data, runestone.EncodeUint128(msg.LiquidityValue)...)
+	data := runestone.EncodeUint128(msg.LiquidityValue)
 	data = append(data, runestone.EncodeUint128(msg.NftId)...)
 	data = append(data, runestone.EncodeUint128(msg.Amount0)...)
 	data = append(data, runestone.EncodeUint128(msg.Amount1)...)
@@ -364,11 +363,10 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 			return &RadFiDecodedMsg {
 				Flag: 					flag,
 				WithdrawLiquidityMsg:	&RadFiWithdrawLiquidityMsg{
-					RecipientIndex:	uint32(integers[0].Lo),
-					LiquidityValue:	integers[1],
-					NftId:			integers[2],
-					Amount0:		integers[3],
-					Amount1:		integers[4],
+					LiquidityValue:	integers[0],
+					NftId:			integers[1],
+					Amount0:		integers[2],
+					Amount1:		integers[3],
 				},
 			}, nil
 
