@@ -385,10 +385,10 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 				Flag:					flag,
 				IncreaseLiquidityMsg:	&RadFiIncreaseLiquidityMsg{
 					Min0:		uint16(integers[0].Lo),
-					Min1:		uint16(integers[0].Lo),
-					NftId:		integers[1],
-					Amount0:	integers[2],
-					Amount1:	integers[3],
+					Min1:		uint16(integers[1].Lo),
+					NftId:		integers[2],
+					Amount0:	integers[3],
+					Amount1:	integers[4],
 				},
 			}, nil
 
