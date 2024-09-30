@@ -74,13 +74,16 @@ type RadFiWithdrawLiquidityMsg struct {
 	NftId			uint128.Uint128
 	Amount0			uint128.Uint128
 	Amount1			uint128.Uint128
-	// RecipientIndex = 3
+	// RecipientIndex is 3 and 4
 }
 
 type RadFiCollectFeesMsg struct {
 	// OP_RETURN output data
-	RecipientIndex	uint32
 	NftId			uint128.Uint128
+	// RecipientIndex is 3 and 4
+	// Collect amount, only for creating bitcoin tx
+	Amount0			uint128.Uint128
+	Amount1			uint128.Uint128
 }
 
 type RadFiIncreaseLiquidityMsg struct {
@@ -223,8 +226,7 @@ func CreateCollectFeesScript(msg *RadFiCollectFeesMsg) ([]byte, error) {
 	builder.AddOp(OP_RADFI_IDENT)
 	builder.AddOp(OP_RADFI_COLLECT_FEES)
 	// encode message content
-	data := runestone.EncodeUint32(msg.RecipientIndex)
-	data = append(data, runestone.EncodeUint128(msg.NftId)...)
+	data := runestone.EncodeUint128(msg.NftId)
 
 	return builder.AddData(data).Script()
 }
@@ -374,8 +376,7 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 			return &RadFiDecodedMsg {
 				Flag:			flag,
 				CollectFeesMsg:	&RadFiCollectFeesMsg{
-					RecipientIndex:	uint32(integers[0].Lo),
-					NftId:			integers[1],
+					NftId:			integers[0],
 				},
 			}, nil
 
