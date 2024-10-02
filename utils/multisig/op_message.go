@@ -25,6 +25,12 @@ type BoundRedeemStableCoinMsg struct {
 	Amount			uint128.Uint128
 }
 
+type BoundMintRequestMsg struct {
+	ToPkScript      []byte
+	BoundRuneId		runestone.RuneId
+	Amount			uint128.Uint128
+}
+
 type BoundDecodedMsg struct {
 	Flag					byte
 	RedeemStableCoinMsg		*BoundRedeemStableCoinMsg

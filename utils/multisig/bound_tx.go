@@ -101,9 +101,61 @@ func CreateBoundTxRedeemStableCoin(
 			Value: 0,
 			PkScript: runeScript,
 		},
+		// rune change output
+		{
+			Value: DUST_UTXO_AMOUNT,
+			PkScript: userPkScript,
+		},
 	}
 
 	return CreateTx(inputs, outputs, userPkScript, txFee, 0)
+}
+
+func CreateBoundTxMintRequest(
+	msg *BoundMintRequestMsg,
+	inputs []*Input,
+	relayerPkScript []byte,
+	txFee int64,
+) (*wire.MsgTx, error) {
+	// the inputs should be from relayer wallet
+	for idx, input := range inputs {
+		if !bytes.Equal(input.PkScript, relayerPkScript) {
+			return nil, fmt.Errorf("the input %v should be from relayer wallet", idx)
+		}
+	}
+
+	relayerChangeOutput := uint32(2)
+	runeOutput := &runestone.Runestone{
+		Edicts: []runestone.Edict{
+			{
+				ID:		msg.BoundRuneId,
+				Amount:	msg.Amount,
+				Output: 0,
+			},
+		},
+		Pointer: &relayerChangeOutput,
+	}
+	runeScript, _ := runeOutput.Encipher()
+
+	outputs := []*wire.TxOut{
+		// bound rune send to user
+		{
+			Value: DUST_UTXO_AMOUNT,
+			PkScript: msg.ToPkScript,
+		},
+		// rune OP_RETURN
+		{
+			Value: 0,
+			PkScript: runeScript,
+		},
+		// rune change output
+		{
+			Value: DUST_UTXO_AMOUNT,
+			PkScript: relayerPkScript,
+		},
+	}
+
+	return CreateTx(inputs, outputs, relayerPkScript, txFee, 0)
 }
 
 func SignTapMultisig(

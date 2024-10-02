@@ -11,8 +11,6 @@ import (
 
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/txscript"
-	"github.com/btcsuite/btcd/wire"
 	"github.com/bxelab/runestone"
 	"lukechampine.com/uint128"
 )
@@ -99,127 +97,10 @@ func TestParseTx(t *testing.T) {
 	}
 }
 
-func TestUserRecoveryTimeLock(t *testing.T) {
-	chainParam := &chaincfg.TestNet3Params
-
-	inputs := []*UTXO{
-		{
-			IsRelayersMultisig: false,
-			TxHash:             "d316231a8aa1f74472ed9cc0f1ed0e36b9b290254cf6b2c377f0d92b299868bf",
-			OutputIdx:          4,
-			OutputAmount:       1929000,
-		},
-	}
-
-	outputs := []*OutputTx{
-		{
-			ReceiverAddress: RELAYER_MULTISIG_ADDRESS,
-			Amount:          1000000,
-		},
-	}
-
-	userPrivKeys, userMultisigInfo := RandomMultisigInfo(2, 2, chainParam, []int{0, 3}, 1, 1)
-	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo)
-
-	changeReceiverAddress := USER_MULTISIG_ADDRESS
-	msgTx, _, txSigHashes, _ := CreateMultisigTx(inputs, outputs, TX_FEE, &MultisigWallet{}, userMultisigWallet, chainParam, changeReceiverAddress, 1)
-	tapSigParams := TapSigParams{
-		TxSigHashes:      txSigHashes,
-		RelayersPKScript: []byte{},
-		RelayersTapLeaf:  txscript.TapLeaf{},
-		UserPKScript:     userMultisigWallet.PKScript,
-		UserTapLeaf:      userMultisigWallet.TapLeaves[1],
-	}
-
-	totalSigs := [][][]byte{}
-
-	// USER SIGN TX
-	userSigs, _ := PartSignOnRawExternalTx(userPrivKeys[1], msgTx, inputs, tapSigParams, chainParam, true)
-	totalSigs = append(totalSigs, userSigs)
-
-	// COMBINE SIGNS
-	signedMsgTx, err := CombineMultisigSigs(msgTx, inputs, userMultisigWallet, 0, userMultisigWallet, 1, totalSigs)
-
-	var signedTx bytes.Buffer
-	signedMsgTx.Serialize(&signedTx)
-	hexSignedTx := hex.EncodeToString(signedTx.Bytes())
-	signedMsgTxID := signedMsgTx.TxHash().String()
-
-	fmt.Println("hexSignedTx: ", hexSignedTx)
-	fmt.Println("signedMsgTxID: ", signedMsgTxID)
-	fmt.Println("err sign: ", err)
-}
-
-func TestTransferRune(t *testing.T) {
-	chainParam := &chaincfg.TestNet3Params
-
-	inputs := []*UTXO{
-		{
-			IsRelayersMultisig: false,
-			TxHash:             "ae9f43a77d861d5076ebdb1af0d76af033843b784766a1d07a78a68fe845c012",
-			OutputIdx:          1,
-			OutputAmount:       3808,
-		},
-	}
-
-	outputs := []*OutputTx{
-		{
-			ReceiverAddress: RELAYER_MULTISIG_ADDRESS,
-			Amount:          1000,
-		},
-	}
-
-	userPrivKeys, userMultisigInfo := RandomMultisigInfo(2, 2, chainParam, []int{0, 3}, 1, 1)
-	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo)
-
-	changeReceiverAddress := USER_MULTISIG_ADDRESS
-	msgTx, _, txSigHashes, _ := CreateMultisigTx(inputs, outputs, TX_FEE, &MultisigWallet{}, userMultisigWallet, chainParam, changeReceiverAddress, 1)
-	// Add Rune transfering
-	// rune id 840000:3, amount 10000 (5 decimals), to output id 0
-	script1, _ := CreateRuneTransferScript(Rune{BlockNumber: 840000, TxIndex: 3}, big.NewInt(1000000000), 0)
-	msgTx.AddTxOut(wire.NewTxOut(0, script1))
-
-	tapSigParams := TapSigParams{
-		TxSigHashes:      txSigHashes,
-		RelayersPKScript: []byte{},
-		RelayersTapLeaf:  txscript.TapLeaf{},
-		UserPKScript:     userMultisigWallet.PKScript,
-		UserTapLeaf:      userMultisigWallet.TapLeaves[1],
-	}
-
-	totalSigs := [][][]byte{}
-
-	// USER SIGN TX
-	userSigs, _ := PartSignOnRawExternalTx(userPrivKeys[1], msgTx, inputs, tapSigParams, chainParam, true)
-	totalSigs = append(totalSigs, userSigs)
-
-	// COMBINE SIGNS
-	signedMsgTx, err := CombineMultisigSigs(msgTx, inputs, userMultisigWallet, 0, userMultisigWallet, 1, totalSigs)
-
-	var signedTx bytes.Buffer
-	signedMsgTx.Serialize(&signedTx)
-	hexSignedTx := hex.EncodeToString(signedTx.Bytes())
-	signedMsgTxID := signedMsgTx.TxHash().String()
-
-	fmt.Println("hexSignedTx: ", hexSignedTx)
-	fmt.Println("signedMsgTxID: ", signedMsgTxID)
-	fmt.Println("err sign: ", err)
-
-	// Decipher runestone
-	r := &runestone.Runestone{}
-	artifact, err := r.Decipher(signedMsgTx)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	a, _ := json.Marshal(artifact)
-	fmt.Printf("Artifact: %s\n", string(a))
-}
-
 func TestBoundRedeemStableCoin(t *testing.T) {
 	chainParam := &chaincfg.TestNet3Params
 	// relayer multisig
-	_, relayersMultisigInfo := RandomMultisigInfo(3, 3, chainParam, []int{0, 1, 2}, 0, 1)
+	_, relayersMultisigInfo := RandomMultisigInfo(3, 2, chainParam, []int{0, 1, 2}, 0, 1)
 	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo)
 	// user key
 	userPrivKeys, userMultisigInfo := RandomMultisigInfo(2, 2, chainParam, []int{0, 3}, 1, 1)
@@ -295,4 +176,76 @@ func TestBoundRedeemStableCoin(t *testing.T) {
 	fmt.Println("decoded message - To     : ", decodedBoundMessage.RedeemStableCoinMsg.To)
 	fmt.Println("decoded message - BoundRuneId     : ", decodedBoundMessage.RedeemStableCoinMsg.BoundRuneId)
 	fmt.Println("decoded message - Amount     : ", decodedBoundMessage.RedeemStableCoinMsg.Amount)
+}
+
+func TestBoundMintRequest(t *testing.T) {
+	chainParam := &chaincfg.TestNet3Params
+	// relayer multisig
+	relayerPrivKeys, relayersMultisigInfo := RandomMultisigInfo(3, 2, chainParam, []int{0, 1, 2}, 0, 1)
+	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo)
+	// user key
+	_, userMultisigInfo := RandomMultisigInfo(2, 2, chainParam, []int{0, 3}, 1, 1)
+	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo)
+
+	boundMsg := BoundMintRequestMsg{
+		ToPkScript:		userMultisigWallet.PKScript,
+		BoundRuneId:	runestone.RuneId{ Block: 678, Tx: 90},
+		Amount:			uint128.From64(1000000),
+	}
+
+	inputs := []*Input{
+		// relayer Bound USD rune UTXO
+		{
+			TxHash:			"647a499a394bdb2a477f29b9f0515ed186e57a469a732be362a172cde4ea67a5",
+			OutputIdx:		0,
+			OutputAmount:	DUST_UTXO_AMOUNT,
+			PkScript:		relayersMultisigWallet.PKScript,
+		},
+		// relayer bitcoin UTXO pay tx fee
+		{
+			TxHash:			"d316231a8aa1f74472ed9cc0f1ed0e36b9b290254cf6b2c377f0d92b299868bf",
+			OutputIdx:		4,
+			OutputAmount:	1929000,
+			PkScript:		relayersMultisigWallet.PKScript,
+		},
+	}
+
+	// create tx
+	msgTx, err := CreateBoundTxMintRequest(
+		&boundMsg,
+		inputs,
+		relayersMultisigWallet.PKScript,
+		TX_FEE,
+	)
+	fmt.Println("err: ", err)
+	// sign tx
+	totalSigsRelayer := [][][]byte{}
+	// relayers sign tx
+	masterRelayerSigs, _ := SignTapMultisig(relayerPrivKeys[0], msgTx, inputs, relayersMultisigWallet, 0)
+	totalSigsRelayer = append(totalSigsRelayer, masterRelayerSigs)
+	slaveRelayer1Sigs, _ := SignTapMultisig(relayerPrivKeys[1], msgTx, inputs, relayersMultisigWallet, 0)
+	totalSigsRelayer = append(totalSigsRelayer, slaveRelayer1Sigs)
+	slaveRelayer2Sigs, _ := SignTapMultisig(relayerPrivKeys[2], msgTx, inputs, relayersMultisigWallet, 0)
+	totalSigsRelayer = append(totalSigsRelayer, slaveRelayer2Sigs)
+
+	// COMBINE SIGN
+	signedMsgTx, _ := CombineTapMultisig(totalSigsRelayer, msgTx, inputs, relayersMultisigWallet, 0)
+
+	var signedTx bytes.Buffer
+	signedMsgTx.Serialize(&signedTx)
+	hexSignedTx := hex.EncodeToString(signedTx.Bytes())
+	signedMsgTxID := signedMsgTx.TxHash().String()
+
+	fmt.Println("hexSignedTx: ", hexSignedTx)
+	fmt.Println("signedMsgTxID: ", signedMsgTxID)
+
+	// Decipher runestone
+	r := &runestone.Runestone{}
+	artifact, err := r.Decipher(signedMsgTx)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	a, _ := json.Marshal(artifact)
+	fmt.Printf("Artifact: %s\n", string(a))
 }
