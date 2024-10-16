@@ -528,14 +528,14 @@ func (p *Provider) computeTx(feeRate int64, satsToSend int64, runeToSend uint128
 
 		newSatsToSend := satsToSend + estFee
 		var err error
-		selectedUnspentInputs, err := p.selectUnspentUTXOs(newSatsToSend, runeToSend, runeId, address, msWallet.PKScript)
+		inputs, err = p.selectUnspentUTXOs(newSatsToSend, runeToSend, runeId, address, msWallet.PKScript)
 		if err != nil {
 			return nil, 0, err
 		}
 
-		sumSelectedInputs = multisig.SumInputsSat(selectedUnspentInputs)
+		sumSelectedInputs = multisig.SumInputsSat(inputs)
 
-		txSize, err := p.calculateTxSize(selectedUnspentInputs, iterationOutputs, estFee, msWallet)
+		txSize, err := p.calculateTxSize(inputs, iterationOutputs, estFee, msWallet)
 		if err != nil {
 			return nil, 0, err
 		}
