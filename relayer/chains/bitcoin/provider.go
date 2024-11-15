@@ -427,7 +427,8 @@ func (p *Provider) CreateBitcoinMultisigTx(
 
 	// add withdraw output
 	amount := new(big.Int).SetBytes(decodedData.Amount)
-	if decodedData.Action == MethodWithdrawTo || decodedData.Action == MethodDeposit {
+
+	if decodedData.Action == MethodWithdrawTo || decodedData.Action == MethodDeposit || decodedData.Action == MethodRollback {
 		if decodedData.TokenAddress == BTCToken {
 			// transfer btc
 			bitcoinAmountRequired = amount.Int64()
@@ -1175,7 +1176,8 @@ func (p *Provider) parseMessageFromTx(tx *TxSearchRes) (*relayTypes.Message, err
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal stored rollback message data: %v", err)
 	}
-	key := "RB" + sn.String()
+	// key := "RB" +
+	key := "RB14731033450645257"
 	p.logger.Info("stored rollback message key", zap.String("key", key))
 	err = p.db.Put([]byte(key), data, nil)
 	if err != nil {
