@@ -1176,8 +1176,7 @@ func (p *Provider) parseMessageFromTx(tx *TxSearchRes) (*relayTypes.Message, err
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal stored rollback message data: %v", err)
 	}
-	// key := "RB" +
-	key := "RB14731033450645257"
+	key := "RB" + sn.String()
 	p.logger.Info("stored rollback message key", zap.String("key", key))
 	err = p.db.Put([]byte(key), data, nil)
 	if err != nil {
