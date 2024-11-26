@@ -15,14 +15,12 @@ import (
 
 const (
 	OP_RADFI_IDENT				= txscript.OP_12
-	OP_RUNE_IDENT				= txscript.OP_13
-	OP_BRIDGE_IDENT				= txscript.OP_14
 
-	OP_RADFI_PROVIDE_LIQUIDITY	= txscript.OP_1
-	OP_RADFI_SWAP				= txscript.OP_2
-	OP_RADFI_WITHDRAW_LIQUIDITY	= txscript.OP_3
-	OP_RADFI_COLLECT_FEES		= txscript.OP_4
-	OP_RADFI_INCREASE_LIQUIDITY	= txscript.OP_5
+	OP_RADFI_PROVIDE_LIQUIDITY	= 0x01
+	OP_RADFI_SWAP				= 0x02
+	OP_RADFI_WITHDRAW_LIQUIDITY	= 0x03
+	OP_RADFI_COLLECT_FEES		= 0x04
+	OP_RADFI_INCREASE_LIQUIDITY	= 0x05
 )
 
 type XCallMessage struct {
@@ -158,9 +156,7 @@ func EncodeUint16(n uint16) []byte {
 
 func CreateProvideLiquidityScript(msg *RadFiProvideLiquidityMsg) ([]byte, error) {
 	builder := txscript.NewScriptBuilder()
-	builder.AddOp(txscript.OP_RETURN)
 	builder.AddOp(OP_RADFI_IDENT)
-	builder.AddOp(OP_RADFI_PROVIDE_LIQUIDITY)
 	// encode message content
 	buf := new(bytes.Buffer)
 	ticksData := msg.Ticks
@@ -169,7 +165,7 @@ func CreateProvideLiquidityScript(msg *RadFiProvideLiquidityMsg) ([]byte, error)
 		return nil, fmt.Errorf("could not encode data - Error %v", err)
 	}
 
-	data := buf.Bytes()
+	data := append([]byte{OP_RADFI_PROVIDE_LIQUIDITY}, buf.Bytes()...)
 	data = append(data, runestone.EncodeUint32(msg.Fee)...)
 	data = append(data, EncodeUint16(msg.Min0)...)
 	data = append(data, EncodeUint16(msg.Min1)...)
@@ -182,9 +178,7 @@ func CreateProvideLiquidityScript(msg *RadFiProvideLiquidityMsg) ([]byte, error)
 
 func CreateSwapScript(msg *RadFiSwapMsg) ([]byte, error) {
 	builder := txscript.NewScriptBuilder()
-	builder.AddOp(txscript.OP_RETURN)
 	builder.AddOp(OP_RADFI_IDENT)
-	builder.AddOp(OP_RADFI_SWAP)
 	// encode message content
 	var isExactInUint8 uint8
 	if msg.IsExactIn {
@@ -192,7 +186,7 @@ func CreateSwapScript(msg *RadFiSwapMsg) ([]byte, error) {
 	}
 	singleByte := byte((isExactInUint8 << 7) ^ msg.PoolsCount) // 1 byte contain both IsExactIn and PoolsCount
 
-	data := []byte{singleByte}
+	data := []byte{OP_RADFI_SWAP, singleByte}
 	data = append(data, runestone.EncodeUint128(msg.AmountIn)...)
 	data = append(data, runestone.EncodeUint128(msg.AmountOut)...)
 	for _, fee := range msg.Fees {
@@ -208,11 +202,9 @@ func CreateSwapScript(msg *RadFiSwapMsg) ([]byte, error) {
 
 func CreateWithdrawLiquidityScript(msg *RadFiWithdrawLiquidityMsg) ([]byte, error) {
 	builder := txscript.NewScriptBuilder()
-	builder.AddOp(txscript.OP_RETURN)
 	builder.AddOp(OP_RADFI_IDENT)
-	builder.AddOp(OP_RADFI_WITHDRAW_LIQUIDITY)
 	// encode message content
-	data := runestone.EncodeUint128(msg.LiquidityValue)
+	data := append([]byte{OP_RADFI_WITHDRAW_LIQUIDITY}, runestone.EncodeUint128(msg.LiquidityValue)...)
 	data = append(data, runestone.EncodeUint128(msg.NftId)...)
 	data = append(data, runestone.EncodeUint128(msg.Amount0)...)
 	data = append(data, runestone.EncodeUint128(msg.Amount1)...)
@@ -222,22 +214,20 @@ func CreateWithdrawLiquidityScript(msg *RadFiWithdrawLiquidityMsg) ([]byte, erro
 
 func CreateCollectFeesScript(msg *RadFiCollectFeesMsg) ([]byte, error) {
 	builder := txscript.NewScriptBuilder()
-	builder.AddOp(txscript.OP_RETURN)
 	builder.AddOp(OP_RADFI_IDENT)
-	builder.AddOp(OP_RADFI_COLLECT_FEES)
 	// encode message content
-	data := runestone.EncodeUint128(msg.NftId)
+	data := append([]byte{OP_RADFI_COLLECT_FEES}, runestone.EncodeUint128(msg.NftId)...)
+	data = append(data, runestone.EncodeUint128(msg.Amount0)...)
+	data = append(data, runestone.EncodeUint128(msg.Amount1)...)
 
 	return builder.AddData(data).Script()
 }
 
 func CreateIncreaseLiquidityScript(msg *RadFiIncreaseLiquidityMsg) ([]byte, error) {
 	builder := txscript.NewScriptBuilder()
-	builder.AddOp(txscript.OP_RETURN)
 	builder.AddOp(OP_RADFI_IDENT)
-	builder.AddOp(OP_RADFI_INCREASE_LIQUIDITY)
 	// encode message content
-	data := EncodeUint16(msg.Min0)
+	data := append([]byte{OP_RADFI_INCREASE_LIQUIDITY}, EncodeUint16(msg.Min0)...)
 	data = append(data, EncodeUint16(msg.Min1)...)
 	data = append(data, runestone.EncodeUint128(msg.NftId)...)
 	data = append(data, runestone.EncodeUint128(msg.Amount0)...)
@@ -251,17 +241,9 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 	var payload []byte
 	for _, output := range transaction.TxOut {
 		tokenizer := txscript.MakeScriptTokenizer(0, output.PkScript)
-		if !tokenizer.Next() || tokenizer.Err() != nil || tokenizer.Opcode() != txscript.OP_RETURN {
-			// Check for OP_RETURN
-			continue
-		}
 		if !tokenizer.Next() || tokenizer.Err() != nil || tokenizer.Opcode() != OP_RADFI_IDENT {
 			// Check to ignore non RadFi protocol identifier (Rune or Bridge)
 			continue
-		}
-
-		if tokenizer.Next() && tokenizer.Err() == nil {
-			flag = tokenizer.Opcode()
 		}
 
 		// Construct the payload by concatenating remaining data pushes
@@ -272,8 +254,12 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 			payload = append(payload, tokenizer.Data()...)
 		}
 
-		// only read 1 OP_RETURN output for RadFi protocol
+		// only read 1 OP_RADFI_IDENT output for RadFi protocol
 		break
+	}
+
+	if len(payload) == 0 {
+		return nil, fmt.Errorf("could not find radfi data")
 	}
 
 	// Decipher runestone
@@ -283,13 +269,14 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 		return nil, fmt.Errorf("could not decipher runestone - Error %v", err)
 	}
 
+	flag = payload[0]
 	var integersStart uint
 	if flag == OP_RADFI_PROVIDE_LIQUIDITY {
-		integersStart = 8
+		integersStart = 9
 	} else if flag == OP_RADFI_SWAP {
-		integersStart = 1
+		integersStart = 2
 	} else {
-		integersStart = 0
+		integersStart = 1
 	}
 	integers, err := integers(payload[integersStart:])
 	if err != nil {
@@ -377,6 +364,8 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 				Flag:			flag,
 				CollectFeesMsg:	&RadFiCollectFeesMsg{
 					NftId:			integers[0],
+					Amount0:		integers[1],
+					Amount1:		integers[2],
 				},
 			}, nil
 

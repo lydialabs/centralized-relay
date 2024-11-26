@@ -107,9 +107,9 @@ func CreateRadFiTxInitPool(
 			Value: sequenceNumberAmount,
 			PkScript: relayerPkScript,
 		},
-		// radfi OP_RETRN
+		// radfi OP
 		{
-			Value: 0,
+			Value: DUST_UTXO_AMOUNT,
 			PkScript: radfiScript,
 		},
 		// rune OP_RETURN
@@ -193,9 +193,9 @@ func CreateRadFiTxProvideLiquidity(
 			Value: sequenceNumberAmount,
 			PkScript: relayerPkScript,
 		},
-		// radfi OP_RETRN
+		// radfi OP
 		{
-			Value: 0,
+			Value: DUST_UTXO_AMOUNT,
 			PkScript: radfiScript,
 		},
 		// rune OP_RETURN
@@ -280,9 +280,9 @@ func CreateRadFiTxSwap(
 	}
 	// add remain outputs
 	outputs = append(outputs, []*wire.TxOut{
-		// radfi OP_RETRN
+		// radfi OP
 		{
-			Value: 0,
+			Value: DUST_UTXO_AMOUNT,
 			PkScript: radfiScript,
 		},
 		// rune OP_RETURN
@@ -357,9 +357,9 @@ func CreateRadFiTxWithdrawLiquidity(
 			Value: sequenceNumberAmount,
 			PkScript: relayerPkScript,
 		},
-		// radfi OP_RETRN
+		// radfi OP
 		{
-			Value: 0,
+			Value: DUST_UTXO_AMOUNT,
 			PkScript: radfiScript,
 		},
 		// rune OP_RETURN
@@ -434,9 +434,9 @@ func CreateRadFiTxCollectFees(
 			Value: sequenceNumberAmount,
 			PkScript: relayerPkScript,
 		},
-		// radfi OP_RETRN
+		// radfi OP
 		{
-			Value: 0,
+			Value: DUST_UTXO_AMOUNT,
 			PkScript: radfiScript,
 		},
 		// rune OP_RETURN
@@ -511,9 +511,9 @@ func CreateRadFiTxIncreaseLiquidity(
 			Value: sequenceNumberAmount,
 			PkScript: relayerPkScript,
 		},
-		// radfi OP_RETRN
+		// radfi OP
 		{
-			Value: 0,
+			Value: DUST_UTXO_AMOUNT,
 			PkScript: radfiScript,
 		},
 		// rune OP_RETURN
