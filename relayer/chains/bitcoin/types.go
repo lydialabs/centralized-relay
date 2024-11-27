@@ -2,6 +2,7 @@ package bitcoin
 
 import (
 	"github.com/btcsuite/btcd/wire"
+	"github.com/icon-project/centralized-relay/utils/multisig"
 )
 
 type MessageType int
@@ -15,7 +16,7 @@ const (
 type CallMessageType int
 
 const (
-	CALL_MESSAGE_TYPE MessageType = iota
+	CALL_MESSAGE_TYPE CallMessageType = iota
 	CALL_MESSAGE_ROLLBACK_TYPE
 	PERSISTENT_MESSAGE_TYPE
 )
@@ -27,9 +28,10 @@ type TxSearchParam struct {
 }
 
 type TxSearchRes struct {
-	Tx     *wire.MsgTx
-	Height uint64
-	TxIndex uint64
+	Tx            *wire.MsgTx
+	Height        uint64
+	TxIndex       uint64
+	BridgeMessage *multisig.BridgeDecodedMsg
 }
 
 // HightRange is a struct to represent a range of heights

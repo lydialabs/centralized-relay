@@ -1,20 +1,13 @@
 package bitcoin
 
 import (
-	"encoding/json"
-	"fmt"
-	"io"
+	"encoding/binary"
 	"math/big"
 	"net/http"
 	"strconv"
 	"strings"
 	"encoding/hex"
 
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/common"
-
-	bitcoinABI "github.com/icon-project/centralized-relay/relayer/chains/bitcoin/abi"
-	"github.com/icon-project/centralized-relay/utils/multisig"
 	"github.com/icon-project/icon-bridge/common/codec"
 )
 
@@ -94,7 +87,7 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 			if err != nil {
 				return nil, err
 			}
-			
+
 			calldata, err = bitcoinStateAbi.Pack("initPool", encodeInitPoolArgs[4:])
 
 		} else {
@@ -107,7 +100,7 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 
 	case multisig.RadFiWithdrawLiquidityMsg:
 		withdrawLiquidityInfo := data.(multisig.RadFiWithdrawLiquidityMsg)
-		
+
 		decreaseLiquidityData := bitcoinABI.INonfungiblePositionManagerDecreaseLiquidityParams{
 			TokenId: withdrawLiquidityInfo.NftId.ToBig(),
 			Amount0Min: withdrawLiquidityInfo.Amount0Min.ToBig(),
@@ -125,12 +118,12 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 		if err != nil {
 			return nil, err
 		}
-		
+
 	case multisig.RadFiIncreaseLiquidityMsg:
 		increaseLiquidityInfo := data.(multisig.RadFiIncreaseLiquidityMsg)
 		increaseLiquidityData := bitcoinABI.INonfungiblePositionManagerIncreaseLiquidityParams{
 			TokenId: increaseLiquidityInfo.NftId.ToBig(),
-			Amount0Desired: increaseLiquidityInfo.Amount0Desired.ToBig(), //todo fill in	
+			Amount0Desired: increaseLiquidityInfo.Amount0Desired.ToBig(), //todo fill in
 			Amount1Desired: increaseLiquidityInfo.Amount1Desired.ToBig(), //todo fill in
 			Deadline: big.NewInt(10000000000),
 			Amount0Min: increaseLiquidityInfo.Amount0Min.ToBig(),
@@ -160,9 +153,9 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 			if err != nil {
 				return nil, err
 			}
-	
+
 		} else {
-			//exact out	
+			//exact out
 			swapExactOutData := bitcoinABI.ISwapRouterExactOutputParams{
 				Path: swapInfo.Path,
 				Recipient: common.HexToAddress(to), // todo: review
@@ -175,7 +168,7 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 			if err != nil {
 				return nil, err
 			}
-	
+
 		}
 	case multisig.RadFiCollectFeesMsg:
 		collectInfo := data.(multisig.RadFiCollectFeesMsg)
@@ -185,7 +178,7 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 			Amount1Max: new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 128), big.NewInt(1)),
 			Recipient: common.HexToAddress(to), // todo:
 		}
-		
+
 		collectCalldata, err := nonfungibleABI.Pack("collect", collectParams)
 		if err != nil {
 			return nil, err
@@ -214,13 +207,13 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 	return res, nil
 }
 
-func XcallFormat(callData []byte, from, to string, sn uint, protocols []string) ([]byte, error) {
+func XcallFormat(callData []byte, from, to string, sn uint, protocols []string, messType uint8) ([]byte, error) {
 	//
 	csV2 := CSMessageRequestV2{
 		From:        from,
 		To:          to,
 		Sn:          big.NewInt(int64(sn)).Bytes(),
-		MessageType: uint8(CS_REQUEST),
+		MessageType: messType,
 		Data:        callData,
 		Protocols:   protocols,
 	}
@@ -245,8 +238,18 @@ func XcallFormat(callData []byte, from, to string, sn uint, protocols []string) 
 	return finalMessage, nil
 }
 
-func mulDiv(a, nNumerator, nDenominator *big.Int) *big.Int {
-	return big.NewInt(0).Div(big.NewInt(0).Mul(a, nNumerator), nDenominator)
+func uint64ToBytes(amount uint64) []byte {
+	bytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(bytes, amount)
+	return bytes
+}
+
+// Helper function to get minimum of two uint64 values
+func min(a, b uint64) uint64 {
+	if a <= b {
+		return a
+	}
+	return b
 }
 
 func BuildPath(paths []common.Address, fees []int64) ([]byte, error) {

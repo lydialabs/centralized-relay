@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	UNISAT_DEFAULT_MAINNET	= "https://open-api.unisat.io"
-	UNISAT_DEFAULT_TESTNET	= "https://open-api-testnet.unisat.io"
+	UNISAT_DEFAULT_MAINNET = "https://open-api.unisat.io"
+	UNISAT_DEFAULT_TESTNET = "https://open-api-testnet.unisat.io"
 )
 
 type DataBlockchainInfo struct {
@@ -175,25 +175,30 @@ type ResponseBtcUtxo struct {
 }
 
 type RuneDetail struct {
-	Amount       string        `json:"amount"`
-	RuneId       string        `json:"runeid"`
-	Rune         string        `json:"rune"`
-	SpacedRune   string        `json:"spacedRune"`
-	Symbol       string        `json:"symbol"`
-	Divisibility int           `json:"divisibility"`
+	Amount       string `json:"amount"`
+	RuneId       string `json:"runeid"`
+	Rune         string `json:"rune"`
+	SpacedRune   string `json:"spacedRune"`
+	Symbol       string `json:"symbol"`
+	Divisibility int    `json:"divisibility"`
 }
 
 type RuneUTXO struct {
-	Address      string        `json:"address"`
-	Satoshi      *big.Int      `json:"satoshi"`
-	ScriptPk     string        `json:"scriptPk"`
-	TxId         string        `json:"txid"`
-	Vout         int           `json:"vout"`
-	Runes 		[]RuneDetail   `json:"runes"`
+	Height        int64        `json:"height"`
+	Confirmations int64        `json:"confirmations"`
+	Address       string       `json:"address"`
+	Satoshi       *big.Int     `json:"satoshi"`
+	ScriptPk      string       `json:"scriptPk"`
+	TxId          string       `json:"txid"`
+	Vout          int          `json:"vout"`
+	Runes         []RuneDetail `json:"runes"`
 }
 
 type DataRuneUtxoList struct {
-	Utxo                  []RuneUTXO `json:"utxo"`
+	Height int64      `json:"height"`
+	Start  int        `json:"start"`
+	Total  int        `json:"total"`
+	Utxo   []RuneUTXO `json:"utxo"`
 }
 
 type ResponseRuneUtxo struct {
@@ -203,12 +208,41 @@ type ResponseRuneUtxo struct {
 	Data DataRuneUtxoList `json:"data"`
 }
 
+type ResponseUtxoRuneBalance struct {
+	Code int          `json:"code"`
+	Data []RuneDetail `json:"data"`
+}
+
+type ResponseFeeSummary struct {
+	Code    int        `json:"code"`
+	Message string     `json:"msg"`
+	Data    FeeSummary `json:"data"`
+}
+
+type FeeSummary struct {
+	List []FeeSummaryDetail `json:"list"`
+}
+
+type FeeSummaryDetail struct {
+	Title   string `json:"title"`
+	FeeRate int    `json:"feeRate"`
+	Desc    string `json:"desc"`
+}
+
 func BtcUtxoUrl(server, address string, offset, limit int64) string {
 	return fmt.Sprintf("%s/v1/indexer/address/%s/utxo-data?cursor=%d&size=%d", server, address, offset, limit)
 }
 
-func RuneUtxoUrl(server, address, runeId string) string {
-	return fmt.Sprintf("%s/v1/indexer/address/%s/runes/%s/utxo", server, address, runeId)
+func RuneUtxoUrl(server, address, runeId string, offset, limit int64) string {
+	return fmt.Sprintf("%s/v1/indexer/address/%s/runes/%s/utxo?start=%d&limit=%d", server, address, runeId, offset, limit)
+}
+
+func UtxoRuneBalanceUrl(server, txId string, index int) string {
+	return fmt.Sprintf("%s/v1/indexer/runes/utxo/%s/%d/balance", server, txId, index)
+}
+
+func FeeSummaryUrl(server string) string {
+	return fmt.Sprintf("%s/v5/default/fee-summary", server)
 }
 
 func GetWithHeader(ctx context.Context, url string, header map[string]string, response interface{}) error {
@@ -247,9 +281,38 @@ func GetBtcUtxo(ctx context.Context, server, bear, address string, offset, limit
 	return resp, err
 }
 
-func GetRuneUtxo(ctx context.Context, server, address, runeId string) (ResponseRuneUtxo, error) {
+func GetRuneUtxo(ctx context.Context, server, bear, address, runeId string, offset, limit int64) (ResponseRuneUtxo, error) {
 	var resp ResponseRuneUtxo
-	url := RuneUtxoUrl(server, address, runeId)
-	err := GetWithHeader(ctx, url, make(map[string]string), &resp)
+	url := RuneUtxoUrl(server, address, runeId, offset, limit)
+	err := GetWithBear(ctx, url, bear, &resp)
+
 	return resp, err
+}
+
+func GetUtxoRuneBalance(ctx context.Context, server, bear, txId string, index int) (ResponseUtxoRuneBalance, error) {
+	var resp ResponseUtxoRuneBalance
+	url := UtxoRuneBalanceUrl(server, txId, index)
+	err := GetWithBear(ctx, url, bear, &resp)
+	return resp, err
+}
+
+func GetFeeSummary(ctx context.Context, server string) (ResponseFeeSummary, error) {
+	var resp ResponseFeeSummary
+	url := FeeSummaryUrl(server)
+	err := GetWithHeader(ctx, url, nil, &resp)
+	return resp, err
+}
+
+func GetFastestFee(ctx context.Context, server string) (int, error) {
+	resp, err := GetFeeSummary(ctx, server)
+	if err != nil {
+		return 0, err
+	}
+	fastestFee := resp.Data.List[0].FeeRate
+	for _, detail := range resp.Data.List {
+		if detail.Title == "Fast" {
+			fastestFee = detail.FeeRate
+		}
+	}
+	return fastestFee, nil
 }

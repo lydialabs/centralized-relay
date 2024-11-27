@@ -20,11 +20,6 @@ func startMaster(c *Config) {
 	}
 
 	log.Printf("Master starting on port %s", port)
-
-	// isProcess := os.Getenv("IS_PROCESS")
-	// if isProcess == "1" {
-	// 	callSlaves("test")
-	// }
 	log.Fatal(server.ListenAndServe())
 }
 
@@ -60,69 +55,53 @@ func handleExecute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Process the message as needed
-	fmt.Println("Received message: ", msg)
-
 	// Send a response
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	response := map[string]string{"status": "success", "msg": msg}
-	fmt.Println(response)
 	json.NewEncoder(w).Encode(response)
 }
 
-// func callSlaves(txId string) {
-// 	fmt.Println("Master request slave")
-// 	slavePort1 := os.Getenv("SLAVE_SERVER_1")
-// 	slavePort2 := os.Getenv("SLAVE_SERVER_2")
-// 	// Call slave to get more data
-// 	var wg sync.WaitGroup
-// 	responses := make(chan string, 2)
-
-// 	wg.Add(2)
-// 	go requestPartialSign(slavePort1, txId, responses, &wg)
-// 	go requestPartialSign(slavePort2, txId, responses, &wg)
-
-// 	go func() {
-// 		wg.Wait()
-// 		close(responses)
-// 	}()
-
-// 	for res := range responses {
-// 		fmt.Println("Received response from slave: ", res)
-// 	}
-// }
-
-func requestPartialSign(url string, slaveRequestData []byte, responses chan<- [][]byte, wg *sync.WaitGroup) {
+func requestPartialSign(apiKey string, url string, slaveRequestData []byte, responses chan<- slaveResponse, order int, wg *sync.WaitGroup) {
 	defer wg.Done()
-
+	response := slaveResponse{}
 	client := &http.Client{}
-	apiKeyHeader := os.Getenv("API_KEY")
 	payload := bytes.NewBuffer(slaveRequestData)
 	req, err := http.NewRequest("POST", url, payload)
 
 	if err != nil {
-		log.Fatalf("Failed to create request: %v", err)
+		response.err = fmt.Errorf("failed to create request: %v", err)
+		responses <- response
+		return
 	}
 
-	req.Header.Add("x-api-key", apiKeyHeader)
+	req.Header.Add("x-api-key", apiKey)
 
 	resp, err := client.Do(req)
 
 	if err != nil {
-		log.Fatalf("Failed to send request: %v", err)
+		response.err = fmt.Errorf("failed to send request: %v", err)
+		responses <- response
+		return
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatalf("Error reading response: %v", err)
+		response.err = fmt.Errorf("error reading response: %v", err)
+		responses <- response
+		return
 	}
 
 	sigs := [][]byte{}
 	err = json.Unmarshal(body, &sigs)
 	if err != nil {
-		fmt.Println("err Unmarshal: ", err)
+		response.err = fmt.Errorf("err Unmarshal: %v", err)
+		responses <- response
+		return
 	}
 
-	responses <- sigs
+	response.order = order
+	response.sigs = sigs
+	response.err = nil
+	responses <- response
 }
