@@ -68,7 +68,7 @@ func TestDecodeConnectionContract(t *testing.T) {
 		log.Fatal(err.Error())
 	}
 
-	fmt.Printf("%+v", res)
+	fmt.Printf("%+v", csMessage)
 }
 
 func TestEncodeToXcallMessage(t *testing.T) {

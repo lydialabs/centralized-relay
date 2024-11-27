@@ -252,6 +252,10 @@ func min(a, b uint64) uint64 {
 	return b
 }
 
+func mulDiv(a, nNumerator, nDenominator *big.Int) *big.Int {
+	return big.NewInt(0).Div(big.NewInt(0).Mul(a, nNumerator), nDenominator)
+}
+
 func BuildPath(paths []common.Address, fees []int64) ([]byte, error) {
 	var temp []byte
 	for i := 0; i < len(fees); i++ {
