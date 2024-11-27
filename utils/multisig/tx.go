@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
+	"github.com/btcsuite/btcd/btcutil"
 )
 
 func TransposeSigs(sigs [][][]byte) [][][]byte {
@@ -22,9 +22,7 @@ func TransposeSigs(sigs [][][]byte) [][][]byte {
 	}
 	for i := 0; i < xl; i++ {
 		for j := 0; j < yl; j++ {
-			if len(sigs[j]) > i {
-				result[i][j] = sigs[j][i]
-			}
+			result[i][j] = sigs[j][i]
 		}
 	}
 
@@ -36,11 +34,13 @@ func ParseTx(data string) (*wire.MsgTx, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	tx := &wire.MsgTx{}
 	err = tx.Deserialize(strings.NewReader(string(dataBytes)))
 	if err != nil {
 		return nil, err
 	}
+
 	return tx, nil
 }
 
@@ -157,9 +157,9 @@ func CombineTapMultisig(
 		if bytes.Equal(inputs[idx].PkScript, multisigWallet.PKScript) {
 			reverseV := [][]byte{}
 			for i := len(v) - 1; i >= 0; i-- {
-				if len(v[i]) != 0 {
+				// if (len(v[i]) != 0) {
 					reverseV = append(reverseV, v[i])
-				}
+				// }
 			}
 
 			msgTx.TxIn[idx].Witness = append(reverseV, tapLeafScript, multisigControlBlockBytes)

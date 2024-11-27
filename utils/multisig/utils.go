@@ -7,6 +7,7 @@ import (
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/btcutil/hdkeychain"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/wire"
 )
 
 func GeneratePrivateKeyFromSeed(seed []byte, chainParam *chaincfg.Params) *btcec.PrivateKey {
@@ -60,6 +61,14 @@ func SumInputsSat(inputs []*Input) int64 {
 	total := int64(0)
 	for _, in := range inputs {
 		total += in.OutputAmount
+	}
+	return total
+}
+
+func SumOutputsSat(outputs []*wire.TxOut) int64 {
+	total := int64(0)
+	for _, output := range outputs {
+		total += output.Value
 	}
 	return total
 }

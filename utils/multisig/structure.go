@@ -32,20 +32,6 @@ type Input struct {
 	Runes			[]*runestone.Edict
 }
 
-type Input struct {
-	TxHash			string
-	OutputIdx		uint32
-	OutputAmount	int64
-	PkScript		[]byte
-	Sigs			[][]byte
-	Runes			[]*runestone.Edict
-}
-
-type TapSigInfo struct {
-	PkScript		[]byte
-	TapLeaf			txscript.TapLeaf
-}
-
 type PoolBalance struct {
 	Token0Id		runestone.RuneId
 	Token1Id		runestone.RuneId

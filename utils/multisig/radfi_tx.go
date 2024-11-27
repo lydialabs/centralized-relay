@@ -4,9 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/bxelab/runestone"
 )
@@ -529,84 +527,4 @@ func CreateRadFiTxIncreaseLiquidity(
 	}
 
 	return CreateRadFiTx(inputs, outputs, userPkScript, txFee, 0)
-}
-
-func SignTapMultisig(
-	privKey string,
-	msgTx *wire.MsgTx,
-	inputs []*Input,
-	multisigWallet *MultisigWallet,
-	indexTapLeaf int,
-) ([][]byte, error) {
-	if len(inputs) != len(msgTx.TxIn) {
-		return nil, fmt.Errorf("len of inputs %v and TxIn %v mismatch", len(inputs), len(msgTx.TxIn))
-	}
-	prevOuts := txscript.NewMultiPrevOutFetcher(nil)
-	for _, input := range inputs {
-		utxoHash, err := chainhash.NewHashFromStr(input.TxHash)
-		if err != nil {
-			return nil, err
-		}
-		outPoint := wire.NewOutPoint(utxoHash, input.OutputIdx)
-
-		prevOuts.AddPrevOut(*outPoint, &wire.TxOut{
-			Value:    input.OutputAmount,
-			PkScript: input.PkScript,
-		})
-	}
-	txSigHashes := txscript.NewTxSigHashes(msgTx, prevOuts)
-
-	wif, err := btcutil.DecodeWIF(privKey)
-	if err != nil {
-		return nil, fmt.Errorf("[PartSignOnRawExternalTx] Error when generate btc private key from seed: %v", err)
-	}
-	// sign on each TxIn
-	tapLeaf := multisigWallet.TapLeaves[0]
-	sigs := [][]byte{}
-	for i, input := range inputs {
-		if bytes.Equal(input.PkScript, multisigWallet.PKScript) {
-			sig, err := txscript.RawTxInTapscriptSignature(
-				msgTx, txSigHashes, i, int64(inputs[i].OutputAmount), multisigWallet.PKScript, tapLeaf, txscript.SigHashDefault, wif.PrivKey)
-			if err != nil {
-				return nil, fmt.Errorf("fail to sign tx: %v", err)
-			}
-
-			sigs = append(sigs, sig)
-		} else {
-			sigs = append(sigs, []byte{})
-		}
-	}
-
-	return sigs, nil
-}
-
-func CombineTapMultisig(
-	totalSigs [][][]byte,
-	msgTx *wire.MsgTx,
-	inputs []*Input,
-	multisigWallet *MultisigWallet,
-	indexTapLeaf int,
-) (*wire.MsgTx, error) {
-	tapLeafScript := multisigWallet.TapLeaves[indexTapLeaf].Script
-	multisigControlBlock := multisigWallet.TapScriptTree.LeafMerkleProofs[indexTapLeaf].ToControlBlock(multisigWallet.SharedPublicKey)
-	multisigControlBlockBytes, err := multisigControlBlock.ToBytes()
-	if err != nil {
-		return nil, err
-	}
-
-	transposedSigs := TransposeSigs(totalSigs)
-	for idx, v := range transposedSigs {
-		if bytes.Equal(inputs[idx].PkScript, multisigWallet.PKScript) {
-			reverseV := [][]byte{}
-			for i := len(v) - 1; i >= 0; i-- {
-				if (len(v[i]) != 0) {
-					reverseV = append(reverseV, v[i])
-				}
-			}
-
-			msgTx.TxIn[idx].Witness = append(reverseV, tapLeafScript, multisigControlBlockBytes)
-		}
-	}
-
-	return msgTx, nil
 }

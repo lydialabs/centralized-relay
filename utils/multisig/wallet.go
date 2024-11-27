@@ -197,3 +197,17 @@ func AddressOnChain(
 
 	return address, nil
 }
+
+// return bitcoin output PkScript
+func DecodeAddress(chainParam *chaincfg.Params, addr string) ([]byte, error) {
+	decodedAddr, err := btcutil.DecodeAddress(addr, chainParam)
+	if err != nil {
+		return nil, err
+	}
+	destinationAddrByte, err := txscript.PayToAddrScript(decodedAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	return destinationAddrByte, nil
+}
