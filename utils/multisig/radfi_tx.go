@@ -87,7 +87,7 @@ func CreateRadFiTxInitPool(
 
 	radfiScript, _ := CreateProvideLiquidityScript(msg)
 
-	userChangeOutput := uint32(poolUTXOsCount+2)
+	userChangeOutput := uint32(poolUTXOsCount+3)
 	runeOutput := &runestone.Runestone{
 		Edicts: []runestone.Edict{},
 		Pointer: &userChangeOutput,
