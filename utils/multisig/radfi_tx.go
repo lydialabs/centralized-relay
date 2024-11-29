@@ -125,7 +125,6 @@ func CreateRadFiTxInitPool(
 			Value: bitcoinAmount,
 			PkScript: relayerPkScript,
 		})
-		fmt.Println("Token1Id: ", msg.Token1Id)
 	}
 	if msg.Token0Id == BitcoinRuneId() {
 		outputs[0].Value += int64(msg.Amount0Desired.Lo % poolUTXOsContainLiquidityCount)
