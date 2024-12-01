@@ -12,7 +12,7 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/bxelab/runestone"
+	"github.com/studyzy/runestone"
 	"lukechampine.com/uint128"
 )
 
@@ -131,14 +131,22 @@ func TestRadFiInitPoolBitcoinRune(t *testing.T) {
 		Fee:	30,
 		Min0:	0,
 		Min1:	10000,
-		Amount0Desired: uint128.From64(10000),
-		Amount1Desired: uint128.From64(1000000),
+		Amount0Desired: uint128.From64(10011),
+		Amount1Desired: uint128.From64(1000011),
 		InitPrice: uint128.From64(123456),
+		SequenceNumber: uint128.From64(0),
 		Token0Id: runestone.RuneId{ Block: 0, Tx: 0},
 		Token1Id: runestone.RuneId{ Block: 678, Tx: 90},
 	}
 
 	inputs := []*Input{
+		// pool init sequence UTXO
+		{
+			TxHash:			"dfa3fc22b6436fdfaaf96bca443270cf1b6b50c24f2f2aff9ceaf668e2b1ed26",
+			OutputIdx:		0,
+			OutputAmount:	DUST_UTXO_AMOUNT,
+			PkScript:		relayersMultisigWallet.PKScript,
+		},
 		// user bitcoin UTXO to add liquidity and pay tx fee
 		{
 			TxHash:			"d316231a8aa1f74472ed9cc0f1ed0e36b9b290254cf6b2c377f0d92b299868bf",
@@ -160,6 +168,8 @@ func TestRadFiInitPoolBitcoinRune(t *testing.T) {
 		inputs,
 		relayersMultisigWallet.PKScript,
 		userMultisigWallet.PKScript,
+		UTXOS_PER_POOL,
+		5,
 		TX_FEE,
 	)
 	fmt.Println("err: ", err)
@@ -205,6 +215,7 @@ func TestRadFiInitPoolBitcoinRune(t *testing.T) {
 	fmt.Println("decoded message - Amount0  : ", decodedRadFiMessage.ProvideLiquidityMsg.Amount0Desired)
 	fmt.Println("decoded message - Amount1  : ", decodedRadFiMessage.ProvideLiquidityMsg.Amount1Desired)
 	fmt.Println("decoded message - InitPrice: ", decodedRadFiMessage.ProvideLiquidityMsg.InitPrice)
+	fmt.Println("decoded message - SequenceNumber: ", decodedRadFiMessage.ProvideLiquidityMsg.SequenceNumber)
 	fmt.Println("decoded message - Token0Id: ", decodedRadFiMessage.ProvideLiquidityMsg.Token0Id)
 	fmt.Println("decoded message - Token1Id: ", decodedRadFiMessage.ProvideLiquidityMsg.Token1Id)
 }
@@ -221,14 +232,22 @@ func TestRadFiInitPoolRuneRune(t *testing.T) {
 		Fee:	30,
 		Min0:	0,
 		Min1:	10000,
-		Amount0Desired: uint128.From64(1000000),
-		Amount1Desired: uint128.From64(2000000),
+		Amount0Desired: uint128.From64(1000011),
+		Amount1Desired: uint128.From64(2000011),
 		InitPrice: uint128.From64(123456),
+		SequenceNumber: uint128.From64(0),
 		Token0Id: runestone.RuneId{ Block: 123, Tx: 321},
 		Token1Id: runestone.RuneId{ Block: 678, Tx: 90},
 	}
 
 	inputs := []*Input{
+		// pool init sequence UTXO
+		{
+			TxHash:			"dfa3fc22b6436fdfaaf96bca443270cf1b6b50c24f2f2aff9ceaf668e2b1ed26",
+			OutputIdx:		0,
+			OutputAmount:	DUST_UTXO_AMOUNT,
+			PkScript:		relayersMultisigWallet.PKScript,
+		},
 		// user rune0 UTXO to add liquidity
 		{
 			TxHash:			"3aa9c4b9a71fe19560c467cdddce932eae8a10e28123a09acb27701123f2a8f7",
@@ -257,6 +276,8 @@ func TestRadFiInitPoolRuneRune(t *testing.T) {
 		inputs,
 		relayersMultisigWallet.PKScript,
 		userMultisigWallet.PKScript,
+		UTXOS_PER_POOL,
+		4,
 		TX_FEE,
 	)
 	fmt.Println("err: ", err)
@@ -302,6 +323,7 @@ func TestRadFiInitPoolRuneRune(t *testing.T) {
 	fmt.Println("decoded message - Amount0  : ", decodedRadFiMessage.ProvideLiquidityMsg.Amount0Desired)
 	fmt.Println("decoded message - Amount1  : ", decodedRadFiMessage.ProvideLiquidityMsg.Amount1Desired)
 	fmt.Println("decoded message - InitPrice: ", decodedRadFiMessage.ProvideLiquidityMsg.InitPrice)
+	fmt.Println("decoded message - SequenceNumber: ", decodedRadFiMessage.ProvideLiquidityMsg.SequenceNumber)
 	fmt.Println("decoded message - Token0Id: ", decodedRadFiMessage.ProvideLiquidityMsg.Token0Id)
 	fmt.Println("decoded message - Token1Id: ", decodedRadFiMessage.ProvideLiquidityMsg.Token1Id)
 }
@@ -321,14 +343,39 @@ func TestRadFiProvideLiquidityPoolBitcoinRune(t *testing.T) {
 		Amount0Desired: uint128.From64(1000),
 		Amount1Desired: uint128.From64(100000),
 		InitPrice: uint128.From64(0),
+		SequenceNumber: uint128.From64(111),
 		Token0Id: runestone.RuneId{ Block: 0, Tx: 0},
 		Token1Id: runestone.RuneId{ Block: 678, Tx: 90},
 	}
 
 	inputs := []*Input{
-		// pool current sequence number
+		// some of pool UTXOs
 		{
 			TxHash:			"dfa3fc22b6436fdfaaf96bca443270cf1b6b50c24f2f2aff9ceaf668e2b1ed26",
+			OutputIdx:		0,
+			OutputAmount:	10000,
+			PkScript:		relayersMultisigWallet.PKScript,
+			Runes:			[]*runestone.Edict{
+								{
+									ID:		runestone.RuneId{ Block: 678, Tx: 90 },
+									Amount:	uint128.From64(1000000),
+								},
+							},
+		},
+		{
+			TxHash:			"dfa3fc22b6436fdfaaf96bca443270cf1b6b50c24f2f2aff9ceaf668e2b1ed27",
+			OutputIdx:		0,
+			OutputAmount:	20000,
+			PkScript:		relayersMultisigWallet.PKScript,
+			Runes:			[]*runestone.Edict{
+								{
+									ID:		runestone.RuneId{ Block: 678, Tx: 90 },
+									Amount:	uint128.From64(2000000),
+								},
+							},
+		},
+		{
+			TxHash:			"dfa3fc22b6436fdfaaf96bca443270cf1b6b50c24f2f2aff9ceaf668e2b1ed28",
 			OutputIdx:		0,
 			OutputAmount:	10000,
 			PkScript:		relayersMultisigWallet.PKScript,
@@ -360,6 +407,7 @@ func TestRadFiProvideLiquidityPoolBitcoinRune(t *testing.T) {
 		inputs,
 		relayersMultisigWallet.PKScript,
 		userMultisigWallet.PKScript,
+		3,
 		TX_FEE,
 	)
 	fmt.Println("err: ", err)
@@ -413,6 +461,7 @@ func TestRadFiProvideLiquidityPoolBitcoinRune(t *testing.T) {
 	fmt.Println("decoded message - Amount0  : ", decodedRadFiMessage.ProvideLiquidityMsg.Amount0Desired)
 	fmt.Println("decoded message - Amount1  : ", decodedRadFiMessage.ProvideLiquidityMsg.Amount1Desired)
 	fmt.Println("decoded message - InitPrice: ", decodedRadFiMessage.ProvideLiquidityMsg.InitPrice)
+	fmt.Println("decoded message - SequenceNumber: ", decodedRadFiMessage.ProvideLiquidityMsg.SequenceNumber)
 	fmt.Println("decoded message - Token0Id: ", decodedRadFiMessage.ProvideLiquidityMsg.Token0Id)
 	fmt.Println("decoded message - Token1Id: ", decodedRadFiMessage.ProvideLiquidityMsg.Token1Id)
 }
@@ -432,14 +481,47 @@ func TestRadFiProvideLiquidityPoolRuneRune(t *testing.T) {
 		Amount0Desired: uint128.From64(100000),
 		Amount1Desired: uint128.From64(200000),
 		InitPrice: uint128.Zero,
+		SequenceNumber: uint128.From64(111),
 		Token0Id: runestone.RuneId{ Block: 123, Tx: 321},
 		Token1Id: runestone.RuneId{ Block: 678, Tx: 90},
 	}
 
 	inputs := []*Input{
-		// pool current sequence number
+		// some of pool UTXOs
 		{
 			TxHash:			"a9287ff640a9a06748100f6334f0e50a8c6a055aabff742443a5b1692d3dd0dc",
+			OutputIdx:		0,
+			OutputAmount:	DUST_UTXO_AMOUNT,
+			PkScript:		relayersMultisigWallet.PKScript,
+			Runes:			[]*runestone.Edict{
+								{
+									ID:		runestone.RuneId{ Block: 123, Tx: 321 },
+									Amount:	uint128.From64(1000000),
+								},
+								{
+									ID:		runestone.RuneId{ Block: 678, Tx: 90 },
+									Amount:	uint128.From64(2000000),
+								},
+							},
+		},
+		{
+			TxHash:			"a9287ff640a9a06748100f6334f0e50a8c6a055aabff742443a5b1692d3dd0dd",
+			OutputIdx:		0,
+			OutputAmount:	DUST_UTXO_AMOUNT,
+			PkScript:		relayersMultisigWallet.PKScript,
+			Runes:			[]*runestone.Edict{
+								{
+									ID:		runestone.RuneId{ Block: 123, Tx: 321 },
+									Amount:	uint128.From64(1000000),
+								},
+								{
+									ID:		runestone.RuneId{ Block: 678, Tx: 90 },
+									Amount:	uint128.From64(2000000),
+								},
+							},
+		},
+		{
+			TxHash:			"a9287ff640a9a06748100f6334f0e50a8c6a055aabff742443a5b1692d3dd0de",
 			OutputIdx:		0,
 			OutputAmount:	DUST_UTXO_AMOUNT,
 			PkScript:		relayersMultisigWallet.PKScript,
@@ -482,6 +564,7 @@ func TestRadFiProvideLiquidityPoolRuneRune(t *testing.T) {
 		inputs,
 		relayersMultisigWallet.PKScript,
 		userMultisigWallet.PKScript,
+		3,
 		TX_FEE,
 	)
 	fmt.Println("err: ", err)
@@ -535,6 +618,7 @@ func TestRadFiProvideLiquidityPoolRuneRune(t *testing.T) {
 	fmt.Println("decoded message - Amount0  : ", decodedRadFiMessage.ProvideLiquidityMsg.Amount0Desired)
 	fmt.Println("decoded message - Amount1  : ", decodedRadFiMessage.ProvideLiquidityMsg.Amount1Desired)
 	fmt.Println("decoded message - InitPrice: ", decodedRadFiMessage.ProvideLiquidityMsg.InitPrice)
+	fmt.Println("decoded message - SequenceNumber: ", decodedRadFiMessage.ProvideLiquidityMsg.SequenceNumber)
 	fmt.Println("decoded message - Token0Id: ", decodedRadFiMessage.ProvideLiquidityMsg.Token0Id)
 	fmt.Println("decoded message - Token1Id: ", decodedRadFiMessage.ProvideLiquidityMsg.Token1Id)
 }

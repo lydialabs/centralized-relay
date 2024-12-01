@@ -4,7 +4,7 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/txscript"
-	"github.com/bxelab/runestone"
+	"github.com/studyzy/runestone"
 	"lukechampine.com/uint128"
 )
 

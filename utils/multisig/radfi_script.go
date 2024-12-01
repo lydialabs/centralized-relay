@@ -8,7 +8,7 @@ import (
 
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/bxelab/runestone"
+	"github.com/studyzy/runestone"
 	"github.com/ethereum/go-ethereum/common"
 	"lukechampine.com/uint128"
 )
@@ -46,6 +46,7 @@ type RadFiProvideLiquidityMsg struct {
 	Amount0Desired	uint128.Uint128
 	Amount1Desired	uint128.Uint128
 	InitPrice		uint128.Uint128
+	SequenceNumber	uint128.Uint128
 	// other outputs data
 	Token0Id		runestone.RuneId
 	Token1Id		runestone.RuneId
@@ -172,6 +173,7 @@ func CreateProvideLiquidityScript(msg *RadFiProvideLiquidityMsg) ([]byte, error)
 	data = append(data, runestone.EncodeUint128(msg.Amount0Desired)...)
 	data = append(data, runestone.EncodeUint128(msg.Amount1Desired)...)
 	data = append(data, runestone.EncodeUint128(msg.InitPrice)...)
+	data = append(data, runestone.EncodeUint128(msg.SequenceNumber)...)
 
 	return builder.AddData(data).Script()
 }
@@ -292,16 +294,31 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 			if err := binary.Read(r, binary.BigEndian, &ticks); err != nil {
 				return nil, fmt.Errorf("OP_RADFI_PROVIDE_LIQUIDITY could not read ticks data - Error %v", err)
 			}
+			// check number of rune id in the runestone
+			tokenIds := []runestone.RuneId{}
+			for _, edict := range runeArtifact.Runestone.Edicts {
+				existed := false
+				for _, tokenId := range tokenIds {
+					if edict.ID.Cmp(tokenId) == 0 {
+						existed = true
+						break
+					}
+
+				}
+				if !existed {
+					tokenIds = append(tokenIds, edict.ID)
+				}
+			}
 			var token0Id, token1Id runestone.RuneId
-			switch len(runeArtifact.Runestone.Edicts) {
+			switch len(tokenIds) {
 				case 1:
 					token0Id = BitcoinRuneId()
-					token1Id = runeArtifact.Runestone.Edicts[0].ID
+					token1Id = tokenIds[0]
 				case 2:
-					token0Id = runeArtifact.Runestone.Edicts[0].ID
-					token1Id = runeArtifact.Runestone.Edicts[1].ID
+					token0Id = tokenIds[0]
+					token1Id = tokenIds[1]
 				default:
-					return nil, fmt.Errorf("invalid numbers of Rune edicts")
+					return nil, fmt.Errorf("invalid number of Rune Ids")
 			}
 			// TODO: check if integers overflow
 			return &RadFiDecodedMsg {
@@ -314,6 +331,7 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 					Amount0Desired:	integers[3],
 					Amount1Desired:	integers[4],
 					InitPrice:		integers[5],
+					SequenceNumber: integers[6],
 					Token0Id:		token0Id,
 					Token1Id:		token1Id,
 				},
