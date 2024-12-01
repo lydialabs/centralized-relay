@@ -2,13 +2,20 @@ package bitcoin
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"math/big"
 	"net/http"
 	"strconv"
 	"strings"
 	"encoding/hex"
+	"fmt"
+	"io"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/icon-project/centralized-relay/utils/multisig"
 
 	"github.com/icon-project/icon-bridge/common/codec"
+	evmAbi "github.com/icon-project/centralized-relay/relayer/chains/evm/abi"
 )
 
 func GetRuneTxIndex(endpoint, method, bearToken, txId string, index int) (*RuneTxIndexResponse, error) {
@@ -48,9 +55,9 @@ func GetRuneTxIndex(endpoint, method, bearToken, txId string, index int) (*RuneT
 
 func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []string, requester common.Address) ([]byte, error) {
 	var res, calldata []byte
-	bitcoinStateAbi, _ := abi.JSON(strings.NewReader(bitcoinABI.BitcoinStateMetaData.ABI))
-	nonfungibleABI, _ := abi.JSON(strings.NewReader(bitcoinABI.INonfungiblePositionManagerMetaData.ABI))
-	routerABI, _ := abi.JSON(strings.NewReader(bitcoinABI.IswaprouterMetaData.ABI))
+	bitcoinStateAbi, _ := abi.JSON(strings.NewReader(evmAbi.BitcoinStateMetaData.ABI))
+	nonfungibleABI, _ := abi.JSON(strings.NewReader(evmAbi.NonfungiblePositionManagerMetaData.ABI))
+	routerABI, _ := abi.JSON(strings.NewReader(evmAbi.IrouterMetaData.ABI))
 	addressTy, _ := abi.NewType("address", "", nil)
 	bytes, _ := abi.NewType("bytes", "", nil)
 
@@ -66,7 +73,7 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 	switch data.(type) {
 	case multisig.RadFiProvideLiquidityMsg:
 		dataMint := data.(multisig.RadFiProvideLiquidityMsg)
-		mintParams := bitcoinABI.INonfungiblePositionManagerMintParams{
+		mintParams := evmAbi.INonfungiblePositionManagerMintParams{
 			Token0:         dataMint.Detail.Token0,
 			Token1:         dataMint.Detail.Token1,
 			Fee:            big.NewInt(int64(dataMint.Detail.Fee) * 100),
@@ -101,7 +108,7 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 	case multisig.RadFiWithdrawLiquidityMsg:
 		withdrawLiquidityInfo := data.(multisig.RadFiWithdrawLiquidityMsg)
 
-		decreaseLiquidityData := bitcoinABI.INonfungiblePositionManagerDecreaseLiquidityParams{
+		decreaseLiquidityData := evmAbi.INonfungiblePositionManagerDecreaseLiquidityParams{
 			TokenId: withdrawLiquidityInfo.NftId.ToBig(),
 			Amount0Min: withdrawLiquidityInfo.Amount0Min.ToBig(),
 			Amount1Min: withdrawLiquidityInfo.Amount1Min.ToBig(),
@@ -121,7 +128,7 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 
 	case multisig.RadFiIncreaseLiquidityMsg:
 		increaseLiquidityInfo := data.(multisig.RadFiIncreaseLiquidityMsg)
-		increaseLiquidityData := bitcoinABI.INonfungiblePositionManagerIncreaseLiquidityParams{
+		increaseLiquidityData := evmAbi.INonfungiblePositionManagerIncreaseLiquidityParams{
 			TokenId: increaseLiquidityInfo.NftId.ToBig(),
 			Amount0Desired: increaseLiquidityInfo.Amount0Desired.ToBig(), //todo fill in
 			Amount1Desired: increaseLiquidityInfo.Amount1Desired.ToBig(), //todo fill in
@@ -141,7 +148,7 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 		var err error
 		if swapInfo.IsExactInOut {
 			//exact in
-			swapExactInData := bitcoinABI.ISwapRouterExactInputParams{
+			swapExactInData := evmAbi.ISwapRouterExactInputParams{
 				Path: swapInfo.Path,
 				AmountIn: swapInfo.AmountIn.ToBig(), // todo:
 				AmountOutMinimum: swapInfo.AmountOutMinimum.ToBig(), // todo:
@@ -156,7 +163,7 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 
 		} else {
 			//exact out
-			swapExactOutData := bitcoinABI.ISwapRouterExactOutputParams{
+			swapExactOutData := evmAbi.ISwapRouterExactOutputParams{
 				Path: swapInfo.Path,
 				Recipient: common.HexToAddress(to), // todo: review
 				Deadline: big.NewInt(10000000000),
@@ -172,7 +179,7 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 		}
 	case multisig.RadFiCollectFeesMsg:
 		collectInfo := data.(multisig.RadFiCollectFeesMsg)
-		collectParams := bitcoinABI.INonfungiblePositionManagerCollectParams{
+		collectParams := evmAbi.INonfungiblePositionManagerCollectParams{
 			TokenId: collectInfo.NftId.ToBig(),
 			Amount0Max: new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 128), big.NewInt(1)),
 			Amount1Max: new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 128), big.NewInt(1)),

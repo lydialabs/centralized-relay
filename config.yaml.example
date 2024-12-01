@@ -1,0 +1,52 @@
+global:
+  timeout: 10s
+  kms-key-id: f5c550ca-a6f2-4597-895c-4846ab8e4ad2
+chains:
+  avalanche:
+    type: evm
+    value:
+      rpc-url: "https://sepolia.optimism.io"
+      websocket-url: "https://sepolia.optimism.io"
+      verifier-rpc-url: ""
+      start-height: 20583839
+      address: 0x9699b31b25D71BDA4819bBe66244E9130cEE62b7
+      gas-min: 0
+      gas-limit: 100056000
+      contracts:
+        xcall: 0x2Ab70055369C860F9f152d291e58A9333C17B3ef
+        connection: 0x81BFbdAa0af287125602C1afe954cBbccff0eB3A
+      concurrency: 0
+      block-interval: 2s
+      finality-block: 10
+      nid: 0xa869.fuji
+
+  bitcoin:
+    type: bitcoin
+    value:
+      rpc-url: stylish-white-paper.btc-testnet.quiknode.pro/f87ecf84754d9daf8cf45b0334ba3fee9b356db6/
+      rpc-user: 123
+      rpc-password: 123
+      address: tb1pf0atpt2d3zel6udws38pkrh2e49vqd3c5jcud3a82srphnmpe55q0ecrzk
+      connections:
+        - cxc7a77b874eddfe3fb5434effaf35375b697496ca
+      unisat-url: https://open-api-testnet.unisat.io
+      unisat-key: 60b7bf52654454f19d8553e1b6427fb9fd2c722ea8dc6822bdf1dd7615b4b35d
+      unisat-wallet-url: https://wallet-api-testnet.unisat.io
+      request-timeout: 1000
+      mempool-url: https://mempool.space/api/testnet/tx
+      start-height: 3004578
+      network-id: 2
+      op-code: 0x5e
+      finality-block: 10
+      nid: 0x2.btc
+      chain-name: bitcoin
+      mode: master
+      slave-server-1: http://localhost:8081
+      slave-server-2: http://localhost:8082
+      port: 8080
+      api-key: key
+      masterPubKey: 02fe44ec9f26b97ed30bd33898cf22de726e05389bde632d3aa6ad6746e15221d2
+      slave1PubKey: 0230edd881db1bc32b94f83ea5799c2e959854e0f99427d07c211206abd876d052
+      slave2PubKey: 021e83d56728fde393b41b74f2b859381661025f2ecec567cf392da7372de47833
+      relayerPrivKey: 
+      recoveryLockTime: 1234
