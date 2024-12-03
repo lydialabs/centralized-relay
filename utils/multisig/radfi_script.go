@@ -72,7 +72,7 @@ type RadFiWithdrawLiquidityMsg struct {
 	NftId			uint128.Uint128
 	Amount0			uint128.Uint128
 	Amount1			uint128.Uint128
-	// RecipientIndex is 3 and 4
+	SequenceNumber	uint128.Uint128
 }
 
 type RadFiCollectFeesMsg struct {
@@ -82,6 +82,7 @@ type RadFiCollectFeesMsg struct {
 	// Collect amount, only for creating bitcoin tx
 	Amount0			uint128.Uint128
 	Amount1			uint128.Uint128
+	SequenceNumber	uint128.Uint128
 }
 
 type RadFiIncreaseLiquidityMsg struct {
@@ -91,6 +92,7 @@ type RadFiIncreaseLiquidityMsg struct {
 	NftId	uint128.Uint128
 	Amount0	uint128.Uint128
 	Amount1	uint128.Uint128
+	SequenceNumber	uint128.Uint128
 }
 
 type RadFiDecodedMsg struct {
@@ -210,6 +212,7 @@ func CreateWithdrawLiquidityScript(msg *RadFiWithdrawLiquidityMsg) ([]byte, erro
 	data = append(data, runestone.EncodeUint128(msg.NftId)...)
 	data = append(data, runestone.EncodeUint128(msg.Amount0)...)
 	data = append(data, runestone.EncodeUint128(msg.Amount1)...)
+	data = append(data, runestone.EncodeUint128(msg.SequenceNumber)...)
 
 	return builder.AddData(data).Script()
 }
@@ -221,6 +224,7 @@ func CreateCollectFeesScript(msg *RadFiCollectFeesMsg) ([]byte, error) {
 	data := append([]byte{OP_RADFI_COLLECT_FEES}, runestone.EncodeUint128(msg.NftId)...)
 	data = append(data, runestone.EncodeUint128(msg.Amount0)...)
 	data = append(data, runestone.EncodeUint128(msg.Amount1)...)
+	data = append(data, runestone.EncodeUint128(msg.SequenceNumber)...)
 
 	return builder.AddData(data).Script()
 }
@@ -234,6 +238,7 @@ func CreateIncreaseLiquidityScript(msg *RadFiIncreaseLiquidityMsg) ([]byte, erro
 	data = append(data, runestone.EncodeUint128(msg.NftId)...)
 	data = append(data, runestone.EncodeUint128(msg.Amount0)...)
 	data = append(data, runestone.EncodeUint128(msg.Amount1)...)
+	data = append(data, runestone.EncodeUint128(msg.SequenceNumber)...)
 
 	return builder.AddData(data).Script()
 }
@@ -374,6 +379,7 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 					NftId:			integers[1],
 					Amount0:		integers[2],
 					Amount1:		integers[3],
+					SequenceNumber: integers[4],
 				},
 			}, nil
 
@@ -384,6 +390,7 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 					NftId:			integers[0],
 					Amount0:		integers[1],
 					Amount1:		integers[2],
+					SequenceNumber: integers[3],
 				},
 			}, nil
 
@@ -391,11 +398,12 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 			return &RadFiDecodedMsg {
 				Flag:					flag,
 				IncreaseLiquidityMsg:	&RadFiIncreaseLiquidityMsg{
-					Min0:		uint16(integers[0].Lo),
-					Min1:		uint16(integers[1].Lo),
-					NftId:		integers[2],
-					Amount0:	integers[3],
-					Amount1:	integers[4],
+					Min0:		    uint16(integers[0].Lo),
+					Min1:		    uint16(integers[1].Lo),
+					NftId:		    integers[2],
+					Amount0:	    integers[3],
+					Amount1:	    integers[4],
+					SequenceNumber: integers[5],
 				},
 			}, nil
 
