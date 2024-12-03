@@ -23,7 +23,7 @@ import (
 
 	"path/filepath"
 
-	"github.com/icon-project/centralized-relay/relayer/chains/wasm/types"
+	// "github.com/icon-project/centralized-relay/relayer/chains/wasm/types"
 	"github.com/icon-project/centralized-relay/relayer/events"
 	"github.com/icon-project/centralized-relay/relayer/kms"
 	"github.com/icon-project/centralized-relay/relayer/provider"
@@ -1140,198 +1140,198 @@ func (p *Provider) extractOutputReceiver(tx *wire.MsgTx) []string {
 	return receiverAddresses
 }
 
-func (p *Provider) parseMessageFromTx(tx *TxSearchRes) (*relayTypes.Message, error) {
-	receiverAddresses := []string{}
-	runeId := ""
-	runeAmount := big.NewInt(0)
-	isMatchAmount := true
-	// handle for bitcoin bridge
-	// decode message from OP_RETURN
-	p.logger.Info("parseMessageFromTx",
-		zap.Uint64("height", tx.Height))
+// func (p *Provider) parseMessageFromTx(tx *TxSearchRes) (*relayTypes.Message, error) {
+// 	receiverAddresses := []string{}
+// 	runeId := ""
+// 	runeAmount := big.NewInt(0)
+// 	isMatchAmount := true
+// 	// handle for bitcoin bridge
+// 	// decode message from OP_RETURN
+// 	p.logger.Info("parseMessageFromTx",
+// 		zap.Uint64("height", tx.Height))
 
-	bridgeMessage := tx.BridgeMessage
-	messageInfo := bridgeMessage.Message
+// 	bridgeMessage := tx.BridgeMessage
+// 	messageInfo := bridgeMessage.Message
 
-	isValidConnector := false
-	for _, connector := range bridgeMessage.Connectors {
-		if slices.Contains(p.cfg.Connections, connector) {
-			isValidConnector = true
-			break
-		}
-	}
+// 	isValidConnector := false
+// 	for _, connector := range bridgeMessage.Connectors {
+// 		if slices.Contains(p.cfg.Connections, connector) {
+// 			isValidConnector = true
+// 			break
+// 		}
+// 	}
 
-	if messageInfo.Action == MethodDeposit && isValidConnector {
-		tokenId := messageInfo.TokenAddress
-		destContract := messageInfo.To
-		p.logger.Info("tokenId", zap.String("tokenId", tokenId))
-		p.logger.Info("destContract", zap.String("destContract", destContract))
+// 	if messageInfo.Action == MethodDeposit && isValidConnector {
+// 		tokenId := messageInfo.TokenAddress
+// 		destContract := messageInfo.To
+// 		p.logger.Info("tokenId", zap.String("tokenId", tokenId))
+// 		p.logger.Info("destContract", zap.String("destContract", destContract))
 
-		receiverAddresses = p.extractOutputReceiver(tx.Tx)
-		_runeId, _runeAmount, _isMatchAmount, err := p.verifyBridgeTx(tx, messageInfo)
-		if err != nil {
-			return nil, err
-		}
-		runeId = _runeId
-		runeAmount = _runeAmount
-		isMatchAmount = _isMatchAmount
-	}
+// 		receiverAddresses = p.extractOutputReceiver(tx.Tx)
+// 		_runeId, _runeAmount, _isMatchAmount, err := p.verifyBridgeTx(tx, messageInfo)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		runeId = _runeId
+// 		runeAmount = _runeAmount
+// 		isMatchAmount = _isMatchAmount
+// 	}
 
-	sn := new(big.Int).SetUint64(tx.Height<<32 + tx.TxIndex)
+// 	sn := new(big.Int).SetUint64(tx.Height<<32 + tx.TxIndex)
 
-	from := p.cfg.NID + "/" + p.cfg.Address
+// 	from := p.cfg.NID + "/" + p.cfg.Address
 
-	xCallMessage := XCallMessage{
-		Action:       messageInfo.Action,
-		TokenAddress: messageInfo.TokenAddress,
-		From:         messageInfo.From,
-		To:           messageInfo.To,
-		Amount:       messageInfo.Amount,
-		Data:         messageInfo.Data,
-	}
-	decodeMessage, _ := codec.RLP.MarshalToBytes(xCallMessage)
+// 	xCallMessage := XCallMessage{
+// 		Action:       messageInfo.Action,
+// 		TokenAddress: messageInfo.TokenAddress,
+// 		From:         messageInfo.From,
+// 		To:           messageInfo.To,
+// 		Amount:       messageInfo.Amount,
+// 		Data:         messageInfo.Data,
+// 	}
+// 	decodeMessage, _ := codec.RLP.MarshalToBytes(xCallMessage)
 
-	data, _ := XcallFormat(decodeMessage, from, bridgeMessage.Receiver, uint(sn.Uint64()), bridgeMessage.Connectors, uint8(messageInfo.MessageType))
-	relayMessage := &relayTypes.Message{
-		Dst:           chainIdToName[bridgeMessage.ChainId],
-		Src:           p.NID(),
-		Sn:            sn,
-		Data:          data,
-		MessageHeight: tx.Height,
-		EventType:     events.EmitMessage,
-	}
+// 	data, _ := XcallFormat(decodeMessage, from, bridgeMessage.Receiver, uint(sn.Uint64()), bridgeMessage.Connectors, uint8(messageInfo.MessageType))
+// 	relayMessage := &relayTypes.Message{
+// 		Dst:           chainIdToName[bridgeMessage.ChainId],
+// 		Src:           p.NID(),
+// 		Sn:            sn,
+// 		Data:          data,
+// 		MessageHeight: tx.Height,
+// 		EventType:     events.EmitMessage,
+// 	}
 
-	actionMethod := MethodRollback
+// 	actionMethod := MethodRollback
 
-	// validate message amount failed -> refund to user
-	if !isMatchAmount {
-		actionMethod = MethodRefundTo
-		// only set rollbackMessage because eventType variable can not be changed
-		relayMessage.EventType = events.RollbackMessage
-		// set dst to the same chain as source for relayer provider detection
-		relayMessage.Dst = relayMessage.Src
-	}
+// 	// validate message amount failed -> refund to user
+// 	if !isMatchAmount {
+// 		actionMethod = MethodRefundTo
+// 		// only set rollbackMessage because eventType variable can not be changed
+// 		relayMessage.EventType = events.RollbackMessage
+// 		// set dst to the same chain as source for relayer provider detection
+// 		relayMessage.Dst = relayMessage.Src
+// 	}
 
-	var senderAddress string
-	// Find sender address to store in db
-	for _, address := range receiverAddresses {
-		if address != p.cfg.Address {
-			senderAddress = address
-			break
-		}
-	}
+// 	var senderAddress string
+// 	// Find sender address to store in db
+// 	for _, address := range receiverAddresses {
+// 		if address != p.cfg.Address {
+// 			senderAddress = address
+// 			break
+// 		}
+// 	}
 
-	byteAmount := big.NewInt(0).SetBytes(messageInfo.Amount)
-	// stored message for rollback and refund case
-	storedData := StoredMessageData{
-		OriginalMessage:  relayMessage,
-		TxHash:           tx.Tx.TxHash().String(),
-		OutputIndex:      uint32(tx.TxIndex),
-		Amount:           byteAmount.Uint64(),
-		RecipientAddress: p.cfg.Address,
-		SenderAddress:    senderAddress,
-		RuneId:           runeId,
-		RuneAmount:       runeAmount.Uint64(),
-		ActionMethod:     actionMethod,
-		TokenAddress:     messageInfo.TokenAddress,
-	}
+// 	byteAmount := big.NewInt(0).SetBytes(messageInfo.Amount)
+// 	// stored message for rollback and refund case
+// 	storedData := StoredMessageData{
+// 		OriginalMessage:  relayMessage,
+// 		TxHash:           tx.Tx.TxHash().String(),
+// 		OutputIndex:      uint32(tx.TxIndex),
+// 		Amount:           byteAmount.Uint64(),
+// 		RecipientAddress: p.cfg.Address,
+// 		SenderAddress:    senderAddress,
+// 		RuneId:           runeId,
+// 		RuneAmount:       runeAmount.Uint64(),
+// 		ActionMethod:     actionMethod,
+// 		TokenAddress:     messageInfo.TokenAddress,
+// 	}
 
-	p.logger.Info("Stored message for rollback case", zap.Any("storedData", storedData))
+// 	p.logger.Info("Stored message for rollback case", zap.Any("storedData", storedData))
 
-	data, err := json.Marshal(storedData)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal stored rollback message data: %v", err)
-	}
-	key := "RB" + sn.String()
-	p.logger.Info("stored rollback message key", zap.String("key", key))
-	err = p.db.Put([]byte(key), data, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to store rollback message data: %v", err)
-	}
-	return relayMessage, nil
-}
+// 	data, err := json.Marshal(storedData)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to marshal stored rollback message data: %v", err)
+// 	}
+// 	key := "RB" + sn.String()
+// 	p.logger.Info("stored rollback message key", zap.String("key", key))
+// 	err = p.db.Put([]byte(key), data, nil)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to store rollback message data: %v", err)
+// 	}
+// 	return relayMessage, nil
+// }
 
-func (p *Provider) verifyBridgeTx(tx *TxSearchRes, messageInfo *multisig.XCallMessage) (string, *big.Int, bool, error) {
-	verified := false
-	isMatchAmount := false
-	runeId := ""
-	runeAmount := big.NewInt(0)
-	amount := big.NewInt(0)
-	amount.SetBytes(messageInfo.Amount)
+// func (p *Provider) verifyBridgeTx(tx *TxSearchRes, messageInfo *multisig.XCallMessage) (string, *big.Int, bool, error) {
+// 	verified := false
+// 	isMatchAmount := false
+// 	runeId := ""
+// 	runeAmount := big.NewInt(0)
+// 	amount := big.NewInt(0)
+// 	amount.SetBytes(messageInfo.Amount)
 
-	for i, out := range tx.Tx.TxOut {
-		if !bytes.Equal(out.PkScript, p.multisigAddrScript) {
-			continue
-		}
+// 	for i, out := range tx.Tx.TxOut {
+// 		if !bytes.Equal(out.PkScript, p.multisigAddrScript) {
+// 			continue
+// 		}
 
-		if messageInfo.TokenAddress == BTCToken {
-			verified = true
-			btcAmount := big.NewInt(out.Value)
-			if amount.Cmp(btcAmount) == 0 {
-				isMatchAmount = true
-				break
-			} else {
-				messageInfo.Amount = btcAmount.Bytes()
-			}
-		} else {
-			runes, err := p.GetUTXORuneBalance(p.cfg.UniSatURL, tx.Tx.TxHash().String(), i)
-			if err != nil {
-				return "", nil, false, err
-			}
+// 		if messageInfo.TokenAddress == BTCToken {
+// 			verified = true
+// 			btcAmount := big.NewInt(out.Value)
+// 			if amount.Cmp(btcAmount) == 0 {
+// 				isMatchAmount = true
+// 				break
+// 			} else {
+// 				messageInfo.Amount = btcAmount.Bytes()
+// 			}
+// 		} else {
+// 			runes, err := p.GetUTXORuneBalance(p.cfg.UniSatURL, tx.Tx.TxHash().String(), i)
+// 			if err != nil {
+// 				return "", nil, false, err
+// 			}
 
-			if len(runes.Data) == 0 {
-				continue
-			}
+// 			if len(runes.Data) == 0 {
+// 				continue
+// 			}
 
-			for _, runeOut := range runes.Data {
-				runeTokenBal, ok := big.NewInt(0).SetString(runeOut.Amount, 10)
-				if !ok {
-					return "", nil, false, fmt.Errorf("rune amount out invalid")
-				}
+// 			for _, runeOut := range runes.Data {
+// 				runeTokenBal, ok := big.NewInt(0).SetString(runeOut.Amount, 10)
+// 				if !ok {
+// 					return "", nil, false, fmt.Errorf("rune amount out invalid")
+// 				}
 
-				if amount.Cmp(runeTokenBal) == 0 && runeOut.RuneId == messageInfo.TokenAddress {
-					runeId = runeOut.RuneId
-					runeAmount = runeTokenBal
-					// runes tx is not verified if amount is not match
-					verified = true
-					isMatchAmount = true
-					break
-				}
-			}
-		}
-	}
-	if !verified {
-		return "", nil, false, fmt.Errorf("failed to verify transaction %v", tx.Tx.TxHash().String())
-	}
-	return runeId, runeAmount, isMatchAmount, nil
-}
+// 				if amount.Cmp(runeTokenBal) == 0 && runeOut.RuneId == messageInfo.TokenAddress {
+// 					runeId = runeOut.RuneId
+// 					runeAmount = runeTokenBal
+// 					// runes tx is not verified if amount is not match
+// 					verified = true
+// 					isMatchAmount = true
+// 					break
+// 				}
+// 			}
+// 		}
+// 	}
+// 	if !verified {
+// 		return "", nil, false, fmt.Errorf("failed to verify transaction %v", tx.Tx.TxHash().String())
+// 	}
+// 	return runeId, runeAmount, isMatchAmount, nil
+// }
 
-func (p *Provider) getMessagesFromTxList(resultTxList []*TxSearchRes) ([]*relayTypes.BlockInfo, error) {
-	var messages []*relayTypes.BlockInfo
-	for _, resultTx := range resultTxList {
-		msg, err := p.parseMessageFromTx(resultTx)
-		if err != nil {
-			p.logger.Error("Failed to parse message from tx", zap.Error(err))
-			continue
-		}
-		if msg == nil {
-			continue
-		}
+// func (p *Provider) getMessagesFromTxList(resultTxList []*TxSearchRes) ([]*relayTypes.BlockInfo, error) {
+// 	var messages []*relayTypes.BlockInfo
+// 	for _, resultTx := range resultTxList {
+// 		msg, err := p.parseMessageFromTx(resultTx)
+// 		if err != nil {
+// 			p.logger.Error("Failed to parse message from tx", zap.Error(err))
+// 			continue
+// 		}
+// 		if msg == nil {
+// 			continue
+// 		}
 
-		msg.MessageHeight = resultTx.Height
-		p.logger.Info("Detected eventlog",
-			zap.Uint64("height", msg.MessageHeight),
-			zap.String("target_network", msg.Dst),
-			zap.Uint64("sn", msg.Sn.Uint64()),
-			zap.String("event_type", msg.EventType),
-		)
-		messages = append(messages, &relayTypes.BlockInfo{
-			Height:   resultTx.Height,
-			Messages: []*relayTypes.Message{msg},
-		})
-	}
-	return messages, nil
-}
+// 		msg.MessageHeight = resultTx.Height
+// 		p.logger.Info("Detected eventlog",
+// 			zap.Uint64("height", msg.MessageHeight),
+// 			zap.String("target_network", msg.Dst),
+// 			zap.Uint64("sn", msg.Sn.Uint64()),
+// 			zap.String("event_type", msg.EventType),
+// 		)
+// 		messages = append(messages, &relayTypes.BlockInfo{
+// 			Height:   resultTx.Height,
+// 			Messages: []*relayTypes.Message{msg},
+// 		})
+// 	}
+// 	return messages, nil
+// }
 
 func (p *Provider) getNumOfPipelines(diff int) int {
 	if diff <= runtime.NumCPU() {
@@ -1398,9 +1398,9 @@ func (p *Provider) getAddressesFromTx(txOut *wire.TxOut, chainParams *chaincfg.P
 
 // SubscribeMessageEvents subscribes to the message events
 // Expermental: Allows to subscribe to the message events realtime without fully syncing the chain
-func (p *Provider) SubscribeMessageEvents(ctx context.Context, blockInfoChan chan *relayTypes.BlockInfo, opts *types.SubscribeOpts, resetFunc func()) error {
-	return nil
-}
+// func (p *Provider) SubscribeMessageEvents(ctx context.Context, blockInfoChan chan *relayTypes.BlockInfo, opts *types.SubscribeOpts, resetFunc func()) error {
+// 	return nil
+// }
 
 // SetLastSavedHeightFunc sets the function to save the last saved height
 func (p *Provider) SetLastSavedHeightFunc(f func() uint64) {

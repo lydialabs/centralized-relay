@@ -79,8 +79,8 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 			Fee:            big.NewInt(int64(dataMint.Detail.Fee) * 100),
 			TickLower:      big.NewInt(int64(dataMint.Detail.LowerTick)),
 			TickUpper:      big.NewInt(int64(dataMint.Detail.UpperTick)),
-			Amount0Desired: dataMint.Detail.Amount0Desired.ToBig(),
-			Amount1Desired: dataMint.Detail.Amount1Desired.ToBig(),
+			Amount0Desired: dataMint.Detail.Amount0Desired.Big(),
+			Amount1Desired: dataMint.Detail.Amount1Desired.Big(),
 			Recipient:      common.HexToAddress(to),
 			Deadline:       big.NewInt(10000000000),
 		}
@@ -90,7 +90,7 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 
 		var err error
 		if dataMint.InitPrice != nil && !dataMint.InitPrice.IsZero() {
-			encodeInitPoolArgs, err := nonfungibleABI.Pack("initPoolHelper", mintParams, dataMint.Token0, dataMint.Token1, dataMint.InitPrice.ToBig())
+			encodeInitPoolArgs, err := nonfungibleABI.Pack("initPoolHelper", mintParams, dataMint.Token0, dataMint.Token1, dataMint.InitPrice.Big())
 			if err != nil {
 				return nil, err
 			}
@@ -109,10 +109,10 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 		withdrawLiquidityInfo := data.(multisig.RadFiWithdrawLiquidityMsg)
 
 		decreaseLiquidityData := evmAbi.INonfungiblePositionManagerDecreaseLiquidityParams{
-			TokenId: withdrawLiquidityInfo.NftId.ToBig(),
-			Amount0Min: withdrawLiquidityInfo.Amount0Min.ToBig(),
-			Amount1Min: withdrawLiquidityInfo.Amount1Min.ToBig(),
-			Liquidity: withdrawLiquidityInfo.LiquidityValue.ToBig(),
+			TokenId: withdrawLiquidityInfo.NftId.Big(),
+			Amount0Min: withdrawLiquidityInfo.Amount0Min.Big(),
+			Amount1Min: withdrawLiquidityInfo.Amount1Min.Big(),
+			Liquidity: withdrawLiquidityInfo.LiquidityValue.Big(),
 			Deadline: big.NewInt(10000000000),
 		}
 
@@ -129,12 +129,12 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 	case multisig.RadFiIncreaseLiquidityMsg:
 		increaseLiquidityInfo := data.(multisig.RadFiIncreaseLiquidityMsg)
 		increaseLiquidityData := evmAbi.INonfungiblePositionManagerIncreaseLiquidityParams{
-			TokenId: increaseLiquidityInfo.NftId.ToBig(),
-			Amount0Desired: increaseLiquidityInfo.Amount0Desired.ToBig(), //todo fill in
-			Amount1Desired: increaseLiquidityInfo.Amount1Desired.ToBig(), //todo fill in
+			TokenId: increaseLiquidityInfo.NftId.Big(),
+			Amount0Desired: increaseLiquidityInfo.Amount0Desired.Big(), //todo fill in
+			Amount1Desired: increaseLiquidityInfo.Amount1Desired.Big(), //todo fill in
 			Deadline: big.NewInt(10000000000),
-			Amount0Min: increaseLiquidityInfo.Amount0Min.ToBig(),
-			Amount1Min: increaseLiquidityInfo.Amount1Min.ToBig(),
+			Amount0Min: increaseLiquidityInfo.Amount0Min.Big(),
+			Amount1Min: increaseLiquidityInfo.Amount1Min.Big(),
 		}
 
 		var err error
@@ -150,8 +150,8 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 			//exact in
 			swapExactInData := evmAbi.ISwapRouterExactInputParams{
 				Path: swapInfo.Path,
-				AmountIn: swapInfo.AmountIn.ToBig(), // todo:
-				AmountOutMinimum: swapInfo.AmountOutMinimum.ToBig(), // todo:
+				AmountIn: swapInfo.AmountIn.Big(), // todo:
+				AmountOutMinimum: swapInfo.AmountOutMinimum.Big(), // todo:
 				Recipient: common.HexToAddress(to),
 				Deadline: big.NewInt(10000000000),
 			}
@@ -167,8 +167,8 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 				Path: swapInfo.Path,
 				Recipient: common.HexToAddress(to), // todo: review
 				Deadline: big.NewInt(10000000000),
-				AmountInMaximum: swapInfo.AmountInMaximum.ToBig(), // todo:
-				AmountOut: swapInfo.AmountIn.ToBig(),
+				AmountInMaximum: swapInfo.AmountInMaximum.Big(), // todo:
+				AmountOut: swapInfo.AmountIn.Big(),
 			}
 
 			calldata, err = nonfungibleABI.Pack("exactOutput", swapExactOutData)
@@ -180,7 +180,7 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 	case multisig.RadFiCollectFeesMsg:
 		collectInfo := data.(multisig.RadFiCollectFeesMsg)
 		collectParams := evmAbi.INonfungiblePositionManagerCollectParams{
-			TokenId: collectInfo.NftId.ToBig(),
+			TokenId: collectInfo.NftId.Big(),
 			Amount0Max: new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 128), big.NewInt(1)),
 			Amount1Max: new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 128), big.NewInt(1)),
 			Recipient: common.HexToAddress(to), // todo:

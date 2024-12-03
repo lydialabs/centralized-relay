@@ -13,7 +13,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/txscript"
-	"github.com/icon-project/centralized-relay/utils/multisig"
+	// "github.com/icon-project/centralized-relay/utils/multisig"
 	"go.uber.org/zap"
 
 	// "github.com/btcsuite/btcd/wire"
@@ -123,28 +123,28 @@ func (c *Client) TxSearch(ctx context.Context, param TxSearchParam) ([]*TxSearch
 	//
 	res := []*TxSearchRes{}
 
-	for i := param.StartHeight; i <= param.EndHeight; i++ {
+	// for i := param.StartHeight; i <= param.EndHeight; i++ {
 
-		blockHash, err := c.client.GetBlockHash(int64(i))
-		if err != nil {
-			c.log.Error("Failed to get block hash", zap.Error(err))
-			return nil, err
-		}
+	// 	blockHash, err := c.client.GetBlockHash(int64(i))
+	// 	if err != nil {
+	// 		c.log.Error("Failed to get block hash", zap.Error(err))
+	// 		return nil, err
+	// 	}
 
-		block, err := c.client.GetBlock(blockHash)
-		if err != nil {
-			c.log.Error("Failed to get block", zap.Error(err))
-			return nil, err
-		}
-		// loop thru transactions
-		for j, tx := range block.Transactions {
-			bridgeMessage, err := multisig.ReadBridgeMessage(tx)
-			if err != nil {
-				continue
-			}
-			res = append(res, &TxSearchRes{Height: i, Tx: tx, TxIndex: uint64(j), BridgeMessage: bridgeMessage})
-		}
-	}
+	// 	block, err := c.client.GetBlock(blockHash)
+	// 	if err != nil {
+	// 		c.log.Error("Failed to get block", zap.Error(err))
+	// 		return nil, err
+	// 	}
+	// 	// loop thru transactions
+	// 	for j, tx := range block.Transactions {
+	// 		bridgeMessage, err := multisig.ReadBridgeMessage(tx)
+	// 		if err != nil {
+	// 			continue
+	// 		}
+	// 		res = append(res, &TxSearchRes{Height: i, Tx: tx, TxIndex: uint64(j), BridgeMessage: bridgeMessage})
+	// 	}
+	// }
 
 	return res, nil
 }
