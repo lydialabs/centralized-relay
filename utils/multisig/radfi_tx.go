@@ -77,7 +77,7 @@ func CreateRadFiTxInitPool(
 	// the remain inputs should be from trading wallet
 	for idx, input := range inputs[1:] {
 		if !bytes.Equal(input.PkScript, userPkScript) {
-			return nil, fmt.Errorf("the input %v should be from trading wallet", idx)
+			return nil, fmt.Errorf("the input %v should be from trading wallet", 1+idx)
 		}
 	}
 	// must have at least 1 pool UTXOs
@@ -170,7 +170,7 @@ func CreateRadFiTxProvideLiquidity(
 	if msg.Token1Id == BitcoinRuneId() {
 		return nil, fmt.Errorf("the second token in the pair can only be rune")
 	}
-	// the first inputs should be the pool's current sequence number that contain pool's liquidity
+	// the first inputs should be the pool UTXOs that contain pool's liquidity
 	for idx, input := range inputs[:poolUTXOsCount] {
 		if !bytes.Equal(input.PkScript, relayerPkScript) {
 			return nil, fmt.Errorf("the input %v should be from relayer wallet", idx)
@@ -179,7 +179,7 @@ func CreateRadFiTxProvideLiquidity(
 	// the remain inputs should be from trading wallet
 	for idx, input := range inputs[poolUTXOsCount:] {
 		if !bytes.Equal(input.PkScript, userPkScript) {
-			return nil, fmt.Errorf("the input %v should be from trading wallet", idx)
+			return nil, fmt.Errorf("the input %v should be from trading wallet", int(poolUTXOsCount)+idx)
 		}
 	}
 	// must have at least 1 pool UTXOs
@@ -256,7 +256,7 @@ func CreateRadFiTxProvideLiquidity(
 func CreateRadFiTxSwap(
 	msg *RadFiSwapMsg,
 	inputs []*Input,
-	newPoolBalances []*PoolBalance,
+	newPoolUTXOBalances []*PoolUTXOBalance,
 	relayerPkScript []byte,
 	userPkScript []byte,
 	txFee int64,
@@ -264,60 +264,72 @@ func CreateRadFiTxSwap(
 	if msg.PoolsCount < 1 || msg.PoolsCount > 127 {
 		return nil, fmt.Errorf("pools count should be in the range of [1; 127]")
 	}
-	if msg.PoolsCount != uint8(len(msg.Fees)) || msg.PoolsCount != uint8(len(msg.Tokens) - 1) || msg.PoolsCount != uint8(len(newPoolBalances)) {
+	if msg.PoolsCount != uint8(len(msg.Fees)) || msg.PoolsCount != uint8(len(msg.Tokens) - 1) {
 		return nil, fmt.Errorf("params array length mismatch with pools count")
 	}
 	// the first inputs should be the pool's current sequence number that contain pool's liquidity
-	for idx, input := range inputs[:msg.PoolsCount] {
+	for idx, input := range inputs[:len(newPoolUTXOBalances)] {
 		if !bytes.Equal(input.PkScript, relayerPkScript) {
 			return nil, fmt.Errorf("the input %v should be from relayer wallet", idx)
 		}
 	}
 	// the remain inputs should be from trading wallet
-	for idx, input := range inputs[msg.PoolsCount:] {
+	for idx, input := range inputs[len(newPoolUTXOBalances):] {
 		if !bytes.Equal(input.PkScript, userPkScript) {
-			return nil, fmt.Errorf("the input %v should be from trading wallet", int(msg.PoolsCount)+idx)
+			return nil, fmt.Errorf("the input %v should be from trading wallet", len(newPoolUTXOBalances)+idx)
 		}
 	}
+
 	radfiScript, _ := CreateSwapScript(msg)
 
+	userChangeOutput := uint32(len(newPoolUTXOBalances)+3)
 	runeOutput := &runestone.Runestone{
 		Edicts: []runestone.Edict{},
-		Pointer: &msg.TokenOutIndex,
+		Pointer: &userChangeOutput,
 	}
 	// sequence number outputs
 	outputs := []*wire.TxOut{}
-	for idx, poolBalance := range newPoolBalances {
-		sequenceNumberAmount := DUST_UTXO_AMOUNT
-		if poolBalance.Token1Id == BitcoinRuneId() {
-			return nil, fmt.Errorf("the second token in the pair can only be rune")
+	for idx, newPoolUTXOBalance := range newPoolUTXOBalances {
+		poolUTXOAmount := DUST_UTXO_AMOUNT
+		if !newPoolUTXOBalance.Token0Amount.IsZero() {
+			if newPoolUTXOBalance.Token0Id == BitcoinRuneId() {
+				poolUTXOAmount = int64(newPoolUTXOBalance.Token0Amount.Lo)
+			} else {
+				runeOutput.Edicts = append(runeOutput.Edicts, runestone.Edict{
+					ID:	newPoolUTXOBalance.Token0Id,
+					Amount: newPoolUTXOBalance.Token0Amount,
+					Output: uint32(idx),
+				})
+			}
 		}
-		if poolBalance.Token0Id == BitcoinRuneId() {
-			sequenceNumberAmount = int64(poolBalance.Token0Amount.Lo)
-
-		} else {
+		if !newPoolUTXOBalance.Token1Amount.IsZero() {
+			if newPoolUTXOBalance.Token1Id == BitcoinRuneId() {
+				return nil, fmt.Errorf("the second token in the pair can only be rune")
+			}
 			runeOutput.Edicts = append(runeOutput.Edicts, runestone.Edict{
-				ID:	poolBalance.Token0Id,
-				Amount: poolBalance.Token0Amount,
+				ID:	newPoolUTXOBalance.Token1Id,
+				Amount: newPoolUTXOBalance.Token1Amount,
 				Output: uint32(idx),
 			})
 		}
-		runeOutput.Edicts = append(runeOutput.Edicts, runestone.Edict{
-			ID:	poolBalance.Token1Id,
-			Amount: poolBalance.Token1Amount,
-			Output: uint32(idx),
-		})
 		outputs = append(outputs, &wire.TxOut{
-			Value: sequenceNumberAmount,
+			Value: poolUTXOAmount,
 			PkScript: relayerPkScript,
 		})
 	}
-	runeScript, _ := runeOutput.Encipher()
 
 	userTokenOutBitcoin := DUST_UTXO_AMOUNT
-	if *msg.Tokens[len(msg.Tokens)-1] == BitcoinRuneId() {
+	userTokenOutId := *msg.Tokens[len(msg.Tokens)-1]
+	if userTokenOutId == BitcoinRuneId() {
 		userTokenOutBitcoin = int64(msg.AmountOut.Lo)
+	} else {
+		runeOutput.Edicts = append(runeOutput.Edicts, runestone.Edict{
+			ID:	userTokenOutId,
+			Amount: msg.AmountOut,
+			Output: userChangeOutput-1,
+		})
 	}
+	runeScript, _ := runeOutput.Encipher()
 	// add remain outputs
 	outputs = append(outputs, []*wire.TxOut{
 		// radfi OP
@@ -333,6 +345,11 @@ func CreateRadFiTxSwap(
 		// user token out output
 		{
 			Value: userTokenOutBitcoin,
+			PkScript: userPkScript,
+		},
+		// rune change output
+		{
+			Value: DUST_UTXO_AMOUNT,
 			PkScript: userPkScript,
 		},
 	}...)

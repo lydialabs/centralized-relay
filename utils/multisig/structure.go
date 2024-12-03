@@ -32,9 +32,9 @@ type Input struct {
 	Runes			[]*runestone.Edict
 }
 
-type PoolBalance struct {
+type PoolUTXOBalance struct {
 	Token0Id		runestone.RuneId
-	Token1Id		runestone.RuneId
 	Token0Amount	uint128.Uint128
+	Token1Id		runestone.RuneId
 	Token1Amount	uint128.Uint128
 }

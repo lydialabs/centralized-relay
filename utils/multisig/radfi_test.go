@@ -635,18 +635,36 @@ func TestRadFiSwap1PoolBitcoinToRune(t *testing.T) {
 		PoolsCount: 1,
 		AmountIn: uint128.From64(2000),
 		AmountOut:  uint128.From64(200000),
+		SequenceNumber: uint128.From64(123),
 		Fees: []uint32{123},
 		Tokens: []*runestone.RuneId{
 			{ Block: 0, Tx: 0 },
 			{ Block: 678, Tx: 90 },
 		},
-		// TokenOutIndex: 1+2,
 	}
 
 	inputs := []*Input{
-		// pool current sequence number
+		// some of pool UTXOs
 		{
 			TxHash:			"dfa3fc22b6436fdfaaf96bca443270cf1b6b50c24f2f2aff9ceaf668e2b1ed26",
+			OutputIdx:		0,
+			OutputAmount:	10000,
+			PkScript:		relayersMultisigWallet.PKScript,
+		},
+		{
+			TxHash:			"dfa3fc22b6436fdfaaf96bca443270cf1b6b50c24f2f2aff9ceaf668e2b1ed27",
+			OutputIdx:		0,
+			OutputAmount:	20000,
+			PkScript:		relayersMultisigWallet.PKScript,
+		},
+		{
+			TxHash:			"dfa3fc22b6436fdfaaf96bca443270cf1b6b50c24f2f2aff9ceaf668e2b1ed28",
+			OutputIdx:		0,
+			OutputAmount:	10000,
+			PkScript:		relayersMultisigWallet.PKScript,
+		},
+		{
+			TxHash:			"dfa3fc22b6436fdfaaf96bca443270cf1b6b50c24f2f2aff9ceaf668e2b1ed29",
 			OutputIdx:		0,
 			OutputAmount:	10000,
 			PkScript:		relayersMultisigWallet.PKScript,
@@ -660,19 +678,32 @@ func TestRadFiSwap1PoolBitcoinToRune(t *testing.T) {
 		},
 	}
 
-	newPoolBalances := []*PoolBalance {
+	newPoolUTXOBalances := []*PoolUTXOBalance {
 		{
 			Token0Id: runestone.RuneId{ Block: 0, Tx: 0 },
-			Token1Id: runestone.RuneId{ Block: 678, Tx: 90 },
 			Token0Amount: uint128.From64(12000),
+			Token1Id: runestone.RuneId{ Block: 678, Tx: 90 },
 			Token1Amount: uint128.From64(800000),
 		},
+		{
+			Token0Id: runestone.RuneId{ Block: 0, Tx: 0 },
+			Token0Amount: uint128.From64(12000),
+			Token1Id: runestone.RuneId{ Block: 678, Tx: 90 },
+			Token1Amount: uint128.From64(800000),
+		},
+		{
+			Token0Id: runestone.RuneId{ Block: 0, Tx: 0 },
+			Token0Amount: uint128.From64(12000),
+			Token1Id: runestone.RuneId{ Block: 678, Tx: 90 },
+			Token1Amount: uint128.From64(800000),
+		},
+		{},
 	}
 	// create tx
 	msgTx, err := CreateRadFiTxSwap(
 		&radfiMsg,
 		inputs,
-		newPoolBalances,
+		newPoolUTXOBalances,
 		relayersMultisigWallet.PKScript,
 		userMultisigWallet.PKScript,
 		TX_FEE,
@@ -726,7 +757,6 @@ func TestRadFiSwap1PoolBitcoinToRune(t *testing.T) {
 	fmt.Println("decoded message - AmountOut: ", decodedRadFiMessage.SwapMsg.AmountOut)
 	fmt.Println("decoded message - Fees: ", decodedRadFiMessage.SwapMsg.Fees)
 	fmt.Println("decoded message - Tokens: ", decodedRadFiMessage.SwapMsg.Tokens)
-	fmt.Println("decoded message - TokenOutIndex: ", decodedRadFiMessage.SwapMsg.TokenOutIndex)
 }
 
 func TestRadFiSwap1PoolRuneToBitcoin(t *testing.T) {
@@ -750,9 +780,27 @@ func TestRadFiSwap1PoolRuneToBitcoin(t *testing.T) {
 	}
 
 	inputs := []*Input{
-		// pool current sequence number
+		// some of pool UTXOs
 		{
 			TxHash:			"dfa3fc22b6436fdfaaf96bca443270cf1b6b50c24f2f2aff9ceaf668e2b1ed26",
+			OutputIdx:		0,
+			OutputAmount:	10000,
+			PkScript:		relayersMultisigWallet.PKScript,
+		},
+		{
+			TxHash:			"dfa3fc22b6436fdfaaf96bca443270cf1b6b50c24f2f2aff9ceaf668e2b1ed27",
+			OutputIdx:		0,
+			OutputAmount:	20000,
+			PkScript:		relayersMultisigWallet.PKScript,
+		},
+		{
+			TxHash:			"dfa3fc22b6436fdfaaf96bca443270cf1b6b50c24f2f2aff9ceaf668e2b1ed28",
+			OutputIdx:		0,
+			OutputAmount:	10000,
+			PkScript:		relayersMultisigWallet.PKScript,
+		},
+		{
+			TxHash:			"dfa3fc22b6436fdfaaf96bca443270cf1b6b50c24f2f2aff9ceaf668e2b1ed29",
 			OutputIdx:		0,
 			OutputAmount:	10000,
 			PkScript:		relayersMultisigWallet.PKScript,
@@ -773,19 +821,32 @@ func TestRadFiSwap1PoolRuneToBitcoin(t *testing.T) {
 		},
 	}
 
-	newPoolBalances := []*PoolBalance {
+	newPoolUTXOBalances := []*PoolUTXOBalance {
 		{
 			Token0Id: runestone.RuneId{ Block: 0, Tx: 0 },
+			Token0Amount: uint128.From64(12000),
 			Token1Id: runestone.RuneId{ Block: 678, Tx: 90 },
-			Token0Amount: uint128.From64(8000),
-			Token1Amount: uint128.From64(1200000),
+			Token1Amount: uint128.From64(800000),
 		},
+		{
+			Token0Id: runestone.RuneId{ Block: 0, Tx: 0 },
+			Token0Amount: uint128.From64(12000),
+			Token1Id: runestone.RuneId{ Block: 678, Tx: 90 },
+			Token1Amount: uint128.From64(800000),
+		},
+		{
+			Token0Id: runestone.RuneId{ Block: 0, Tx: 0 },
+			Token0Amount: uint128.From64(12000),
+			Token1Id: runestone.RuneId{ Block: 678, Tx: 90 },
+			Token1Amount: uint128.From64(800000),
+		},
+		{},
 	}
 	// create tx
 	msgTx, err := CreateRadFiTxSwap(
 		&radfiMsg,
 		inputs,
-		newPoolBalances,
+		newPoolUTXOBalances,
 		relayersMultisigWallet.PKScript,
 		userMultisigWallet.PKScript,
 		TX_FEE,
@@ -839,7 +900,6 @@ func TestRadFiSwap1PoolRuneToBitcoin(t *testing.T) {
 	fmt.Println("decoded message - AmountOut: ", decodedRadFiMessage.SwapMsg.AmountOut)
 	fmt.Println("decoded message - Fees: ", decodedRadFiMessage.SwapMsg.Fees)
 	fmt.Println("decoded message - Tokens: ", decodedRadFiMessage.SwapMsg.Tokens)
-	fmt.Println("decoded message - TokenOutIndex: ", decodedRadFiMessage.SwapMsg.TokenOutIndex)
 }
 
 func TestRadFiSwap2PoolRuneToRune(t *testing.T) {
@@ -864,18 +924,30 @@ func TestRadFiSwap2PoolRuneToRune(t *testing.T) {
 	}
 
 	inputs := []*Input{
-		// pool 1 current sequence number
+		// some of pool 1 UTXOs
 		{
 			TxHash:			"dfa3fc22b6436fdfaaf96bca443270cf1b6b50c24f2f2aff9ceaf668e2b1ed26",
 			OutputIdx:		0,
 			OutputAmount:	10000,
 			PkScript:		relayersMultisigWallet.PKScript,
 		},
-		// pool 2 current sequence number
 		{
-			TxHash:			"a9287ff640a9a06748100f6334f0e50a8c6a055aabff742443a5b1692d3dd0dc",
+			TxHash:			"dfa3fc22b6436fdfaaf96bca443270cf1b6b50c24f2f2aff9ceaf668e2b1ed27",
 			OutputIdx:		0,
 			OutputAmount:	20000,
+			PkScript:		relayersMultisigWallet.PKScript,
+		},
+		// some of pool 2 UTXOs
+		{
+			TxHash:			"dfa3fc22b6436fdfaaf96bca443270cf1b6b50c24f2f2aff9ceaf668e2b1ed28",
+			OutputIdx:		0,
+			OutputAmount:	10000,
+			PkScript:		relayersMultisigWallet.PKScript,
+		},
+		{
+			TxHash:			"dfa3fc22b6436fdfaaf96bca443270cf1b6b50c24f2f2aff9ceaf668e2b1ed29",
+			OutputIdx:		0,
+			OutputAmount:	10000,
 			PkScript:		relayersMultisigWallet.PKScript,
 		},
 		// user rune UTXO to swap liquidity
@@ -894,7 +966,7 @@ func TestRadFiSwap2PoolRuneToRune(t *testing.T) {
 		},
 	}
 
-	newPoolBalances := []*PoolBalance {
+	newPoolUTXOBalances := []*PoolUTXOBalance {
 		// new pool 1 balance
 		{
 			Token0Id: runestone.RuneId{ Block: 0, Tx: 0 },
@@ -902,6 +974,7 @@ func TestRadFiSwap2PoolRuneToRune(t *testing.T) {
 			Token0Amount: uint128.From64(8000),
 			Token1Amount: uint128.From64(1200000),
 		},
+		{},
 		// new pool 2 balance
 		{
 			Token0Id: runestone.RuneId{ Block: 0, Tx: 0 },
@@ -909,12 +982,13 @@ func TestRadFiSwap2PoolRuneToRune(t *testing.T) {
 			Token0Amount: uint128.From64(22000),
 			Token1Amount: uint128.From64(800000),
 		},
+		{},
 	}
 	// create tx
 	msgTx, err := CreateRadFiTxSwap(
 		&radfiMsg,
 		inputs,
-		newPoolBalances,
+		newPoolUTXOBalances,
 		relayersMultisigWallet.PKScript,
 		userMultisigWallet.PKScript,
 		TX_FEE,
@@ -968,7 +1042,6 @@ func TestRadFiSwap2PoolRuneToRune(t *testing.T) {
 	fmt.Println("decoded message - AmountOut: ", decodedRadFiMessage.SwapMsg.AmountOut)
 	fmt.Println("decoded message - Fees: ", decodedRadFiMessage.SwapMsg.Fees)
 	fmt.Println("decoded message - Tokens: ", decodedRadFiMessage.SwapMsg.Tokens)
-	fmt.Println("decoded message - TokenOutIndex: ", decodedRadFiMessage.SwapMsg.TokenOutIndex)
 }
 
 func TestRadFiWithdrawLiquidityPoolBitcoinRune(t *testing.T) {

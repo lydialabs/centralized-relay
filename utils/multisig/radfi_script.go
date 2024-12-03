@@ -61,10 +61,9 @@ type RadFiSwapMsg struct {
 	PoolsCount		uint8
 	AmountIn 		uint128.Uint128
 	AmountOut 		uint128.Uint128
+	SequenceNumber	uint128.Uint128
 	Fees 			[]uint32
 	Tokens			[]*runestone.RuneId
-	// TokenOutIndex = PoolsCount + 2 (does not included in OP_RETURN)
-	TokenOutIndex	uint32
 }
 
 type RadFiWithdrawLiquidityMsg struct {
@@ -191,6 +190,7 @@ func CreateSwapScript(msg *RadFiSwapMsg) ([]byte, error) {
 	data := []byte{OP_RADFI_SWAP, singleByte}
 	data = append(data, runestone.EncodeUint128(msg.AmountIn)...)
 	data = append(data, runestone.EncodeUint128(msg.AmountOut)...)
+	data = append(data, runestone.EncodeUint128(msg.SequenceNumber)...)
 	for _, fee := range msg.Fees {
 		data = append(data, runestone.EncodeUint32(fee)...)
 	}
@@ -289,7 +289,7 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 	switch flag {
 		case OP_RADFI_PROVIDE_LIQUIDITY:
 			// OP_RETURN output data
-			r := bytes.NewReader(payload[:16])
+			r := bytes.NewReader(payload[1:9])
 			var ticks RadFiProvideLiquidityTicks
 			if err := binary.Read(r, binary.BigEndian, &ticks); err != nil {
 				return nil, fmt.Errorf("OP_RADFI_PROVIDE_LIQUIDITY could not read ticks data - Error %v", err)
@@ -338,15 +338,15 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 			}, nil
 
 		case OP_RADFI_SWAP:
-			singleByte := uint8(payload[0])
+			singleByte := uint8(payload[1])
 			isExactIn := (singleByte >> 7) != 0
 			poolsCount := singleByte << 1 >> 1
 			fees := []uint32{}
-			for _, fee := range(integers[2:2+poolsCount]) {
+			for _, fee := range(integers[3:3+poolsCount]) {
 				fees = append(fees, uint32(fee.Lo))
 			}
 			tokens := []*runestone.RuneId{}
-			for i := 2+int(poolsCount); i < len(integers)-1 ; i += 2 {
+			for i := 3+int(poolsCount); i < len(integers)-1 ; i += 2 {
 				tokens = append(tokens, &runestone.RuneId{
 					Block: integers[i].Lo,
 					Tx: uint32(integers[i+1].Lo),
@@ -360,9 +360,9 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 					PoolsCount:		poolsCount,
 					AmountIn:		integers[0],
 					AmountOut:		integers[1],
+					SequenceNumber: integers[2],
 					Fees:			fees,
 					Tokens:			tokens,
-					TokenOutIndex:	uint32(poolsCount) + 2,
 				},
 			}, nil
 
