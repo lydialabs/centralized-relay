@@ -755,6 +755,7 @@ func TestRadFiSwap1PoolBitcoinToRune(t *testing.T) {
 	fmt.Println("decoded message - PoolsCount: ", decodedRadFiMessage.SwapMsg.PoolsCount)
 	fmt.Println("decoded message - AmountIn: ", decodedRadFiMessage.SwapMsg.AmountIn)
 	fmt.Println("decoded message - AmountOut: ", decodedRadFiMessage.SwapMsg.AmountOut)
+	fmt.Println("decoded message - SequenceNumber: ", decodedRadFiMessage.SwapMsg.SequenceNumber)
 	fmt.Println("decoded message - Fees: ", decodedRadFiMessage.SwapMsg.Fees)
 	fmt.Println("decoded message - Tokens: ", decodedRadFiMessage.SwapMsg.Tokens)
 }
@@ -771,6 +772,7 @@ func TestRadFiSwap1PoolRuneToBitcoin(t *testing.T) {
 		PoolsCount: 1,
 		AmountIn: uint128.From64(200000),
 		AmountOut:  uint128.From64(2000),
+		SequenceNumber: uint128.From64(124),
 		Fees: []uint32{123},
 		Tokens: []*runestone.RuneId{
 			{ Block: 678, Tx: 90 },
@@ -898,6 +900,7 @@ func TestRadFiSwap1PoolRuneToBitcoin(t *testing.T) {
 	fmt.Println("decoded message - PoolsCount: ", decodedRadFiMessage.SwapMsg.PoolsCount)
 	fmt.Println("decoded message - AmountIn: ", decodedRadFiMessage.SwapMsg.AmountIn)
 	fmt.Println("decoded message - AmountOut: ", decodedRadFiMessage.SwapMsg.AmountOut)
+	fmt.Println("decoded message - SequenceNumber: ", decodedRadFiMessage.SwapMsg.SequenceNumber)
 	fmt.Println("decoded message - Fees: ", decodedRadFiMessage.SwapMsg.Fees)
 	fmt.Println("decoded message - Tokens: ", decodedRadFiMessage.SwapMsg.Tokens)
 }
@@ -914,6 +917,7 @@ func TestRadFiSwap2PoolRuneToRune(t *testing.T) {
 		PoolsCount: 2,
 		AmountIn: uint128.From64(200000),
 		AmountOut:  uint128.From64(100000),
+		SequenceNumber: uint128.From64(125),
 		Fees: []uint32{123, 456},
 		Tokens: []*runestone.RuneId{
 			{ Block: 678, Tx: 90 },
@@ -1040,6 +1044,7 @@ func TestRadFiSwap2PoolRuneToRune(t *testing.T) {
 	fmt.Println("decoded message - PoolsCount: ", decodedRadFiMessage.SwapMsg.PoolsCount)
 	fmt.Println("decoded message - AmountIn: ", decodedRadFiMessage.SwapMsg.AmountIn)
 	fmt.Println("decoded message - AmountOut: ", decodedRadFiMessage.SwapMsg.AmountOut)
+	fmt.Println("decoded message - SequenceNumber: ", decodedRadFiMessage.SwapMsg.SequenceNumber)
 	fmt.Println("decoded message - Fees: ", decodedRadFiMessage.SwapMsg.Fees)
 	fmt.Println("decoded message - Tokens: ", decodedRadFiMessage.SwapMsg.Tokens)
 }
