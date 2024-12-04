@@ -365,60 +365,56 @@ func CreateRadFiTxWithdrawLiquidity(
 	userPkScript []byte,
 	txFee int64,
 ) (*wire.MsgTx, error) {
-	// the first input should be the pool's current sequence number that contain pool's liquidity
-	if !bytes.Equal(inputs[0].PkScript, relayerPkScript) {
-		return nil, fmt.Errorf("the first input should be the pool's current sequence number")
+	// the first inputs should be the pool UTXOs that contain pool's liquidity
+	for idx, input := range inputs[:len(newPoolUTXOBalances)] {
+		if !bytes.Equal(input.PkScript, relayerPkScript) {
+			return nil, fmt.Errorf("the input %v should be from relayer wallet", idx)
+		}
 	}
-		// the first inputs should be the pool UTXOs that contain pool's liquidity
-		for idx, input := range inputs[:len(newPoolUTXOBalances)] {
-			if !bytes.Equal(input.PkScript, relayerPkScript) {
-				return nil, fmt.Errorf("the input %v should be from relayer wallet", idx)
-			}
+	// the remain inputs should be from trading wallet
+	for idx, input := range inputs[len(newPoolUTXOBalances):] {
+		if !bytes.Equal(input.PkScript, userPkScript) {
+			return nil, fmt.Errorf("the input %v should be from trading wallet", len(newPoolUTXOBalances)+idx)
 		}
-		// the remain inputs should be from trading wallet
-		for idx, input := range inputs[len(newPoolUTXOBalances):] {
-			if !bytes.Equal(input.PkScript, userPkScript) {
-				return nil, fmt.Errorf("the input %v should be from trading wallet", len(newPoolUTXOBalances)+idx)
-			}
-		}
+	}
 
-		radfiScript, _ := CreateWithdrawLiquidityScript(msg)
+	radfiScript, _ := CreateWithdrawLiquidityScript(msg)
 
-		withdrawedRuneOutput := uint32(len(newPoolUTXOBalances)+2)
-		runeOutput := &runestone.Runestone{
-			Edicts: []runestone.Edict{},
-			Pointer: &withdrawedRuneOutput,
-		}
-		// pool UTXO outputs
-		outputs := []*wire.TxOut{}
-		for idx, newPoolUTXOBalance := range newPoolUTXOBalances {
-			poolUTXOAmount := DUST_UTXO_AMOUNT
-			if !newPoolUTXOBalance.Token0Amount.IsZero() {
-				if newPoolUTXOBalance.Token0Id == BitcoinRuneId() {
-					poolUTXOAmount = int64(newPoolUTXOBalance.Token0Amount.Lo)
-				} else {
-					runeOutput.Edicts = append(runeOutput.Edicts, runestone.Edict{
-						ID:	newPoolUTXOBalance.Token0Id,
-						Amount: newPoolUTXOBalance.Token0Amount,
-						Output: uint32(idx),
-					})
-				}
-			}
-			if !newPoolUTXOBalance.Token1Amount.IsZero() {
-				if newPoolUTXOBalance.Token1Id == BitcoinRuneId() {
-					return nil, fmt.Errorf("the second token in the pair can only be rune")
-				}
+	withdrawedRuneOutput := uint32(len(newPoolUTXOBalances)+2)
+	runeOutput := &runestone.Runestone{
+		Edicts: []runestone.Edict{},
+		Pointer: &withdrawedRuneOutput,
+	}
+	// pool UTXO outputs
+	outputs := []*wire.TxOut{}
+	for idx, newPoolUTXOBalance := range newPoolUTXOBalances {
+		poolUTXOAmount := DUST_UTXO_AMOUNT
+		if !newPoolUTXOBalance.Token0Amount.IsZero() {
+			if newPoolUTXOBalance.Token0Id == BitcoinRuneId() {
+				poolUTXOAmount = int64(newPoolUTXOBalance.Token0Amount.Lo)
+			} else {
 				runeOutput.Edicts = append(runeOutput.Edicts, runestone.Edict{
-					ID:	newPoolUTXOBalance.Token1Id,
-					Amount: newPoolUTXOBalance.Token1Amount,
+					ID:	newPoolUTXOBalance.Token0Id,
+					Amount: newPoolUTXOBalance.Token0Amount,
 					Output: uint32(idx),
 				})
 			}
-			outputs = append(outputs, &wire.TxOut{
-				Value: poolUTXOAmount,
-				PkScript: relayerPkScript,
+		}
+		if !newPoolUTXOBalance.Token1Amount.IsZero() {
+			if newPoolUTXOBalance.Token1Id == BitcoinRuneId() {
+				return nil, fmt.Errorf("the second token in the pair can only be rune")
+			}
+			runeOutput.Edicts = append(runeOutput.Edicts, runestone.Edict{
+				ID:	newPoolUTXOBalance.Token1Id,
+				Amount: newPoolUTXOBalance.Token1Amount,
+				Output: uint32(idx),
 			})
 		}
+		outputs = append(outputs, &wire.TxOut{
+			Value: poolUTXOAmount,
+			PkScript: relayerPkScript,
+		})
+	}
 	runeScript, _ := runeOutput.Encipher()
 	// add remain outputs
 	outputs = append(outputs, []*wire.TxOut{
@@ -445,60 +441,64 @@ func CreateRadFiTxWithdrawLiquidity(
 func CreateRadFiTxCollectFees(
 	msg *RadFiCollectFeesMsg,
 	inputs []*Input,
+	newPoolUTXOBalances []*PoolUTXOBalance,
 	relayerPkScript []byte,
 	userPkScript []byte,
 	txFee int64,
 ) (*wire.MsgTx, error) {
-	// the first input should be the pool's current sequence number that contain pool's liquidity
-	if !bytes.Equal(inputs[0].PkScript, relayerPkScript) {
-		return nil, fmt.Errorf("the first input should be the pool's current sequence number")
+	// the first inputs should be the pool UTXOs that contain pool's liquidity
+	for idx, input := range inputs[:len(newPoolUTXOBalances)] {
+		if !bytes.Equal(input.PkScript, relayerPkScript) {
+			return nil, fmt.Errorf("the input %v should be from relayer wallet", idx)
+		}
 	}
 	// the remain inputs should be from trading wallet
-	for idx, input := range inputs[1:] {
+	for idx, input := range inputs[len(newPoolUTXOBalances):] {
 		if !bytes.Equal(input.PkScript, userPkScript) {
-			return nil, fmt.Errorf("the input %v should be from trading wallet", idx)
+			return nil, fmt.Errorf("the input %v should be from trading wallet", len(newPoolUTXOBalances)+idx)
 		}
 	}
 
 	radfiScript, _ := CreateCollectFeesScript(msg)
 
-	withdrawedRuneOutput := uint32(3)
+	withdrawedRuneOutput := uint32(len(newPoolUTXOBalances)+2)
 	runeOutput := &runestone.Runestone{
 		Edicts: []runestone.Edict{},
 		Pointer: &withdrawedRuneOutput,
 	}
-
-	sequenceNumberAmount := DUST_UTXO_AMOUNT
-	if len(inputs[0].Runes) == 1 {
-		sequenceNumberAmount = inputs[0].OutputAmount - int64(msg.Amount0.Lo)
-		runeOutput.Edicts = append(runeOutput.Edicts, runestone.Edict{
-			ID:	inputs[0].Runes[0].ID,
-			Amount: inputs[0].Runes[0].Amount.Sub(msg.Amount1),
-			Output: 0,
-		})
-	} else {
-		if len(inputs[0].Runes) != 2 {
-			return nil, fmt.Errorf("rune-rune pool sequence number UTXO should hold exactly 2 rune")
+	// pool UTXO outputs
+	outputs := []*wire.TxOut{}
+	for idx, newPoolUTXOBalance := range newPoolUTXOBalances {
+		poolUTXOAmount := DUST_UTXO_AMOUNT
+		if !newPoolUTXOBalance.Token0Amount.IsZero() {
+			if newPoolUTXOBalance.Token0Id == BitcoinRuneId() {
+				poolUTXOAmount = int64(newPoolUTXOBalance.Token0Amount.Lo)
+			} else {
+				runeOutput.Edicts = append(runeOutput.Edicts, runestone.Edict{
+					ID:	newPoolUTXOBalance.Token0Id,
+					Amount: newPoolUTXOBalance.Token0Amount,
+					Output: uint32(idx),
+				})
+			}
 		}
-		runeOutput.Edicts = append(runeOutput.Edicts, runestone.Edict{
-			ID:	inputs[0].Runes[0].ID,
-			Amount: inputs[0].Runes[0].Amount.Sub(msg.Amount0),
-			Output: 0,
-		})
-		runeOutput.Edicts = append(runeOutput.Edicts, runestone.Edict{
-			ID:	inputs[0].Runes[1].ID,
-			Amount: inputs[0].Runes[1].Amount.Sub(msg.Amount1),
-			Output: 0,
+		if !newPoolUTXOBalance.Token1Amount.IsZero() {
+			if newPoolUTXOBalance.Token1Id == BitcoinRuneId() {
+				return nil, fmt.Errorf("the second token in the pair can only be rune")
+			}
+			runeOutput.Edicts = append(runeOutput.Edicts, runestone.Edict{
+				ID:	newPoolUTXOBalance.Token1Id,
+				Amount: newPoolUTXOBalance.Token1Amount,
+				Output: uint32(idx),
+			})
+		}
+		outputs = append(outputs, &wire.TxOut{
+			Value: poolUTXOAmount,
+			PkScript: relayerPkScript,
 		})
 	}
 	runeScript, _ := runeOutput.Encipher()
-
-	outputs := []*wire.TxOut{
-		// sequence number output
-		{
-			Value: sequenceNumberAmount,
-			PkScript: relayerPkScript,
-		},
+	// add remain outputs
+	outputs = append(outputs, []*wire.TxOut{
 		// radfi OP
 		{
 			Value: DUST_UTXO_AMOUNT,
@@ -509,12 +509,12 @@ func CreateRadFiTxCollectFees(
 			Value: 0,
 			PkScript: runeScript,
 		},
-		// withdrawed rune output
+		// withdrawn rune output
 		{
 			Value: DUST_UTXO_AMOUNT,
 			PkScript: userPkScript,
 		},
-	}
+	}...)
 	// withdrawed bitcoin output is included in the change output
 	return CreateRadFiTx(inputs, outputs, userPkScript, txFee, 0)
 }
