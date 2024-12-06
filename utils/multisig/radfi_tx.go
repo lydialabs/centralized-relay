@@ -111,13 +111,13 @@ func CreateRadFiTxInitPool(
 				runeOutput.Edicts = append(runeOutput.Edicts, runestone.Edict{
 					ID:	msg.Token0Id,
 					Amount: msg.Amount0Desired.Div64(poolUTXOsContainLiquidityCount),
-					Output: uint32(poolUTXOIdx),
+					Output: uint32(poolUTXOIdx+1),
 				})
 			}
 			runeOutput.Edicts = append(runeOutput.Edicts, runestone.Edict{
 				ID:	msg.Token1Id,
 				Amount: msg.Amount1Desired.Div64(poolUTXOsContainLiquidityCount),
-				Output: uint32(poolUTXOIdx),
+				Output: uint32(poolUTXOIdx+1),
 			})
 		}
 		// pool UTXO
@@ -257,7 +257,6 @@ func CreateRadFiTxSwap(
 	msg *RadFiSwapMsg,
 	inputs []*Input,
 	newPoolUTXOBalances []*PoolUTXOBalance,
-	relayerPkScript []byte,
 	userPkScript []byte,
 	txFee int64,
 ) (*wire.MsgTx, error) {
@@ -268,11 +267,6 @@ func CreateRadFiTxSwap(
 		return nil, fmt.Errorf("params array length mismatch with pools count")
 	}
 	// the first inputs should be the pool UTXOs that contain pool's liquidity
-	for idx, input := range inputs[:len(newPoolUTXOBalances)] {
-		if !bytes.Equal(input.PkScript, relayerPkScript) {
-			return nil, fmt.Errorf("the input %v should be from relayer wallet", idx)
-		}
-	}
 	// the remain inputs should be from trading wallet
 	for idx, input := range inputs[len(newPoolUTXOBalances):] {
 		if !bytes.Equal(input.PkScript, userPkScript) {
@@ -314,7 +308,7 @@ func CreateRadFiTxSwap(
 		}
 		outputs = append(outputs, &wire.TxOut{
 			Value: poolUTXOAmount,
-			PkScript: relayerPkScript,
+			PkScript: inputs[idx].PkScript,
 		})
 	}
 

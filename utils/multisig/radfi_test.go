@@ -57,9 +57,9 @@ func TestBuildMultisigTapScript(t *testing.T) {
 	chainParam := &chaincfg.TestNet3Params
 
 	relayerPrivKeys, relayersMultisigInfo := RandomMultisigInfo(3, 3, chainParam, []int{0, 1, 2}, 0, 1)
-	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo)
+	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo, SHARED_RANDOM_HEX_PREFIX + "01")
 	_, userMultisigInfo := RandomMultisigInfo(2, 2, chainParam, []int{0, 3}, 1, 1)
-	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo)
+	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo, SHARED_RANDOM_HEX)
 
 	fmt.Println("relayersMultisigPKScript: ", hex.EncodeToString(relayersMultisigWallet.PKScript))
 	relayersMultisigAddress, err := AddressOnChain(chainParam, relayersMultisigWallet)
@@ -82,7 +82,7 @@ func TestSignTaproot(t *testing.T) {
 
 	_, userMultisigInfo := RandomMultisigInfo(2, 2, chainParam, []int{0, 3}, 1, 1)
 	userMultisigInfo.PubKeys[0], _ = hex.DecodeString("d1fdca976c0ff461c501057d9c43bff16aa8145d5c0e0117984eadac11ce8973")
-	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo)
+	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo, SHARED_RANDOM_HEX)
 
 	fmt.Println("address: ", userMultisigWallet.SharedPublicKey)
 	wif, _ := btcutil.DecodeWIF("cVb3ZUwwXoM5L3f8eFbg4NHU3VFqdy6nmcdEk7Nukc5huRAiHW7m")
@@ -120,11 +120,12 @@ func TestParseTx(t *testing.T) {
 }
 
 func TestRadFiInitPoolBitcoinRune(t *testing.T) {
+	poolId := "01"
 	chainParam := &chaincfg.TestNet3Params
 	_, relayersMultisigInfo := RandomMultisigInfo(3, 3, chainParam, []int{0, 1, 2}, 0, 1)
-	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo)
+	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo, SHARED_RANDOM_HEX_PREFIX + poolId)
 	userPrivKeys, userMultisigInfo := RandomMultisigInfo(2, 2, chainParam, []int{0, 3}, 1, 1)
-	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo)
+	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo, SHARED_RANDOM_HEX)
 
 	radfiMsg := RadFiProvideLiquidityMsg{
 		Ticks: 	RadFiProvideLiquidityTicks{ UpperTick: 12345, LowerTick: -12345 },
@@ -134,7 +135,7 @@ func TestRadFiInitPoolBitcoinRune(t *testing.T) {
 		Amount0Desired: uint128.From64(10011),
 		Amount1Desired: uint128.From64(1000011),
 		InitPrice: uint128.From64(123456),
-		SequenceNumber: uint128.From64(0),
+		SequenceNumber: uint128.From64(1),
 		Token0Id: runestone.RuneId{ Block: 0, Tx: 0},
 		Token1Id: runestone.RuneId{ Block: 678, Tx: 90},
 	}
@@ -221,11 +222,12 @@ func TestRadFiInitPoolBitcoinRune(t *testing.T) {
 }
 
 func TestRadFiInitPoolRuneRune(t *testing.T) {
+	poolId := "02"
 	chainParam := &chaincfg.TestNet3Params
 	_, relayersMultisigInfo := RandomMultisigInfo(3, 3, chainParam, []int{0, 1, 2}, 0, 1)
-	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo)
+	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo, SHARED_RANDOM_HEX_PREFIX + poolId)
 	userPrivKeys, userMultisigInfo := RandomMultisigInfo(2, 2, chainParam, []int{0, 3}, 1, 1)
-	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo)
+	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo, SHARED_RANDOM_HEX)
 
 	radfiMsg := RadFiProvideLiquidityMsg{
 		Ticks: 	RadFiProvideLiquidityTicks{ UpperTick: 12345, LowerTick: -12345 },
@@ -235,7 +237,7 @@ func TestRadFiInitPoolRuneRune(t *testing.T) {
 		Amount0Desired: uint128.From64(1000011),
 		Amount1Desired: uint128.From64(2000011),
 		InitPrice: uint128.From64(123456),
-		SequenceNumber: uint128.From64(0),
+		SequenceNumber: uint128.From64(2),
 		Token0Id: runestone.RuneId{ Block: 123, Tx: 321},
 		Token1Id: runestone.RuneId{ Block: 678, Tx: 90},
 	}
@@ -329,11 +331,12 @@ func TestRadFiInitPoolRuneRune(t *testing.T) {
 }
 
 func TestRadFiProvideLiquidityPoolBitcoinRune(t *testing.T) {
+	poolId := "01"
 	chainParam := &chaincfg.TestNet3Params
 	relayerPrivKeys, relayersMultisigInfo := RandomMultisigInfo(3, 3, chainParam, []int{0, 1, 2}, 0, 1)
-	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo)
+	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo, SHARED_RANDOM_HEX_PREFIX + poolId)
 	userPrivKeys, userMultisigInfo := RandomMultisigInfo(2, 2, chainParam, []int{0, 3}, 1, 1)
-	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo)
+	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo, SHARED_RANDOM_HEX)
 
 	radfiMsg := RadFiProvideLiquidityMsg{
 		Ticks: 	RadFiProvideLiquidityTicks{ UpperTick: 12345, LowerTick: -12345 },
@@ -343,7 +346,7 @@ func TestRadFiProvideLiquidityPoolBitcoinRune(t *testing.T) {
 		Amount0Desired: uint128.From64(1000),
 		Amount1Desired: uint128.From64(100000),
 		InitPrice: uint128.From64(0),
-		SequenceNumber: uint128.From64(111),
+		SequenceNumber: uint128.From64(3),
 		Token0Id: runestone.RuneId{ Block: 0, Tx: 0},
 		Token1Id: runestone.RuneId{ Block: 678, Tx: 90},
 	}
@@ -351,38 +354,38 @@ func TestRadFiProvideLiquidityPoolBitcoinRune(t *testing.T) {
 	inputs := []*Input{
 		// some of pool UTXOs
 		{
-			TxHash:			"dfa3fc22b6436fdfaaf96bca443270cf1b6b50c24f2f2aff9ceaf668e2b1ed26",
-			OutputIdx:		0,
-			OutputAmount:	10000,
+			TxHash:			"0f56fe0ca51b40e003f143fe86325cb32091d07e9618e080375c308d451dac2b",
+			OutputIdx:		1,
+			OutputAmount:	2548,
 			PkScript:		relayersMultisigWallet.PKScript,
 			Runes:			[]*runestone.Edict{
 								{
 									ID:		runestone.RuneId{ Block: 678, Tx: 90 },
-									Amount:	uint128.From64(1000000),
+									Amount:	uint128.From64(200003),
 								},
 							},
 		},
 		{
-			TxHash:			"dfa3fc22b6436fdfaaf96bca443270cf1b6b50c24f2f2aff9ceaf668e2b1ed27",
-			OutputIdx:		0,
-			OutputAmount:	20000,
+			TxHash:			"0f56fe0ca51b40e003f143fe86325cb32091d07e9618e080375c308d451dac2b",
+			OutputIdx:		2,
+			OutputAmount:	2548,
 			PkScript:		relayersMultisigWallet.PKScript,
 			Runes:			[]*runestone.Edict{
 								{
 									ID:		runestone.RuneId{ Block: 678, Tx: 90 },
-									Amount:	uint128.From64(2000000),
+									Amount:	uint128.From64(200002),
 								},
 							},
 		},
 		{
-			TxHash:			"dfa3fc22b6436fdfaaf96bca443270cf1b6b50c24f2f2aff9ceaf668e2b1ed28",
-			OutputIdx:		0,
-			OutputAmount:	10000,
+			TxHash:			"0f56fe0ca51b40e003f143fe86325cb32091d07e9618e080375c308d451dac2b",
+			OutputIdx:		3,
+			OutputAmount:	2548,
 			PkScript:		relayersMultisigWallet.PKScript,
 			Runes:			[]*runestone.Edict{
 								{
 									ID:		runestone.RuneId{ Block: 678, Tx: 90 },
-									Amount:	uint128.From64(1000000),
+									Amount:	uint128.From64(200002),
 								},
 							},
 		},
@@ -467,11 +470,12 @@ func TestRadFiProvideLiquidityPoolBitcoinRune(t *testing.T) {
 }
 
 func TestRadFiProvideLiquidityPoolRuneRune(t *testing.T) {
+	poolId := "02"
 	chainParam := &chaincfg.TestNet3Params
 	relayerPrivKeys, relayersMultisigInfo := RandomMultisigInfo(3, 3, chainParam, []int{0, 1, 2}, 0, 1)
-	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo)
+	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo, SHARED_RANDOM_HEX_PREFIX + poolId)
 	userPrivKeys, userMultisigInfo := RandomMultisigInfo(2, 2, chainParam, []int{0, 3}, 1, 1)
-	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo)
+	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo, SHARED_RANDOM_HEX)
 
 	radfiMsg := RadFiProvideLiquidityMsg{
 		Ticks: 	RadFiProvideLiquidityTicks{ UpperTick: 12345, LowerTick: -12345 },
@@ -481,7 +485,7 @@ func TestRadFiProvideLiquidityPoolRuneRune(t *testing.T) {
 		Amount0Desired: uint128.From64(100000),
 		Amount1Desired: uint128.From64(200000),
 		InitPrice: uint128.Zero,
-		SequenceNumber: uint128.From64(111),
+		SequenceNumber: uint128.From64(4),
 		Token0Id: runestone.RuneId{ Block: 123, Tx: 321},
 		Token1Id: runestone.RuneId{ Block: 678, Tx: 90},
 	}
@@ -489,50 +493,50 @@ func TestRadFiProvideLiquidityPoolRuneRune(t *testing.T) {
 	inputs := []*Input{
 		// some of pool UTXOs
 		{
-			TxHash:			"a9287ff640a9a06748100f6334f0e50a8c6a055aabff742443a5b1692d3dd0dc",
-			OutputIdx:		0,
+			TxHash:			"412260f130449022c5a14016aecf8080408e9fb6d846f4f7893bb61b3d59f7cf",
+			OutputIdx:		1,
 			OutputAmount:	DUST_UTXO_AMOUNT,
 			PkScript:		relayersMultisigWallet.PKScript,
 			Runes:			[]*runestone.Edict{
 								{
 									ID:		runestone.RuneId{ Block: 123, Tx: 321 },
-									Amount:	uint128.From64(1000000),
+									Amount:	uint128.From64(250005),
 								},
 								{
 									ID:		runestone.RuneId{ Block: 678, Tx: 90 },
-									Amount:	uint128.From64(2000000),
+									Amount:	uint128.From64(500005),
 								},
 							},
 		},
 		{
-			TxHash:			"a9287ff640a9a06748100f6334f0e50a8c6a055aabff742443a5b1692d3dd0dd",
-			OutputIdx:		0,
+			TxHash:			"412260f130449022c5a14016aecf8080408e9fb6d846f4f7893bb61b3d59f7cf",
+			OutputIdx:		2,
 			OutputAmount:	DUST_UTXO_AMOUNT,
 			PkScript:		relayersMultisigWallet.PKScript,
 			Runes:			[]*runestone.Edict{
 								{
 									ID:		runestone.RuneId{ Block: 123, Tx: 321 },
-									Amount:	uint128.From64(1000000),
+									Amount:	uint128.From64(250002),
 								},
 								{
 									ID:		runestone.RuneId{ Block: 678, Tx: 90 },
-									Amount:	uint128.From64(2000000),
+									Amount:	uint128.From64(500002),
 								},
 							},
 		},
 		{
-			TxHash:			"a9287ff640a9a06748100f6334f0e50a8c6a055aabff742443a5b1692d3dd0de",
-			OutputIdx:		0,
+			TxHash:			"412260f130449022c5a14016aecf8080408e9fb6d846f4f7893bb61b3d59f7cf",
+			OutputIdx:		3,
 			OutputAmount:	DUST_UTXO_AMOUNT,
 			PkScript:		relayersMultisigWallet.PKScript,
 			Runes:			[]*runestone.Edict{
 								{
 									ID:		runestone.RuneId{ Block: 123, Tx: 321 },
-									Amount:	uint128.From64(1000000),
+									Amount:	uint128.From64(250002),
 								},
 								{
 									ID:		runestone.RuneId{ Block: 678, Tx: 90 },
-									Amount:	uint128.From64(2000000),
+									Amount:	uint128.From64(500002),
 								},
 							},
 		},
@@ -624,18 +628,19 @@ func TestRadFiProvideLiquidityPoolRuneRune(t *testing.T) {
 }
 
 func TestRadFiSwap1PoolBitcoinToRune(t *testing.T) {
+	poolId := "01"
 	chainParam := &chaincfg.TestNet3Params
 	relayerPrivKeys, relayersMultisigInfo := RandomMultisigInfo(3, 3, chainParam, []int{0, 1, 2}, 0, 1)
-	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo)
+	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo, SHARED_RANDOM_HEX_PREFIX + poolId)
 	userPrivKeys, userMultisigInfo := RandomMultisigInfo(2, 2, chainParam, []int{0, 3}, 1, 1)
-	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo)
+	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo, SHARED_RANDOM_HEX)
 
 	radfiMsg := RadFiSwapMsg {
 		IsExactIn: true,
 		PoolsCount: 1,
 		AmountIn: uint128.From64(2000),
 		AmountOut:  uint128.From64(200000),
-		SequenceNumber: uint128.From64(123),
+		SequenceNumber: uint128.From64(5),
 		Fees: []uint32{123},
 		Tokens: []*runestone.RuneId{
 			{ Block: 0, Tx: 0 },
@@ -704,7 +709,6 @@ func TestRadFiSwap1PoolBitcoinToRune(t *testing.T) {
 		&radfiMsg,
 		inputs,
 		newPoolUTXOBalances,
-		relayersMultisigWallet.PKScript,
 		userMultisigWallet.PKScript,
 		TX_FEE,
 	)
@@ -761,18 +765,19 @@ func TestRadFiSwap1PoolBitcoinToRune(t *testing.T) {
 }
 
 func TestRadFiSwap1PoolRuneToBitcoin(t *testing.T) {
+	poolId := "01"
 	chainParam := &chaincfg.TestNet3Params
 	relayerPrivKeys, relayersMultisigInfo := RandomMultisigInfo(3, 3, chainParam, []int{0, 1, 2}, 0, 1)
-	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo)
+	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo, SHARED_RANDOM_HEX_PREFIX + poolId)
 	userPrivKeys, userMultisigInfo := RandomMultisigInfo(2, 2, chainParam, []int{0, 3}, 1, 1)
-	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo)
+	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo, SHARED_RANDOM_HEX)
 
 	radfiMsg := RadFiSwapMsg {
 		IsExactIn: true,
 		PoolsCount: 1,
 		AmountIn: uint128.From64(200000),
 		AmountOut:  uint128.From64(2000),
-		SequenceNumber: uint128.From64(124),
+		SequenceNumber: uint128.From64(6),
 		Fees: []uint32{123},
 		Tokens: []*runestone.RuneId{
 			{ Block: 678, Tx: 90 },
@@ -849,7 +854,6 @@ func TestRadFiSwap1PoolRuneToBitcoin(t *testing.T) {
 		&radfiMsg,
 		inputs,
 		newPoolUTXOBalances,
-		relayersMultisigWallet.PKScript,
 		userMultisigWallet.PKScript,
 		TX_FEE,
 	)
@@ -906,18 +910,22 @@ func TestRadFiSwap1PoolRuneToBitcoin(t *testing.T) {
 }
 
 func TestRadFiSwap2PoolRuneToRune(t *testing.T) {
+	poolId1 := "01"
+	poolId2 := "02"
 	chainParam := &chaincfg.TestNet3Params
-	relayerPrivKeys, relayersMultisigInfo := RandomMultisigInfo(3, 3, chainParam, []int{0, 1, 2}, 0, 1)
-	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo)
+	relayerPrivKeys1, relayersMultisigInfo1 := RandomMultisigInfo(3, 3, chainParam, []int{0, 1, 2}, 0, 1)
+	relayersMultisigWallet1, _ := BuildMultisigWallet(relayersMultisigInfo1, SHARED_RANDOM_HEX_PREFIX + poolId1)
+	_, relayersMultisigInfo2 := RandomMultisigInfo(3, 3, chainParam, []int{0, 1, 2}, 0, 1)
+	relayersMultisigWallet2, _ := BuildMultisigWallet(relayersMultisigInfo2, SHARED_RANDOM_HEX_PREFIX + poolId2)
 	userPrivKeys, userMultisigInfo := RandomMultisigInfo(2, 2, chainParam, []int{0, 3}, 1, 1)
-	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo)
+	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo, SHARED_RANDOM_HEX)
 
 	radfiMsg := RadFiSwapMsg {
 		IsExactIn: true,
 		PoolsCount: 2,
 		AmountIn: uint128.From64(200000),
 		AmountOut:  uint128.From64(100000),
-		SequenceNumber: uint128.From64(125),
+		SequenceNumber: uint128.From64(7),
 		Fees: []uint32{123, 456},
 		Tokens: []*runestone.RuneId{
 			{ Block: 678, Tx: 90 },
@@ -933,26 +941,26 @@ func TestRadFiSwap2PoolRuneToRune(t *testing.T) {
 			TxHash:			"dfa3fc22b6436fdfaaf96bca443270cf1b6b50c24f2f2aff9ceaf668e2b1ed26",
 			OutputIdx:		0,
 			OutputAmount:	10000,
-			PkScript:		relayersMultisigWallet.PKScript,
+			PkScript:		relayersMultisigWallet1.PKScript,
 		},
 		{
 			TxHash:			"dfa3fc22b6436fdfaaf96bca443270cf1b6b50c24f2f2aff9ceaf668e2b1ed27",
 			OutputIdx:		0,
 			OutputAmount:	20000,
-			PkScript:		relayersMultisigWallet.PKScript,
+			PkScript:		relayersMultisigWallet1.PKScript,
 		},
 		// some of pool 2 UTXOs
 		{
 			TxHash:			"dfa3fc22b6436fdfaaf96bca443270cf1b6b50c24f2f2aff9ceaf668e2b1ed28",
 			OutputIdx:		0,
 			OutputAmount:	10000,
-			PkScript:		relayersMultisigWallet.PKScript,
+			PkScript:		relayersMultisigWallet2.PKScript,
 		},
 		{
 			TxHash:			"dfa3fc22b6436fdfaaf96bca443270cf1b6b50c24f2f2aff9ceaf668e2b1ed29",
 			OutputIdx:		0,
 			OutputAmount:	10000,
-			PkScript:		relayersMultisigWallet.PKScript,
+			PkScript:		relayersMultisigWallet2.PKScript,
 		},
 		// user rune UTXO to swap liquidity
 		{
@@ -993,7 +1001,6 @@ func TestRadFiSwap2PoolRuneToRune(t *testing.T) {
 		&radfiMsg,
 		inputs,
 		newPoolUTXOBalances,
-		relayersMultisigWallet.PKScript,
 		userMultisigWallet.PKScript,
 		TX_FEE,
 	)
@@ -1008,15 +1015,15 @@ func TestRadFiSwap2PoolRuneToRune(t *testing.T) {
 	userSigs, _ := SignTapMultisig(userPrivKeys[1], msgTx, inputs, userMultisigWallet, 0)
 	totalSigs = append(totalSigs, userSigs)
 	// relayers sign tx
-	masterRelayerSigs, _ := SignTapMultisig(relayerPrivKeys[0], msgTx, inputs, relayersMultisigWallet, 0)
+	masterRelayerSigs, _ := SignTapMultisig(relayerPrivKeys1[0], msgTx, inputs, relayersMultisigWallet1, 0)
 	totalSigsRelayer = append(totalSigsRelayer, masterRelayerSigs)
-	slaveRelayer1Sigs, _ := SignTapMultisig(relayerPrivKeys[1], msgTx, inputs, relayersMultisigWallet, 0)
+	slaveRelayer1Sigs, _ := SignTapMultisig(relayerPrivKeys1[1], msgTx, inputs, relayersMultisigWallet1, 0)
 	totalSigsRelayer = append(totalSigsRelayer, slaveRelayer1Sigs)
-	slaveRelayer2Sigs, _ := SignTapMultisig(relayerPrivKeys[2], msgTx, inputs, relayersMultisigWallet, 0)
+	slaveRelayer2Sigs, _ := SignTapMultisig(relayerPrivKeys1[2], msgTx, inputs, relayersMultisigWallet1, 0)
 	totalSigsRelayer = append(totalSigsRelayer, slaveRelayer2Sigs)
 	// COMBINE SIGN
 	signedMsgTx, _ := CombineTapMultisig(totalSigs, msgTx, inputs, userMultisigWallet, 0)
-	signedMsgTx, _ = CombineTapMultisig(totalSigsRelayer, signedMsgTx, inputs, relayersMultisigWallet, 0)
+	signedMsgTx, _ = CombineTapMultisig(totalSigsRelayer, signedMsgTx, inputs, relayersMultisigWallet1, 0)
 
 	var signedTx bytes.Buffer
 	signedMsgTx.Serialize(&signedTx)
@@ -1050,18 +1057,19 @@ func TestRadFiSwap2PoolRuneToRune(t *testing.T) {
 }
 
 func TestRadFiWithdrawLiquidityPoolBitcoinRune(t *testing.T) {
+	poolId := "01"
 	chainParam := &chaincfg.TestNet3Params
 	relayerPrivKeys, relayersMultisigInfo := RandomMultisigInfo(3, 3, chainParam, []int{0, 1, 2}, 0, 1)
-	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo)
+	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo, SHARED_RANDOM_HEX_PREFIX + poolId)
 	userPrivKeys, userMultisigInfo := RandomMultisigInfo(2, 2, chainParam, []int{0, 3}, 1, 1)
-	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo)
+	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo, SHARED_RANDOM_HEX)
 
 	radfiMsg := RadFiWithdrawLiquidityMsg{
 		LiquidityValue: uint128.From64(1000000000),
 		NftId: uint128.From64(123),
 		Amount0: uint128.From64(20000),
 		Amount1: uint128.From64(100000),
-		SequenceNumber: uint128.From64(125),
+		SequenceNumber: uint128.From64(8),
 	}
 
 	inputs := []*Input{
@@ -1181,18 +1189,19 @@ func TestRadFiWithdrawLiquidityPoolBitcoinRune(t *testing.T) {
 }
 
 func TestRadFiWithdrawLiquidityPoolRuneRune(t *testing.T) {
+	poolId := "02"
 	chainParam := &chaincfg.TestNet3Params
 	relayerPrivKeys, relayersMultisigInfo := RandomMultisigInfo(3, 3, chainParam, []int{0, 1, 2}, 0, 1)
-	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo)
+	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo, SHARED_RANDOM_HEX_PREFIX + poolId)
 	userPrivKeys, userMultisigInfo := RandomMultisigInfo(2, 2, chainParam, []int{0, 3}, 1, 1)
-	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo)
+	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo, SHARED_RANDOM_HEX)
 
 	radfiMsg := RadFiWithdrawLiquidityMsg{
 		LiquidityValue: uint128.From64(1000000000),
 		NftId: uint128.From64(123),
 		Amount0: uint128.From64(100000),
 		Amount1: uint128.From64(200000),
-		SequenceNumber: uint128.From64(125),
+		SequenceNumber: uint128.From64(9),
 	}
 
 	inputs := []*Input{
@@ -1311,17 +1320,18 @@ func TestRadFiWithdrawLiquidityPoolRuneRune(t *testing.T) {
 }
 
 func TestRadFiCollectFeesPoolBitcoinRune(t *testing.T) {
+	poolId := "01"
 	chainParam := &chaincfg.TestNet3Params
 	relayerPrivKeys, relayersMultisigInfo := RandomMultisigInfo(3, 3, chainParam, []int{0, 1, 2}, 0, 1)
-	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo)
+	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo, SHARED_RANDOM_HEX_PREFIX + poolId)
 	userPrivKeys, userMultisigInfo := RandomMultisigInfo(2, 2, chainParam, []int{0, 3}, 1, 1)
-	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo)
+	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo, SHARED_RANDOM_HEX)
 
 	radfiMsg := RadFiCollectFeesMsg{
 		NftId: uint128.From64(123),
 		Amount0: uint128.From64(20000),
 		Amount1: uint128.From64(100000),
-		SequenceNumber: uint128.From64(125),
+		SequenceNumber: uint128.From64(10),
 	}
 
 	inputs := []*Input{
@@ -1439,17 +1449,18 @@ func TestRadFiCollectFeesPoolBitcoinRune(t *testing.T) {
 }
 
 func TestRadFiCollectFeesPoolRuneRune(t *testing.T) {
+	poolId := "02"
 	chainParam := &chaincfg.TestNet3Params
 	relayerPrivKeys, relayersMultisigInfo := RandomMultisigInfo(3, 3, chainParam, []int{0, 1, 2}, 0, 1)
-	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo)
+	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo, SHARED_RANDOM_HEX_PREFIX + poolId)
 	userPrivKeys, userMultisigInfo := RandomMultisigInfo(2, 2, chainParam, []int{0, 3}, 1, 1)
-	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo)
+	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo, SHARED_RANDOM_HEX)
 
 	radfiMsg := RadFiCollectFeesMsg{
 		NftId: uint128.From64(123),
 		Amount0: uint128.From64(100000),
 		Amount1: uint128.From64(200000),
-		SequenceNumber: uint128.From64(125),
+		SequenceNumber: uint128.From64(11),
 	}
 
 	inputs := []*Input{
@@ -1567,11 +1578,12 @@ func TestRadFiCollectFeesPoolRuneRune(t *testing.T) {
 }
 
 func TestRadFiIncreaseLiquidityPoolBitcoinRune(t *testing.T) {
+	poolId := "01"
 	chainParam := &chaincfg.TestNet3Params
 	relayerPrivKeys, relayersMultisigInfo := RandomMultisigInfo(3, 3, chainParam, []int{0, 1, 2}, 0, 1)
-	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo)
+	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo, SHARED_RANDOM_HEX_PREFIX + poolId)
 	userPrivKeys, userMultisigInfo := RandomMultisigInfo(2, 2, chainParam, []int{0, 3}, 1, 1)
-	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo)
+	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo, SHARED_RANDOM_HEX)
 
 	radfiMsg := RadFiIncreaseLiquidityMsg{
 		Min0:	0,
@@ -1579,7 +1591,7 @@ func TestRadFiIncreaseLiquidityPoolBitcoinRune(t *testing.T) {
 		NftId: uint128.From64(123),
 		Amount0: uint128.From64(2000),
 		Amount1: uint128.From64(100000),
-		SequenceNumber: uint128.From64(125),
+		SequenceNumber: uint128.From64(12),
 	}
 
 	inputs := []*Input{
@@ -1706,11 +1718,12 @@ func TestRadFiIncreaseLiquidityPoolBitcoinRune(t *testing.T) {
 }
 
 func TestRadFiIncreaseLiquidityPoolRuneRune(t *testing.T) {
+	poolId := "02"
 	chainParam := &chaincfg.TestNet3Params
 	relayerPrivKeys, relayersMultisigInfo := RandomMultisigInfo(3, 3, chainParam, []int{0, 1, 2}, 0, 1)
-	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo)
+	relayersMultisigWallet, _ := BuildMultisigWallet(relayersMultisigInfo, SHARED_RANDOM_HEX_PREFIX + poolId)
 	userPrivKeys, userMultisigInfo := RandomMultisigInfo(2, 2, chainParam, []int{0, 3}, 1, 1)
-	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo)
+	userMultisigWallet, _ := BuildMultisigWallet(userMultisigInfo, SHARED_RANDOM_HEX)
 
 	radfiMsg := RadFiIncreaseLiquidityMsg{
 		Min0:	0,

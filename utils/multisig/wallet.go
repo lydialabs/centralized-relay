@@ -70,7 +70,7 @@ func buildPTLCTapScript(
 	return scriptBytes, "", nil
 }
 
-func buildMultisigWalletFromScripts(scripts [][]byte) (*MultisigWallet, error) {
+func buildMultisigWalletFromScripts(scripts [][]byte, sharedRandomHex string) (*MultisigWallet, error) {
 	tapLeaves := []txscript.TapLeaf{}
 	for _, script := range scripts {
 		tapLeaf := txscript.NewBaseTapLeaf(script)
@@ -80,7 +80,7 @@ func buildMultisigWalletFromScripts(scripts [][]byte) (*MultisigWallet, error) {
 	tapScriptTree := txscript.AssembleTaprootScriptTree(tapLeaves...)
 	tapScriptRootHash := tapScriptTree.RootNode.TapHash()
 
-	sharedRandomBytes, _ := hex.DecodeString(SHARED_RANDOM_HEX)
+	sharedRandomBytes, _ := hex.DecodeString(sharedRandomHex)
 	sharedRandom := new(big.Int).SetBytes(sharedRandomBytes)
 
 	sharedPublicKey, _, err := genSharedInternalPubKey(sharedRandom)
@@ -158,6 +158,7 @@ func genSharedInternalPubKey(sharedRandom *big.Int) (*btcec.PublicKey, []byte, e
 // output: multisig struct
 func BuildMultisigWallet(
 	multisigInfo *MultisigInfo,
+	sharedRandomHex string,
 ) (*MultisigWallet, error) {
 	// Taptree structure:
 	// TapLeaf 1: <MULTISIG_SCRIPT>
@@ -168,14 +169,14 @@ func BuildMultisigWallet(
 	}
 
 	if multisigInfo.RecoveryLockTime == 0 {
-		return buildMultisigWalletFromScripts([][]byte{script1})
+		return buildMultisigWalletFromScripts([][]byte{script1}, sharedRandomHex)
 	} else {
 		script2, _, err := buildPTLCTapScript(multisigInfo.RecoveryLockTime, multisigInfo.RecoveryPubKey)
 		if err != nil {
 			return nil, fmt.Errorf("build script PTLC err %v", err)
 		}
 
-		return buildMultisigWalletFromScripts([][]byte{script1, script2})
+		return buildMultisigWalletFromScripts([][]byte{script1, script2}, sharedRandomHex)
 	}
 }
 
