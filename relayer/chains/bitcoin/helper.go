@@ -2,20 +2,21 @@ package bitcoin
 
 import (
 	"encoding/binary"
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
+	"io"
 	"math/big"
 	"net/http"
 	"strconv"
 	"strings"
-	"encoding/hex"
-	"fmt"
-	"io"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/icon-project/centralized-relay/utils/multisig"
 
+	radfiAbi "github.com/icon-project/centralized-relay/relayer/chains/bitcoin/abi"
 	"github.com/icon-project/icon-bridge/common/codec"
-	evmAbi "github.com/icon-project/centralized-relay/relayer/chains/evm/abi"
 )
 
 func GetRuneTxIndex(endpoint, method, bearToken, txId string, index int) (*RuneTxIndexResponse, error) {
@@ -53,11 +54,11 @@ func GetRuneTxIndex(endpoint, method, bearToken, txId string, index int) (*RuneT
 	return resp, nil
 }
 
-func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []string, requester common.Address) ([]byte, error) {
+func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []string, requester common.Address, runeFactory *radfiAbi.Runefactory) ([]byte, error) {
 	var res, calldata []byte
-	bitcoinStateAbi, _ := abi.JSON(strings.NewReader(evmAbi.BitcoinStateMetaData.ABI))
-	nonfungibleABI, _ := abi.JSON(strings.NewReader(evmAbi.NonfungiblePositionManagerMetaData.ABI))
-	routerABI, _ := abi.JSON(strings.NewReader(evmAbi.IrouterMetaData.ABI))
+	bitcoinStateAbi, _ := abi.JSON(strings.NewReader(radfiAbi.BitcoinStateMetaData.ABI))
+	nonfungibleABI, _ := abi.JSON(strings.NewReader(radfiAbi.NonfungiblePositionManagerMetaData.ABI))
+	routerABI, _ := abi.JSON(strings.NewReader(radfiAbi.IrouterMetaData.ABI))
 	addressTy, _ := abi.NewType("address", "", nil)
 	bytes, _ := abi.NewType("bytes", "", nil)
 
@@ -70,33 +71,43 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 		},
 	}
 
-	switch data.(type) {
+	switch v := data.(type) {
 	case multisig.RadFiProvideLiquidityMsg:
-		dataMint := data.(multisig.RadFiProvideLiquidityMsg)
-		mintParams := evmAbi.INonfungiblePositionManagerMintParams{
-			Token0:         dataMint.Detail.Token0,
-			Token1:         dataMint.Detail.Token1,
-			Fee:            big.NewInt(int64(dataMint.Detail.Fee) * 100),
-			TickLower:      big.NewInt(int64(dataMint.Detail.LowerTick)),
-			TickUpper:      big.NewInt(int64(dataMint.Detail.UpperTick)),
-			Amount0Desired: dataMint.Detail.Amount0Desired.Big(),
-			Amount1Desired: dataMint.Detail.Amount1Desired.Big(),
+		dataMint := v
+
+		// get address token0 token1 from contract
+		token0, err := runeFactory.ComputeTokenAddress(nil, dataMint.Token0Id.String())
+		if err != nil {
+			return nil, err
+		}
+
+		token1, err := runeFactory.ComputeTokenAddress(nil, dataMint.Token1Id.String())
+		if err != nil {
+			return nil, err
+		}
+
+		mintParams := radfiAbi.INonfungiblePositionManagerMintParams{
+			Token0:         token0,
+			Token1:         token1,
+			Fee:            big.NewInt(int64(dataMint.Fee) * 100),
+			TickLower:      big.NewInt(int64(dataMint.Ticks.LowerTick)),
+			TickUpper:      big.NewInt(int64(dataMint.Ticks.UpperTick)),
+			Amount0Desired: dataMint.Amount0Desired.Big(),
+			Amount1Desired: dataMint.Amount1Desired.Big(),
 			Recipient:      common.HexToAddress(to),
 			Deadline:       big.NewInt(10000000000),
 		}
 
-		mintParams.Amount0Min = mulDiv(mintParams.Amount0Desired, big.NewInt(int64(dataMint.Detail.Min0)), big.NewInt(1e4))
-		mintParams.Amount1Min = mulDiv(mintParams.Amount1Desired, big.NewInt(int64(dataMint.Detail.Min1)), big.NewInt(1e4))
+		mintParams.Amount0Min = mulDiv(mintParams.Amount0Desired, big.NewInt(int64(dataMint.Min0)), big.NewInt(1e4))
+		mintParams.Amount1Min = mulDiv(mintParams.Amount1Desired, big.NewInt(int64(dataMint.Min1)), big.NewInt(1e4))
 
-		var err error
-		if dataMint.InitPrice != nil && !dataMint.InitPrice.IsZero() {
-			encodeInitPoolArgs, err := nonfungibleABI.Pack("initPoolHelper", mintParams, dataMint.Token0, dataMint.Token1, dataMint.InitPrice.Big())
+		if !dataMint.InitPrice.IsZero() {
+			encodeInitPoolArgs, err := nonfungibleABI.Pack("initPoolHelper", mintParams, token0, token1, dataMint.InitPrice.Big())
 			if err != nil {
 				return nil, err
 			}
 
 			calldata, err = bitcoinStateAbi.Pack("initPool", encodeInitPoolArgs[4:])
-
 		} else {
 			calldata, err = nonfungibleABI.Pack("mint", mintParams)
 		}
@@ -106,14 +117,14 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 		}
 
 	case multisig.RadFiWithdrawLiquidityMsg:
-		withdrawLiquidityInfo := data.(multisig.RadFiWithdrawLiquidityMsg)
+		withdrawLiquidityInfo := v
 
-		decreaseLiquidityData := evmAbi.INonfungiblePositionManagerDecreaseLiquidityParams{
-			TokenId: withdrawLiquidityInfo.NftId.Big(),
-			Amount0Min: withdrawLiquidityInfo.Amount0Min.Big(),
-			Amount1Min: withdrawLiquidityInfo.Amount1Min.Big(),
-			Liquidity: withdrawLiquidityInfo.LiquidityValue.Big(),
-			Deadline: big.NewInt(10000000000),
+		decreaseLiquidityData := radfiAbi.INonfungiblePositionManagerDecreaseLiquidityParams{
+			TokenId:    withdrawLiquidityInfo.NftId.Big(),
+			Amount0Min: withdrawLiquidityInfo.Amount0.Big(),
+			Amount1Min: withdrawLiquidityInfo.Amount1.Big(),
+			Liquidity:  withdrawLiquidityInfo.LiquidityValue.Big(),
+			Deadline:   big.NewInt(10000000000),
 		}
 
 		decreaseLiquidityCalldata, err := nonfungibleABI.Pack("decreaseLiquidity", decreaseLiquidityData)
@@ -127,14 +138,14 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 		}
 
 	case multisig.RadFiIncreaseLiquidityMsg:
-		increaseLiquidityInfo := data.(multisig.RadFiIncreaseLiquidityMsg)
-		increaseLiquidityData := evmAbi.INonfungiblePositionManagerIncreaseLiquidityParams{
-			TokenId: increaseLiquidityInfo.NftId.Big(),
-			Amount0Desired: increaseLiquidityInfo.Amount0Desired.Big(), //todo fill in
-			Amount1Desired: increaseLiquidityInfo.Amount1Desired.Big(), //todo fill in
-			Deadline: big.NewInt(10000000000),
-			Amount0Min: increaseLiquidityInfo.Amount0Min.Big(),
-			Amount1Min: increaseLiquidityInfo.Amount1Min.Big(),
+		increaseLiquidityInfo := v
+		increaseLiquidityData := radfiAbi.INonfungiblePositionManagerIncreaseLiquidityParams{
+			TokenId:        increaseLiquidityInfo.NftId.Big(),
+			Amount0Desired: increaseLiquidityInfo.Amount0.Big(), //todo fill in
+			Amount1Desired: increaseLiquidityInfo.Amount1.Big(), //todo fill in
+			Deadline:       big.NewInt(10000000000),
+			Amount0Min:     increaseLiquidityInfo.Amount0.Big(),
+			Amount1Min:     increaseLiquidityInfo.Amount1.Big(),
 		}
 
 		var err error
@@ -144,16 +155,33 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 		}
 
 	case multisig.RadFiSwapMsg:
-		swapInfo := data.(multisig.RadFiSwapMsg)
+		swapInfo := v
 		var err error
-		if swapInfo.IsExactInOut {
+
+		// get token from contract to build path
+		tokens := []common.Address{}
+		for _, v := range tokens {
+			tokenAddr, err := runeFactory.ComputeTokenAddress(nil, v.String())
+			if err != nil {
+				return nil, err
+			}
+
+			tokens = append(tokens, tokenAddr)
+		}
+
+		path, err := BuildPath(tokens, swapInfo.Fees)
+		if err != nil {
+			return nil, err
+		}
+
+		if swapInfo.IsExactIn {
 			//exact in
-			swapExactInData := evmAbi.ISwapRouterExactInputParams{
-				Path: swapInfo.Path,
-				AmountIn: swapInfo.AmountIn.Big(), // todo:
-				AmountOutMinimum: swapInfo.AmountOutMinimum.Big(), // todo:
-				Recipient: common.HexToAddress(to),
-				Deadline: big.NewInt(10000000000),
+			swapExactInData := radfiAbi.ISwapRouterExactInputParams{
+				Path:             path,
+				AmountIn:         swapInfo.AmountIn.Big(),  // todo:
+				AmountOutMinimum: swapInfo.AmountOut.Big(), // todo:
+				Recipient:        common.HexToAddress(to),
+				Deadline:         big.NewInt(10000000000),
 			}
 
 			calldata, err = routerABI.Pack("exactInput", swapExactInData)
@@ -163,12 +191,12 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 
 		} else {
 			//exact out
-			swapExactOutData := evmAbi.ISwapRouterExactOutputParams{
-				Path: swapInfo.Path,
-				Recipient: common.HexToAddress(to), // todo: review
-				Deadline: big.NewInt(10000000000),
-				AmountInMaximum: swapInfo.AmountInMaximum.Big(), // todo:
-				AmountOut: swapInfo.AmountIn.Big(),
+			swapExactOutData := radfiAbi.ISwapRouterExactOutputParams{
+				Path:            path,
+				Recipient:       common.HexToAddress(to), // todo: review
+				Deadline:        big.NewInt(10000000000),
+				AmountInMaximum: swapInfo.AmountIn.Big(), // todo:
+				AmountOut:       swapInfo.AmountIn.Big(),
 			}
 
 			calldata, err = nonfungibleABI.Pack("exactOutput", swapExactOutData)
@@ -178,12 +206,12 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 
 		}
 	case multisig.RadFiCollectFeesMsg:
-		collectInfo := data.(multisig.RadFiCollectFeesMsg)
-		collectParams := evmAbi.INonfungiblePositionManagerCollectParams{
-			TokenId: collectInfo.NftId.Big(),
+		collectInfo := v
+		collectParams := radfiAbi.INonfungiblePositionManagerCollectParams{
+			TokenId:    collectInfo.NftId.Big(),
 			Amount0Max: new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 128), big.NewInt(1)),
 			Amount1Max: new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 128), big.NewInt(1)),
-			Recipient: common.HexToAddress(to), // todo:
+			Recipient:  common.HexToAddress(to), // todo:
 		}
 
 		collectCalldata, err := nonfungibleABI.Pack("collect", collectParams)
@@ -214,13 +242,13 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 	return res, nil
 }
 
-func XcallFormat(callData []byte, from, to string, sn uint, protocols []string, messType uint8) ([]byte, error) {
+func XcallFormat(callData []byte, from, to string, sn uint, protocols []string) ([]byte, error) {
 	//
 	csV2 := CSMessageRequestV2{
 		From:        from,
 		To:          to,
 		Sn:          big.NewInt(int64(sn)).Bytes(),
-		MessageType: messType,
+		MessageType: uint8(CALL_MESSAGE_TYPE),
 		Data:        callData,
 		Protocols:   protocols,
 	}
@@ -263,7 +291,7 @@ func mulDiv(a, nNumerator, nDenominator *big.Int) *big.Int {
 	return big.NewInt(0).Div(big.NewInt(0).Mul(a, nNumerator), nDenominator)
 }
 
-func BuildPath(paths []common.Address, fees []int64) ([]byte, error) {
+func BuildPath(paths []common.Address, fees []uint32) ([]byte, error) {
 	var temp []byte
 	for i := 0; i < len(fees); i++ {
 		temp = append(temp, paths[i].Bytes()...)
