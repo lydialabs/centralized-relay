@@ -277,3 +277,8 @@ func BuildPath(paths []common.Address, fees []int64) ([]byte, error) {
 	temp = append(temp, paths[len(paths)-1].Bytes()...)
 	return temp, nil
 }
+
+func AddPrefixChainName(chainName string, key []byte) []byte {
+	prefix := fmt.Sprintf("%s_", chainName)
+	return append([]byte(prefix), key...)
+}
