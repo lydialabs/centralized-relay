@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 	"runtime"
@@ -12,6 +13,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"strconv"
 
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -29,11 +31,14 @@ import (
 	"github.com/icon-project/centralized-relay/utils/multisig"
 	"github.com/icon-project/goloop/common/codec"
 
-	"github.com/syndtr/goleveldb/leveldb"
-	"github.com/icon-project/centralized-relay/relayer/chains/bitcoin/abi"
-	"github.com/ethereum/go-ethereum/ethclient"
-	"go.uber.org/zap"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/icon-project/centralized-relay/relayer/chains/bitcoin/abi"
+	"github.com/syndtr/goleveldb/leveldb"
+	"go.uber.org/zap"
+	"github.com/icon-project/centralized-relay/relayer/chains/bitcoin/helper"
+	ethabi	"github.com/ethereum/go-ethereum/accounts/abi"
+	ethereum "github.com/ethereum/go-ethereum"
 )
 
 var (
@@ -49,8 +54,7 @@ var (
 	NumberRequiredSigs = 3
 
 	// Define DB key
-	LastProcessedSequenceNumber = "LastSequenceNumber"
-	LastSequenceNumber = "LastSequenceNumber"
+	LastPendingSequenceNumber = "LastPendingSequenceNumber"
 	DefaultCreateTimeout   = time.Second * 10
 	
 )
@@ -60,6 +64,8 @@ var chainIdToName = map[uint8]string{
 	2: "0x1.btc",
 	3: "0x2.icon",
 	4: "0x2.btc",
+	5: "0x2105.base",
+	6: "0x14a34.base",
 }
 
 var (
@@ -127,14 +133,15 @@ type Provider struct {
 	cfg                 *Config
 	client              IClient
 	LastSavedHeightFunc func() uint64
-	LastSerialNumFunc   func() *big.Int
 	multisigAddrScript  []byte
 	httpServer          chan struct{}
 	db                  *leveldb.DB
 	chainParam          *chaincfg.Params
 	eth       			*ethclient.Client
-	bitcoinState        *abi.BitcoinState
+	bitcoinState        *abi.Bitcoinstate
 	runeFactory         *abi.Runefactory
+	connections 		[]string
+	destChainId         int
 }
 
 type Config struct {
@@ -160,9 +167,10 @@ type Config struct {
 	RecoveryLockTime      int      `json:"recoveryLockTime" yaml:"recoveryLockTime"`
 	Connections           []string `json:"connections" yaml:"connections"`
 	EthRPC           	  string   `json:"eth-prc" yaml:"connections"`
-	LastSequenceNumber    uint64   `json:"last-sequence-number" yaml:"last-sequence-number"`
 	RuneFactory           string   `json:"rune-factory" yaml:"rune-factory"`
 	BitcoinState          string   `json:"bitcoin-state" yaml:"bitcoin-state"`
+	SequenceBatchSize     int      `json:"sequence-batch-size" yaml:"sequence-batch-size"`
+	DestChainId 		  int      `json:"dest-chain-id" yaml:"dest-chain-id"`
 }
 
 // NewProvider returns new Icon provider
@@ -183,12 +191,6 @@ func (c *Config) NewProvider(ctx context.Context, log *zap.Logger, homepath stri
 		return nil, fmt.Errorf("failed to open or create database: %v", err)
 	}
 
-	// init sequence number 
-	lastSeqKey := AddPrefixChainName(c.NID, []byte(LastSequenceNumber))
-	_, err = db.Get(lastSeqKey, nil)
-	if err == leveldb.ErrNotFound {
-		db.Put(AddPrefixChainName(c.NID, []byte(LastSequenceNumber)), []byte(fmt.Sprintf("%d", c.LastSequenceNumber)), nil)
-	}
 
 	client, err := newClient(ctx, c.RPCUrl, c.User, c.Password, true, false, log)
 	if err != nil {
@@ -220,7 +222,7 @@ func (c *Config) NewProvider(ctx context.Context, log *zap.Logger, homepath stri
 	}
 
 	// init bitcoinState contract instance
-	bitcoinState, err := abi.NewBitcoinState(common.HexToAddress(c.BitcoinState), rpc)
+	bitcoinState, err := abi.NewBitcoinstate(common.HexToAddress(c.BitcoinState), rpc)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +231,6 @@ func (c *Config) NewProvider(ctx context.Context, log *zap.Logger, homepath stri
 		logger:             log.With(zap.Stringp("nid", &c.NID), zap.Stringp("name", &c.ChainName)),
 		cfg:                c,
 		client:             client,
-		LastSerialNumFunc:  func() *big.Int { return big.NewInt(0) },
 		httpServer:         make(chan struct{}),
 		db:                 db, // Add the database to the Provider
 		chainParam:         chainParam,
@@ -321,9 +322,149 @@ func (p *Provider) Config() provider.Config {
 
 func (p *Provider) Listener(ctx context.Context, lastProcessedTx relayTypes.LastProcessedTx, blockInfoChan chan *relayTypes.BlockInfo) error {
 	// run http server to help btc interact each others
-	
+	lastSqnNumber := lastProcessedTx.Height
+
+	// get last sqn from the contract
+	sqn, err := p.bitcoinState.RequestCount(nil)
+	if err != nil {
+		return err
+	}
+
+	// compare sqn
+	if sqn.Uint64() != lastSqnNumber {
+		return errors.New("last sqn is not match")
+	}
+
+	// init sequence number if needed
+	lastSeqKey := AddPrefixChainName(p.NID(), []byte(LastPendingSequenceNumber))
+	lastPendingSqnBytes, err := p.db.Get(lastSeqKey, nil)
+	if err != nil {
+		return err
+	}
+
+	//
+	lastPendingSqn, err := strconv.ParseUint(string(lastPendingSqnBytes), 10, 64)
+	if err == leveldb.ErrNotFound || lastPendingSqn < lastSqnNumber {
+		p.db.Put(AddPrefixChainName(p.NID(), []byte(LastPendingSequenceNumber)), []byte(fmt.Sprintf("%d", lastSqnNumber)), nil)
+	} else if err != nil && err != leveldb.ErrNotFound {
+		return err
+	}
+
 	// loop thru 
-	return nil
+	var (
+		subscribeStart = time.NewTicker(time.Second * 1)
+		// errChan        = make(chan error)
+		checkSqnUpdatedContract = time.NewTicker(time.Second * 1)
+	)
+
+	// bitcoin state
+	bitcoinStateAddr := common.HexToAddress(p.cfg.BitcoinState)
+	bitcoinStateAbi, err := ethabi.JSON(strings.NewReader(abi.BitcoinstateABI))
+	if err != nil {
+		p.logger.Error(fmt.Sprintln("fail to get bitcoin state abi"), zap.Error(err))
+		return err
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			p.logger.Debug("radfi listener: done")
+			return ctx.Err()
+		case <-subscribeStart.C:
+			if lastPendingSqn > lastSqnNumber {
+				subscribeStart.Stop()
+
+				for {
+					// 
+					lastSqnNumber++
+					
+					// get data from level db
+					lastSqnNumberBytes := []byte(fmt.Sprintf("%d", lastSqnNumber))
+					requestData, err := p.db.Get(AddPrefixChainName(p.NID(), lastSqnNumberBytes), nil)
+					if err != nil {
+						p.logger.Error(fmt.Sprintln("failed to get data at sequence number %d", lastSqnNumber), zap.Error(err))
+						break
+					}
+
+					// todo: handle batching
+					// todo: validation 
+
+					// todo: parse it from tx
+					from := "bc1pn55rnm2a883y2v0znk9ek5mmt7agtp8pue8ugacdkjgc56dhhetql5dpek"
+
+					// buidl xcall message
+					calldata, uniswapCalldata, err := ToXCallMessage(requestData, from, p.cfg.BitcoinState, uint(lastSqnNumber), p.connections, from, p.runeFactory)
+					if err != nil {
+						p.logger.Error(fmt.Sprintln("failed to build xcall message %d", lastSqnNumber), zap.Error(err))
+						break
+					}
+
+					simulateCalldata, err := bitcoinStateAbi.Pack("simulateRequest", big.NewInt(0), from, uniswapCalldata)
+					if err != nil {
+						p.logger.Error(fmt.Sprintln("pack simuate calldata"), zap.Error(err))
+						break
+					}
+
+					// run simulate before deliver it to evm channel
+					gasLimit, err := helper.EstimateGas(
+						ethereum.CallMsg{From: common.HexToAddress("0x000000000000000000000000000000000000dEaD"), To: &bitcoinStateAddr, Data: simulateCalldata},
+						p.cfg.EthRPC,
+					)
+
+					if err != nil || gasLimit == 0 {
+						p.logger.Error(fmt.Sprintln("simulate fail because of err"), zap.Error(err))
+						lastSqnNumber--
+						break
+					}
+
+					relayMessage := &relayTypes.Message{
+						Dst:           chainIdToName[uint8(p.destChainId)],
+						Src:           p.NID(),
+						Sn:            big.NewInt(int64(lastSqnNumber)),
+						Data:          calldata,
+						MessageHeight: lastSqnNumber,
+						EventType:     events.EmitMessage,
+					}
+
+					p.logger.Info("Detected radfi request",
+						zap.Uint64("last sequence number", relayMessage.MessageHeight),
+						zap.String("target_network", relayMessage.Dst),
+						zap.Uint64("sn", relayMessage.Sn.Uint64()),
+						zap.String("event_type", relayMessage.EventType),
+					)
+
+					// handle batching later
+					blockInfoChan <- &relayTypes.BlockInfo{
+						Height:   lastSqnNumber,
+						Messages: []*relayTypes.Message{relayMessage},
+					}
+
+					// check the sqn number on contract is updated
+					tempSqn := 0
+					for {
+						<-checkSqnUpdatedContract.C
+						// get last sqn from the contract
+						sqn, err = p.bitcoinState.RequestCount(nil)
+						if err != nil {
+							p.logger.Error(fmt.Sprintln("retry: get sequence error"), zap.Error(err))
+						} else {
+							tempSqn = int(sqn.Int64())
+						}
+						if lastSqnNumber == uint64(tempSqn) {
+							checkSqnUpdatedContract.Stop()
+							break
+						}
+					}
+
+					if lastPendingSqn == lastSqnNumber {
+						break
+					}
+				}
+			}
+
+			subscribeStart.Reset(time.Second * 1)
+		}
+	}
 }
 
 func (p *Provider) GetBitcoinUTXOs(server, address string, amountRequired int64, addressPkScript []byte) ([]*multisig.Input, error) {

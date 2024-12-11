@@ -78,6 +78,30 @@ func handleUpdateRelayerMessageStatus(w http.ResponseWriter, r *http.Request, p 
 	p.updateRelayerMessageStatus(rsi)
 }
 
+func handleAddNewRequest(w http.ResponseWriter, r *http.Request, p *Provider) {
+	if !validateMethod(w, r, p) {
+		return
+	}
+	if !authorizeRequest(w, r, p) {
+		return
+	}
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		p.logger.Error("Error reading request body", zap.Error(err))
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+	var rsi slaveRequestUpdateRelayMessageStatus
+	err = json.Unmarshal(body, &rsi)
+	if err != nil {
+		p.logger.Error("Error decoding request body", zap.Error(err))
+		http.Error(w, "Error decoding request body", http.StatusInternalServerError)
+		return
+	}
+
+	// handle add new request 
+}
+
 func authorizeRequest(w http.ResponseWriter, r *http.Request, p *Provider) bool {
 	apiKey := r.Header.Get("x-api-key")
 	if apiKey == "" {
