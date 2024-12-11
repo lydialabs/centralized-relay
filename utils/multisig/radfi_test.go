@@ -136,6 +136,7 @@ func TestRadFiInitPoolBitcoinRune(t *testing.T) {
 		Amount1Desired: uint128.From64(1000011),
 		InitPrice: uint128.From64(123456),
 		SequenceNumber: uint128.From64(1),
+		NftId: uint128.From64(1),
 		Token0Id: runestone.RuneId{ Block: 0, Tx: 0},
 		Token1Id: runestone.RuneId{ Block: 678, Tx: 90},
 	}
@@ -217,6 +218,7 @@ func TestRadFiInitPoolBitcoinRune(t *testing.T) {
 	fmt.Println("decoded message - Amount1  : ", decodedRadFiMessage.ProvideLiquidityMsg.Amount1Desired)
 	fmt.Println("decoded message - InitPrice: ", decodedRadFiMessage.ProvideLiquidityMsg.InitPrice)
 	fmt.Println("decoded message - SequenceNumber: ", decodedRadFiMessage.ProvideLiquidityMsg.SequenceNumber)
+	fmt.Println("decoded message - NftId: ", decodedRadFiMessage.ProvideLiquidityMsg.NftId)
 	fmt.Println("decoded message - Token0Id: ", decodedRadFiMessage.ProvideLiquidityMsg.Token0Id)
 	fmt.Println("decoded message - Token1Id: ", decodedRadFiMessage.ProvideLiquidityMsg.Token1Id)
 }
@@ -238,6 +240,7 @@ func TestRadFiInitPoolRuneRune(t *testing.T) {
 		Amount1Desired: uint128.From64(2000011),
 		InitPrice: uint128.From64(123456),
 		SequenceNumber: uint128.From64(2),
+		NftId: uint128.From64(2),
 		Token0Id: runestone.RuneId{ Block: 123, Tx: 321},
 		Token1Id: runestone.RuneId{ Block: 678, Tx: 90},
 	}
@@ -326,6 +329,7 @@ func TestRadFiInitPoolRuneRune(t *testing.T) {
 	fmt.Println("decoded message - Amount1  : ", decodedRadFiMessage.ProvideLiquidityMsg.Amount1Desired)
 	fmt.Println("decoded message - InitPrice: ", decodedRadFiMessage.ProvideLiquidityMsg.InitPrice)
 	fmt.Println("decoded message - SequenceNumber: ", decodedRadFiMessage.ProvideLiquidityMsg.SequenceNumber)
+	fmt.Println("decoded message - NftId: ", decodedRadFiMessage.ProvideLiquidityMsg.NftId)
 	fmt.Println("decoded message - Token0Id: ", decodedRadFiMessage.ProvideLiquidityMsg.Token0Id)
 	fmt.Println("decoded message - Token1Id: ", decodedRadFiMessage.ProvideLiquidityMsg.Token1Id)
 }
@@ -347,6 +351,7 @@ func TestRadFiProvideLiquidityPoolBitcoinRune(t *testing.T) {
 		Amount1Desired: uint128.From64(100000),
 		InitPrice: uint128.From64(0),
 		SequenceNumber: uint128.From64(3),
+		NftId: uint128.From64(1),
 		Token0Id: runestone.RuneId{ Block: 0, Tx: 0},
 		Token1Id: runestone.RuneId{ Block: 678, Tx: 90},
 	}
@@ -465,6 +470,7 @@ func TestRadFiProvideLiquidityPoolBitcoinRune(t *testing.T) {
 	fmt.Println("decoded message - Amount1  : ", decodedRadFiMessage.ProvideLiquidityMsg.Amount1Desired)
 	fmt.Println("decoded message - InitPrice: ", decodedRadFiMessage.ProvideLiquidityMsg.InitPrice)
 	fmt.Println("decoded message - SequenceNumber: ", decodedRadFiMessage.ProvideLiquidityMsg.SequenceNumber)
+	fmt.Println("decoded message - NftId: ", decodedRadFiMessage.ProvideLiquidityMsg.NftId)
 	fmt.Println("decoded message - Token0Id: ", decodedRadFiMessage.ProvideLiquidityMsg.Token0Id)
 	fmt.Println("decoded message - Token1Id: ", decodedRadFiMessage.ProvideLiquidityMsg.Token1Id)
 }
@@ -486,6 +492,7 @@ func TestRadFiProvideLiquidityPoolRuneRune(t *testing.T) {
 		Amount1Desired: uint128.From64(200000),
 		InitPrice: uint128.Zero,
 		SequenceNumber: uint128.From64(4),
+		NftId: uint128.From64(2),
 		Token0Id: runestone.RuneId{ Block: 123, Tx: 321},
 		Token1Id: runestone.RuneId{ Block: 678, Tx: 90},
 	}
@@ -623,6 +630,7 @@ func TestRadFiProvideLiquidityPoolRuneRune(t *testing.T) {
 	fmt.Println("decoded message - Amount1  : ", decodedRadFiMessage.ProvideLiquidityMsg.Amount1Desired)
 	fmt.Println("decoded message - InitPrice: ", decodedRadFiMessage.ProvideLiquidityMsg.InitPrice)
 	fmt.Println("decoded message - SequenceNumber: ", decodedRadFiMessage.ProvideLiquidityMsg.SequenceNumber)
+	fmt.Println("decoded message - NftId: ", decodedRadFiMessage.ProvideLiquidityMsg.NftId)
 	fmt.Println("decoded message - Token0Id: ", decodedRadFiMessage.ProvideLiquidityMsg.Token0Id)
 	fmt.Println("decoded message - Token1Id: ", decodedRadFiMessage.ProvideLiquidityMsg.Token1Id)
 }
@@ -641,6 +649,7 @@ func TestRadFiSwap1PoolBitcoinToRune(t *testing.T) {
 		AmountIn: uint128.From64(2000),
 		AmountOut:  uint128.From64(200000),
 		SequenceNumber: uint128.From64(5),
+		NftIds: []uint128.Uint128{uint128.From64(1)},
 		Fees: []uint32{123},
 		Tokens: []*runestone.RuneId{
 			{ Block: 0, Tx: 0 },
@@ -760,6 +769,7 @@ func TestRadFiSwap1PoolBitcoinToRune(t *testing.T) {
 	fmt.Println("decoded message - AmountIn: ", decodedRadFiMessage.SwapMsg.AmountIn)
 	fmt.Println("decoded message - AmountOut: ", decodedRadFiMessage.SwapMsg.AmountOut)
 	fmt.Println("decoded message - SequenceNumber: ", decodedRadFiMessage.SwapMsg.SequenceNumber)
+	fmt.Println("decoded message - NftIds: ", decodedRadFiMessage.SwapMsg.NftIds)
 	fmt.Println("decoded message - Fees: ", decodedRadFiMessage.SwapMsg.Fees)
 	fmt.Println("decoded message - Tokens: ", decodedRadFiMessage.SwapMsg.Tokens)
 }
@@ -778,6 +788,7 @@ func TestRadFiSwap1PoolRuneToBitcoin(t *testing.T) {
 		AmountIn: uint128.From64(200000),
 		AmountOut:  uint128.From64(2000),
 		SequenceNumber: uint128.From64(6),
+		NftIds: []uint128.Uint128{uint128.From64(1)},
 		Fees: []uint32{123},
 		Tokens: []*runestone.RuneId{
 			{ Block: 678, Tx: 90 },
@@ -905,6 +916,7 @@ func TestRadFiSwap1PoolRuneToBitcoin(t *testing.T) {
 	fmt.Println("decoded message - AmountIn: ", decodedRadFiMessage.SwapMsg.AmountIn)
 	fmt.Println("decoded message - AmountOut: ", decodedRadFiMessage.SwapMsg.AmountOut)
 	fmt.Println("decoded message - SequenceNumber: ", decodedRadFiMessage.SwapMsg.SequenceNumber)
+	fmt.Println("decoded message - NftIds: ", decodedRadFiMessage.SwapMsg.NftIds)
 	fmt.Println("decoded message - Fees: ", decodedRadFiMessage.SwapMsg.Fees)
 	fmt.Println("decoded message - Tokens: ", decodedRadFiMessage.SwapMsg.Tokens)
 }
@@ -926,6 +938,7 @@ func TestRadFiSwap2PoolRuneToRune(t *testing.T) {
 		AmountIn: uint128.From64(200000),
 		AmountOut:  uint128.From64(100000),
 		SequenceNumber: uint128.From64(7),
+		NftIds: []uint128.Uint128{uint128.From64(1), uint128.From64(2)},
 		Fees: []uint32{123, 456},
 		Tokens: []*runestone.RuneId{
 			{ Block: 678, Tx: 90 },
@@ -1052,6 +1065,7 @@ func TestRadFiSwap2PoolRuneToRune(t *testing.T) {
 	fmt.Println("decoded message - AmountIn: ", decodedRadFiMessage.SwapMsg.AmountIn)
 	fmt.Println("decoded message - AmountOut: ", decodedRadFiMessage.SwapMsg.AmountOut)
 	fmt.Println("decoded message - SequenceNumber: ", decodedRadFiMessage.SwapMsg.SequenceNumber)
+	fmt.Println("decoded message - NftIds: ", decodedRadFiMessage.SwapMsg.NftIds)
 	fmt.Println("decoded message - Fees: ", decodedRadFiMessage.SwapMsg.Fees)
 	fmt.Println("decoded message - Tokens: ", decodedRadFiMessage.SwapMsg.Tokens)
 }

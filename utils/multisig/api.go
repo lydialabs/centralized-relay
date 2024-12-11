@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/wire"
+	"github.com/studyzy/runestone"
 	"lukechampine.com/uint128"
 )
 
@@ -231,6 +232,13 @@ type ResponseRuneBalanceOfAddress struct {
 	Data RuneDetail `json:"data"`
 }
 
+type ResponseBitcoinBalanceByUtxo struct {
+	Code    int64  `json:"code"`
+	Message string `json:"msg"`
+
+	Data    UTXO `json:"data"`
+}
+
 type MempoolRecommendedFeeResponse struct {
 	FastestFee  uint64 `json:"fastestFee"`
 	HalfHourFee uint64 `json:"halfHourFee"`
@@ -287,6 +295,10 @@ func TxInfoUrl(server, txid string) string {
 
 func TxInputsUrl(server, txid string, offset, limit int64) string {
 	return fmt.Sprintf("%s/v1/indexer/tx/%s/ins?cursor=%d&size=%d", server, txid, offset, limit)
+}
+
+func BitcoinBalanceByUtxoUrl(server, txid string, index uint32) string {
+	return fmt.Sprintf("%s/v1/indexer/utxo/%s/%d", server, txid, index)
 }
 
 func UnisatWalletBroadcastTxUrl(server string) string {
@@ -363,6 +375,14 @@ func GetRuneBalanceByUtxo(ctx context.Context, server, bear, txid string, index 
 func GetRuneBalanceOfAddress(ctx context.Context, server, bear, address, runeId string) (ResponseRuneBalanceOfAddress, error) {
 	var resp ResponseRuneBalanceOfAddress
 	url := RuneBalanceOfAddressUrl(server, address, runeId)
+	err := GetWithBear(ctx, url, bear, &resp)
+
+	return resp, err
+}
+
+func GetBitcoinBalanceByUtxo(ctx context.Context, server, bear, txid string, index uint32) (ResponseBitcoinBalanceByUtxo, error) {
+	var resp ResponseBitcoinBalanceByUtxo
+	url := BitcoinBalanceByUtxoUrl(server, txid, index)
 	err := GetWithBear(ctx, url, bear, &resp)
 
 	return resp, err
@@ -516,6 +536,18 @@ func GetRunesInUtxo(timeout int64, server, bear, txid string, index uint32) ([]R
 	}
 
 	return resp.Data, nil
+}
+
+func GetBitcoinInUtxo(timeout int64, server, bear, txid string, index uint32) (*UTXO, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(int64(time.Second)*timeout))
+	defer cancel()
+
+	resp, err := GetBitcoinBalanceByUtxo(ctx, server, bear, txid, index)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query RuneBalanceByUtxo from unisat: %v", err)
+	}
+
+	return &resp.Data, nil
 }
 
 func GetRunesBalanceOf(timeout int64, server, bear, address, runeId string) (uint128.Uint128, error) {
@@ -702,4 +734,79 @@ func UnisatBroadcastTransaction(server string, signedMsgTx *wire.MsgTx) (string,
 	}
 
 	return "", fmt.Errorf("broadcast failed: code %v, message %v", bodyData.Code, bodyData.Message)
+}
+
+func VerifyTradingWalletInputs(timeout int64, server, bear string, txids []string, indexes []uint32, token0Id, token1Id string, minAmount0, minAmount1 uint128.Uint128) error {
+	totalToken0Amount := uint128.Zero
+	totalToken1Amount := uint128.Zero
+	for idx, txid := range(txids) {
+		runeBalances, err := GetRunesInUtxo(timeout, server, bear, txid, indexes[idx])
+		if err != nil {
+			return err
+		}
+		// bitcoinInfo, err := GetBitcoinInUtxo(timeout, server, bear, txid, indexes[idx])
+		// if err != nil {
+		// 	return err
+		// }
+		// // make sure output is not spent
+		// if bitcoinInfo.IsSpent {
+		// 	return err
+		// }
+		for _, runeBalance := range(runeBalances) {
+			runeAmount, err := uint128.FromString(runeBalance.Amount)
+			if err != nil {
+				return err
+			}
+			if runeBalance.RuneId == token1Id {
+				totalToken1Amount = totalToken1Amount.Add(runeAmount)
+			} else if runeBalance.RuneId == token0Id {
+				totalToken0Amount = totalToken0Amount.Add(runeAmount)
+			}
+		}
+		// if token0Id == BitcoinRuneId().String() {
+		// 	totalToken0Amount = totalToken0Amount.Add(uint128.FromBig(bitcoinInfo.Satoshi))
+		// }
+	}
+	// verify token0 amount
+	if token0Id != BitcoinRuneId().String() && totalToken0Amount.Cmp(minAmount0) < 0 {
+		return fmt.Errorf("totalToken0Amount not meet the minAmount0 requirement: %v", totalToken0Amount.String())
+	}
+	// verify token1 amount
+	if totalToken1Amount.Cmp(minAmount1) < 0 {
+		return fmt.Errorf("totalToken1Amount not meet the minAmount0 requirement: %v", totalToken1Amount.String())
+	}
+
+	return nil
+}
+
+// call testmempoolaccept RPC to validate the UTXO and bitcoin amount
+func VerifyRadfiTx(timeout int64, server, bear, txid string, transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
+	// Decipher runestone
+	r := &runestone.Runestone{}
+	runeArtifact, err := r.Decipher(transaction)
+	if err != nil {
+		return nil, fmt.Errorf("could not decipher runestone - Error %v", err)
+	}
+	tradingWalletPKScripts := transaction.TxOut[*runeArtifact.Runestone.Pointer].PkScript
+	println(tradingWalletPKScripts)
+
+	// decode tx
+	radFiMessage, err := ReadRadFiMessage(transaction)
+	if err != nil {
+		return nil, err
+	}
+
+
+	// get trading wallet inputs
+
+	// verify tx data
+	switch radFiMessage.Flag {
+		case OP_RADFI_PROVIDE_LIQUIDITY:
+			// verify the liquidity amount user deposit
+
+		default:
+			return nil, fmt.Errorf("ReadRadFiMessage - invalid flag")
+	}
+
+	return radFiMessage, nil
 }
