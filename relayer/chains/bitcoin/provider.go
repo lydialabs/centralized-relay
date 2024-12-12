@@ -103,6 +103,10 @@ type slaveRequestUpdateRelayMessageStatus struct {
 	TxHash string `json:"txHash"`
 }
 
+type slaveNewRequest struct {
+	RawTransction []byte `json:"rawTransction"` // bitcoin 
+}
+
 type slaveResponse struct {
 	order int
 	sigs  [][]byte

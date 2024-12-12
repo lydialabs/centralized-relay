@@ -11,8 +11,11 @@ import (
 	"sync"
 )
 
-func startMaster(c *Config) {
+func startMaster(c *Config, p *Provider) {
 	http.HandleFunc("/execute", handleExecute)
+	http.HandleFunc("/broadcast-request", func(w http.ResponseWriter, r *http.Request) {
+		handleRoot(w, r, p)
+	})
 	port := c.Port
 	server := &http.Server{
 		Addr:    ":" + port,
@@ -60,6 +63,45 @@ func handleExecute(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	response := map[string]string{"status": "success", "msg": msg}
 	json.NewEncoder(w).Encode(response)
+}
+
+func handleBroadcastNewRequest(w http.ResponseWriter, r *http.Request, p *Provider) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	apiKey := r.Header.Get("x-api-key")
+	if apiKey == "" {
+		http.Error(w, "Missing API Key", http.StatusUnauthorized)
+		return
+	}
+	apiKeyHeader := os.Getenv("API_KEY")
+	if apiKey != apiKeyHeader {
+		http.Error(w, "Invalid API Key", http.StatusForbidden)
+		return
+	}
+
+	// var msg string
+
+	// body, err := io.ReadAll(r.Body)
+	// if err != nil {
+	// 	http.Error(w, "Failed to read request body", http.StatusBadRequest)
+	// 	return
+	// }
+	// defer r.Body.Close()
+
+	// err = json.Unmarshal(body, &msg)
+	// if err != nil {
+	// 	http.Error(w, "Failed to parse JSON", http.StatusBadRequest)
+	// 	return
+	// }
+
+	// // Send a response
+	// w.WriteHeader(http.StatusOK)
+	// w.Header().Set("Content-Type", "application/json")
+	// response := map[string]string{"status": "success", "msg": msg}
+	// json.NewEncoder(w).Encode(response)
 }
 
 func requestPartialSign(apiKey string, url string, slaveRequestData []byte, responses chan<- slaveResponse, order int, wg *sync.WaitGroup) {
