@@ -11,6 +11,8 @@ import (
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
+	"github.com/studyzy/runestone"
+	"lukechampine.com/uint128"
 )
 
 func toXOnly(pubKey []byte) []byte {
@@ -211,4 +213,17 @@ func DecodeAddress(chainParam *chaincfg.Params, addr string) ([]byte, error) {
 	}
 
 	return destinationAddrByte, nil
+}
+
+func GetPoolSharedRandomHex(poolId uint128.Uint128) string {
+	return SHARED_RANDOM_HEX_PREFIX + hex.EncodeToString(runestone.EncodeUint128(poolId))
+}
+
+func GetPoolWalletPkScript(relayersMultisigInfo *MultisigInfo, poolId uint128.Uint128) (string, error) {
+	poolMultisigWallet, err := BuildMultisigWallet(relayersMultisigInfo, GetPoolSharedRandomHex(poolId))
+	if err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(poolMultisigWallet.PKScript), nil
 }

@@ -736,73 +736,116 @@ func UnisatBroadcastTransaction(server string, signedMsgTx *wire.MsgTx) (string,
 	return "", fmt.Errorf("broadcast failed: code %v, message %v", bodyData.Code, bodyData.Message)
 }
 
-func VerifyTradingWalletInputs(timeout int64, server, bear string, txids []string, indexes []uint32, token0Id, token1Id string, minAmount0, minAmount1 uint128.Uint128) error {
-	totalToken0Amount := uint128.Zero
-	totalToken1Amount := uint128.Zero
-	for idx, txid := range(txids) {
-		runeBalances, err := GetRunesInUtxo(timeout, server, bear, txid, indexes[idx])
+func GetInputOutputBalance(timeout int64, server, bear string, transaction *wire.MsgTx, runeArtifact *runestone.Artifact) (map[string]map[string]uint128.Uint128, map[string]map[string]uint128.Uint128, string, error) {
+	bitcoinId := BitcoinRuneId().String()
+
+	inputsTokenBalance := make(map[string]map[string]uint128.Uint128)
+	totalInputsTokenBalance := make(map[string]uint128.Uint128)
+	for _, txIn := range(transaction.TxIn) {
+		runeBalances, err := GetRunesInUtxo(timeout, server, bear, txIn.PreviousOutPoint.Hash.String(), txIn.PreviousOutPoint.Index)
 		if err != nil {
-			return err
+			return nil, nil, "", err
 		}
-		// bitcoinInfo, err := GetBitcoinInUtxo(timeout, server, bear, txid, indexes[idx])
-		// if err != nil {
-		// 	return err
-		// }
-		// // make sure output is not spent
-		// if bitcoinInfo.IsSpent {
-		// 	return err
-		// }
+		bitcoinInfo, err := GetBitcoinInUtxo(timeout, server, bear, txIn.PreviousOutPoint.Hash.String(), txIn.PreviousOutPoint.Index)
+		if err != nil {
+			return nil, nil, "", err
+		}
+		// make sure output is not spent
+		if bitcoinInfo.IsSpent {
+			return nil, nil, "", err
+		}
+
+		inputsTokenBalance[bitcoinInfo.ScriptPk][bitcoinId] = inputsTokenBalance[bitcoinInfo.ScriptPk][bitcoinId].Add(uint128.FromBig(bitcoinInfo.Satoshi))
+		totalInputsTokenBalance[bitcoinId] = totalInputsTokenBalance[bitcoinId].Add(uint128.FromBig(bitcoinInfo.Satoshi))
 		for _, runeBalance := range(runeBalances) {
 			runeAmount, err := uint128.FromString(runeBalance.Amount)
 			if err != nil {
-				return err
+				return nil, nil, "", err
 			}
-			if runeBalance.RuneId == token1Id {
-				totalToken1Amount = totalToken1Amount.Add(runeAmount)
-			} else if runeBalance.RuneId == token0Id {
-				totalToken0Amount = totalToken0Amount.Add(runeAmount)
-			}
+			inputsTokenBalance[bitcoinInfo.ScriptPk][runeBalance.RuneId] = inputsTokenBalance[bitcoinInfo.ScriptPk][runeBalance.RuneId].Add(runeAmount)
+			totalInputsTokenBalance[runeBalance.RuneId] = totalInputsTokenBalance[runeBalance.RuneId].Add(runeAmount)
 		}
-		// if token0Id == BitcoinRuneId().String() {
-		// 	totalToken0Amount = totalToken0Amount.Add(uint128.FromBig(bitcoinInfo.Satoshi))
-		// }
-	}
-	// verify token0 amount
-	if token0Id != BitcoinRuneId().String() && totalToken0Amount.Cmp(minAmount0) < 0 {
-		return fmt.Errorf("totalToken0Amount not meet the minAmount0 requirement: %v", totalToken0Amount.String())
-	}
-	// verify token1 amount
-	if totalToken1Amount.Cmp(minAmount1) < 0 {
-		return fmt.Errorf("totalToken1Amount not meet the minAmount0 requirement: %v", totalToken1Amount.String())
 	}
 
-	return nil
+	outputsTokenBalance := make(map[string]map[string]uint128.Uint128)
+	totalOutputsTokenBalance := make(map[string]uint128.Uint128)
+	for _, txOut := range(transaction.TxOut) {
+		outPkScript := hex.EncodeToString(txOut.PkScript)
+		outputsTokenBalance[outPkScript][bitcoinId] = outputsTokenBalance[outPkScript][bitcoinId].Add(uint128.From64(uint64(txOut.Value)))
+		totalOutputsTokenBalance[bitcoinId] = totalOutputsTokenBalance[bitcoinId].Add(uint128.From64(uint64(txOut.Value)))
+	}
+	for _, runeEdict := range(runeArtifact.Runestone.Edicts) {
+		outPkScript := hex.EncodeToString(transaction.TxOut[runeEdict.Output].PkScript)
+		outputsTokenBalance[outPkScript][runeEdict.ID.String()] = outputsTokenBalance[outPkScript][runeEdict.ID.String()].Add(runeEdict.Amount)
+		totalOutputsTokenBalance[runeEdict.ID.String()] = totalOutputsTokenBalance[runeEdict.ID.String()].Add(runeEdict.Amount)
+	}
+
+	// make sure total token in = total token out (the rune change amount in the output >= 0)
+	runeChangePKScript := hex.EncodeToString(transaction.TxOut[*runeArtifact.Runestone.Pointer].PkScript)
+	for outputTokenId, outputTokenValue := range(totalOutputsTokenBalance) {
+		inputTokenValue := totalInputsTokenBalance[outputTokenId]
+		if outputTokenValue.Cmp(inputTokenValue) > 0 {
+			return nil, nil, "", fmt.Errorf("outputTokenValue (%v) > inputTokenValue (%v)", outputTokenValue.String(), inputTokenValue.String())
+		}
+		// add token change amount to output balance (include bitcoin tx fee of user)
+		outputsTokenBalance[runeChangePKScript][outputTokenId] = outputsTokenBalance[runeChangePKScript][outputTokenId].Add(inputTokenValue.Sub(outputTokenValue))
+	}
+
+	return inputsTokenBalance, outputsTokenBalance, runeChangePKScript, nil
 }
 
 // call testmempoolaccept RPC to validate the UTXO and bitcoin amount
-func VerifyRadfiTx(timeout int64, server, bear, txid string, transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
+func VerifyRadfiTx(timeout int64, server, bear string, relayersMultisigInfo *MultisigInfo, transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 	// Decipher runestone
 	r := &runestone.Runestone{}
 	runeArtifact, err := r.Decipher(transaction)
 	if err != nil {
 		return nil, fmt.Errorf("could not decipher runestone - Error %v", err)
 	}
-	tradingWalletPKScripts := transaction.TxOut[*runeArtifact.Runestone.Pointer].PkScript
-	println(tradingWalletPKScripts)
+
+	inputsTokenBalance, outputsTokenBalance, runeChangePKScript, err := GetInputOutputBalance(timeout, server, bear, transaction, runeArtifact)
+	if err != nil {
+		return nil, err
+	}
 
 	// decode tx
 	radFiMessage, err := ReadRadFiMessage(transaction)
 	if err != nil {
 		return nil, err
 	}
-
-
-	// get trading wallet inputs
-
 	// verify tx data
 	switch radFiMessage.Flag {
 		case OP_RADFI_PROVIDE_LIQUIDITY:
-			// verify the liquidity amount user deposit
+			plMessage := radFiMessage.ProvideLiquidityMsg
+			poolWalletPkScript, err := GetPoolWalletPkScript(relayersMultisigInfo, plMessage.NftId)
+			if err != nil {
+				return nil, err
+			}
+
+			// check if pool liquidity really increased by the amounts in radfiMsg
+			if !outputsTokenBalance[poolWalletPkScript][plMessage.Token0Id.String()].Equals(inputsTokenBalance[poolWalletPkScript][plMessage.Token0Id.String()].Add(plMessage.Amount0Desired)) {
+				return nil, fmt.Errorf("OP_RADFI_PROVIDE_LIQUIDITY - the amount0 mismatch with the liquidity pool received")
+			}
+			if !outputsTokenBalance[poolWalletPkScript][plMessage.Token1Id.String()].Equals(inputsTokenBalance[poolWalletPkScript][plMessage.Token1Id.String()].Add(plMessage.Amount1Desired)) {
+				return nil, fmt.Errorf("OP_RADFI_PROVIDE_LIQUIDITY - the amount1 mismatch with the liquidity pool received")
+			}
+			// check if user rune balance really decreased
+			for userTokenId, userTokenBalanceOut := range(outputsTokenBalance[runeChangePKScript]) {
+				if userTokenId == plMessage.Token0Id.String() {
+					if !userTokenBalanceOut.Equals(inputsTokenBalance[runeChangePKScript][userTokenId].Add(plMessage.Amount0Desired)) {
+						return nil, fmt.Errorf("OP_RADFI_PROVIDE_LIQUIDITY - the amount0 mismatch with the rune user provided")
+					}
+				} else if userTokenId == plMessage.Token1Id.String() {
+					if !userTokenBalanceOut.Equals(inputsTokenBalance[runeChangePKScript][userTokenId].Add(plMessage.Amount1Desired)) {
+						return nil, fmt.Errorf("OP_RADFI_PROVIDE_LIQUIDITY - the amount1 mismatch with the rune user provided")
+					}
+				} else {
+					// the other token balance not for the pool should be unchanged
+					if !userTokenBalanceOut.Equals(inputsTokenBalance[runeChangePKScript][userTokenId]) {
+						return nil, fmt.Errorf("OP_RADFI_PROVIDE_LIQUIDITY - the non liquidity token balance should not changed")
+					}
+				}
+			}
 
 		default:
 			return nil, fmt.Errorf("ReadRadFiMessage - invalid flag")
