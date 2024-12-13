@@ -58,6 +58,7 @@ func CreateRadFiTx(
 func CreateRadFiTxInitPool(
 	msg *RadFiProvideLiquidityMsg,
 	inputs []*Input,
+	relayerPkScript0 []byte,
 	relayerPkScript []byte,
 	userPkScript []byte,
 	poolUTXOsCount uint64,
@@ -71,7 +72,7 @@ func CreateRadFiTxInitPool(
 		return nil, fmt.Errorf("the second token in the pair can only be rune")
 	}
 	// the first input should be the pool init sequence UTXO
-	if !bytes.Equal(inputs[0].PkScript, relayerPkScript) {
+	if !bytes.Equal(inputs[0].PkScript, relayerPkScript0) {
 		return nil, fmt.Errorf("the first input should be the pool init sequence UTXO")
 	}
 	// the remain inputs should be from trading wallet
@@ -97,7 +98,7 @@ func CreateRadFiTxInitPool(
 		// pool init sequence UTXO
 		{
 			Value: DUST_UTXO_AMOUNT,
-			PkScript: relayerPkScript,
+			PkScript: relayerPkScript0,
 		},
 	}
 	// add pool UTXOs to output

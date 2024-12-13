@@ -48,7 +48,6 @@ type RadFiProvideLiquidityMsg struct {
 	InitPrice		uint128.Uint128
 	SequenceNumber	uint128.Uint128
 	NftId	        uint128.Uint128
-	// other outputs data
 	Token0Id		runestone.RuneId
 	Token1Id		runestone.RuneId
 	// smart contract data
@@ -75,6 +74,8 @@ type RadFiWithdrawLiquidityMsg struct {
 	Amount0			uint128.Uint128
 	Amount1			uint128.Uint128
 	SequenceNumber	uint128.Uint128
+	Token0Id		runestone.RuneId
+	Token1Id		runestone.RuneId
 }
 
 type RadFiCollectFeesMsg struct {
@@ -83,6 +84,8 @@ type RadFiCollectFeesMsg struct {
 	Amount0			uint128.Uint128
 	Amount1			uint128.Uint128
 	SequenceNumber	uint128.Uint128
+	Token0Id		runestone.RuneId
+	Token1Id		runestone.RuneId
 }
 
 type RadFiIncreaseLiquidityMsg struct {
@@ -93,6 +96,8 @@ type RadFiIncreaseLiquidityMsg struct {
 	Amount0	uint128.Uint128
 	Amount1	uint128.Uint128
 	SequenceNumber	uint128.Uint128
+	Token0Id		runestone.RuneId
+	Token1Id		runestone.RuneId
 }
 
 type RadFiDecodedMsg struct {
@@ -176,6 +181,10 @@ func CreateProvideLiquidityScript(msg *RadFiProvideLiquidityMsg) ([]byte, error)
 	data = append(data, runestone.EncodeUint128(msg.InitPrice)...)
 	data = append(data, runestone.EncodeUint128(msg.SequenceNumber)...)
 	data = append(data, runestone.EncodeUint128(msg.NftId)...)
+	data = append(data, runestone.EncodeUint64(msg.Token0Id.Block)...)
+	data = append(data, runestone.EncodeUint32(msg.Token0Id.Tx)...)
+	data = append(data, runestone.EncodeUint64(msg.Token1Id.Block)...)
+	data = append(data, runestone.EncodeUint32(msg.Token1Id.Tx)...)
 
 	return builder.AddData(data).Script()
 }
@@ -217,6 +226,10 @@ func CreateWithdrawLiquidityScript(msg *RadFiWithdrawLiquidityMsg) ([]byte, erro
 	data = append(data, runestone.EncodeUint128(msg.Amount0)...)
 	data = append(data, runestone.EncodeUint128(msg.Amount1)...)
 	data = append(data, runestone.EncodeUint128(msg.SequenceNumber)...)
+	data = append(data, runestone.EncodeUint64(msg.Token0Id.Block)...)
+	data = append(data, runestone.EncodeUint32(msg.Token0Id.Tx)...)
+	data = append(data, runestone.EncodeUint64(msg.Token1Id.Block)...)
+	data = append(data, runestone.EncodeUint32(msg.Token1Id.Tx)...)
 
 	return builder.AddData(data).Script()
 }
@@ -229,6 +242,10 @@ func CreateCollectFeesScript(msg *RadFiCollectFeesMsg) ([]byte, error) {
 	data = append(data, runestone.EncodeUint128(msg.Amount0)...)
 	data = append(data, runestone.EncodeUint128(msg.Amount1)...)
 	data = append(data, runestone.EncodeUint128(msg.SequenceNumber)...)
+	data = append(data, runestone.EncodeUint64(msg.Token0Id.Block)...)
+	data = append(data, runestone.EncodeUint32(msg.Token0Id.Tx)...)
+	data = append(data, runestone.EncodeUint64(msg.Token1Id.Block)...)
+	data = append(data, runestone.EncodeUint32(msg.Token1Id.Tx)...)
 
 	return builder.AddData(data).Script()
 }
@@ -243,6 +260,10 @@ func CreateIncreaseLiquidityScript(msg *RadFiIncreaseLiquidityMsg) ([]byte, erro
 	data = append(data, runestone.EncodeUint128(msg.Amount0)...)
 	data = append(data, runestone.EncodeUint128(msg.Amount1)...)
 	data = append(data, runestone.EncodeUint128(msg.SequenceNumber)...)
+	data = append(data, runestone.EncodeUint64(msg.Token0Id.Block)...)
+	data = append(data, runestone.EncodeUint32(msg.Token0Id.Tx)...)
+	data = append(data, runestone.EncodeUint64(msg.Token1Id.Block)...)
+	data = append(data, runestone.EncodeUint32(msg.Token1Id.Tx)...)
 
 	return builder.AddData(data).Script()
 }
@@ -273,13 +294,6 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 		return nil, fmt.Errorf("could not find radfi data")
 	}
 
-	// Decipher runestone
-	r := &runestone.Runestone{}
-	runeArtifact, err := r.Decipher(transaction)
-	if err != nil {
-		return nil, fmt.Errorf("could not decipher runestone - Error %v", err)
-	}
-
 	flag = payload[0]
 	var integersStart uint
 	if flag == OP_RADFI_PROVIDE_LIQUIDITY {
@@ -303,32 +317,6 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 			if err := binary.Read(r, binary.BigEndian, &ticks); err != nil {
 				return nil, fmt.Errorf("OP_RADFI_PROVIDE_LIQUIDITY could not read ticks data - Error %v", err)
 			}
-			// check number of rune id in the runestone
-			tokenIds := []runestone.RuneId{}
-			for _, edict := range runeArtifact.Runestone.Edicts {
-				existed := false
-				for _, tokenId := range tokenIds {
-					if edict.ID.Cmp(tokenId) == 0 {
-						existed = true
-						break
-					}
-
-				}
-				if !existed {
-					tokenIds = append(tokenIds, edict.ID)
-				}
-			}
-			var token0Id, token1Id runestone.RuneId
-			switch len(tokenIds) {
-				case 1:
-					token0Id = BitcoinRuneId()
-					token1Id = tokenIds[0]
-				case 2:
-					token0Id = tokenIds[0]
-					token1Id = tokenIds[1]
-				default:
-					return nil, fmt.Errorf("invalid number of Rune Ids")
-			}
 			// TODO: check if integers overflow
 			return &RadFiDecodedMsg {
 				Flag:					flag,
@@ -342,8 +330,14 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 					InitPrice:		integers[5],
 					SequenceNumber: integers[6],
 					NftId:          integers[7],
-					Token0Id:		token0Id,
-					Token1Id:		token1Id,
+					Token0Id:		runestone.RuneId{
+										Block: integers[8].Lo,
+										Tx: uint32(integers[9].Lo),
+									},
+					Token1Id:		runestone.RuneId{
+										Block: integers[10].Lo,
+										Tx: uint32(integers[11].Lo),
+									},
 				},
 			}, nil
 
@@ -388,6 +382,14 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 					Amount0:		integers[2],
 					Amount1:		integers[3],
 					SequenceNumber: integers[4],
+					Token0Id:		runestone.RuneId{
+										Block: integers[5].Lo,
+										Tx: uint32(integers[6].Lo),
+									},
+					Token1Id:		runestone.RuneId{
+										Block: integers[7].Lo,
+										Tx: uint32(integers[8].Lo),
+									},
 				},
 			}, nil
 
@@ -399,6 +401,14 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 					Amount0:		integers[1],
 					Amount1:		integers[2],
 					SequenceNumber: integers[3],
+					Token0Id:		runestone.RuneId{
+										Block: integers[4].Lo,
+										Tx: uint32(integers[5].Lo),
+									},
+					Token1Id:		runestone.RuneId{
+										Block: integers[6].Lo,
+										Tx: uint32(integers[7].Lo),
+									},
 				},
 			}, nil
 
@@ -412,6 +422,14 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 					Amount0:	    integers[3],
 					Amount1:	    integers[4],
 					SequenceNumber: integers[5],
+					Token0Id:		runestone.RuneId{
+										Block: integers[6].Lo,
+										Tx: uint32(integers[7].Lo),
+									},
+					Token1Id:		runestone.RuneId{
+										Block: integers[8].Lo,
+										Tx: uint32(integers[9].Lo),
+									},
 				},
 			}, nil
 
