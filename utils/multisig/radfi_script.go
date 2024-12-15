@@ -45,7 +45,10 @@ type RadFiProvideLiquidityMsg struct {
 	Min1			uint16
 	Amount0Desired	uint128.Uint128
 	Amount1Desired	uint128.Uint128
+	// for init price only
 	InitPrice		uint128.Uint128
+	Token0Decimal   uint8
+	Token1Decimal   uint8
 	SequenceNumber	uint128.Uint128
 	// other outputs data
 	Token0Id		runestone.RuneId

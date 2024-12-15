@@ -9,12 +9,13 @@ import (
 	"net/http"
 	"os"
 	"sync"
+	"go.uber.org/zap"
 )
 
 func startMaster(c *Config, p *Provider) {
 	http.HandleFunc("/execute", handleExecute)
 	http.HandleFunc("/broadcast-request", func(w http.ResponseWriter, r *http.Request) {
-		handleRoot(w, r, p)
+		handleBroadcastNewRequest(w, r, p)
 	})
 	port := c.Port
 	server := &http.Server{
@@ -83,25 +84,62 @@ func handleBroadcastNewRequest(w http.ResponseWriter, r *http.Request, p *Provid
 	}
 
 	// var msg string
+	var msg slaveNewRequest
 
-	// body, err := io.ReadAll(r.Body)
-	// if err != nil {
-	// 	http.Error(w, "Failed to read request body", http.StatusBadRequest)
-	// 	return
-	// }
-	// defer r.Body.Close()
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
 
-	// err = json.Unmarshal(body, &msg)
-	// if err != nil {
-	// 	http.Error(w, "Failed to parse JSON", http.StatusBadRequest)
-	// 	return
-	// }
+	err = json.Unmarshal(body, &msg)
+	if err != nil {
+		http.Error(w, "Failed to parse JSON", http.StatusBadRequest)
+		return
+	}
 
-	// // Send a response
-	// w.WriteHeader(http.StatusOK)
-	// w.Header().Set("Content-Type", "application/json")
-	// response := map[string]string{"status": "success", "msg": msg}
-	// json.NewEncoder(w).Encode(response)
+	// Send a response
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	response := map[string]string{"status": "success", "msg": string(msg.RawTransction)}
+	json.NewEncoder(w).Encode(response)
+
+	// route
+	route := "/add-new-request"
+
+	// fwd data to slavers
+	sendRequestToSlaver(p.cfg.ApiKey, p.cfg.SlaveServer1+route, msg, p.logger)
+	sendRequestToSlaver(p.cfg.ApiKey, p.cfg.SlaveServer2+route, msg, p.logger)
+}
+
+func sendRequestToSlaver(apiKey, url string, msg slaveNewRequest, logger *zap.Logger) error {
+	client := &http.Client{}
+	requestData, _ := json.Marshal(msg)
+	payload := bytes.NewBuffer(requestData)
+
+	maxRetry := 0
+	for {
+		req, err := http.NewRequest("POST", url, payload)
+		if err != nil {
+			logger.Error("sendRequestToSlaver: failed to create request: ", zap.Error(err))
+			return err
+		}
+
+		req.Header.Add("x-api-key", apiKey)
+		_, err = client.Do(req)
+		if err != nil {
+			logger.Error("sendRequestToSlaver: failed to send request: ", zap.Error(err))
+			// retry 
+			maxRetry++
+			if maxRetry == 5 {
+				return err
+			}
+		} else {
+			break
+		}
+	}
+	return nil
 }
 
 func requestPartialSign(apiKey string, url string, slaveRequestData []byte, responses chan<- slaveResponse, order int, wg *sync.WaitGroup) {

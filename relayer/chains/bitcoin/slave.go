@@ -112,7 +112,7 @@ func handleAddNewRequest(w http.ResponseWriter, r *http.Request, p *Provider) {
 	// store to db
 	err = p.db.Put(AddPrefixChainName(p.NID(), lastSqnNumberBytes), lastSqnNumberBytes, nil)
 	if err != nil {
-		p.logger.Error(fmt.Sprintln("failed to store data at sequence number %d", lastSqnNumber), zap.Error(err))
+		p.logger.Error(fmt.Sprintln("failed to store data at sequence number ", lastSqnNumber), zap.Error(err))
 		http.Error(w, "Error reading request body", http.StatusInternalServerError)
 		return
 	}

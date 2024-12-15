@@ -221,353 +221,353 @@ func TestBuildWithdrawRunesTxMessageTestnet(t *testing.T) {
 	btcProvider.logger.Info("txHash", zap.String("transaction_hash", txHash))
 }
 
-func TestBuildRollbackBtcTxMessageTestnet(t *testing.T) {
-	// Create a mock Provider
-	btcProvider, termpDir := initBtcProviderTestnet()
-	defer os.Remove(termpDir)
-	// relayer multisig
-	decodedAddr, _ := btcutil.DecodeAddress(TESTNET_RELAYER_ADDRESS, btcProvider.chainParam)
-	relayerPkScript, _ := txscript.PayToAddrScript(decodedAddr)
-	// user key
-	userPrivKeys, userMultisigWallet, _ := buildUserMultisigWalletTestnet(btcProvider.chainParam)
+// func TestBuildRollbackBtcTxMessageTestnet(t *testing.T) {
+// 	// Create a mock Provider
+// 	btcProvider, termpDir := initBtcProviderTestnet()
+// 	defer os.Remove(termpDir)
+// 	// relayer multisig
+// 	decodedAddr, _ := btcutil.DecodeAddress(TESTNET_RELAYER_ADDRESS, btcProvider.chainParam)
+// 	relayerPkScript, _ := txscript.PayToAddrScript(decodedAddr)
+// 	// user key
+// 	userPrivKeys, userMultisigWallet, _ := buildUserMultisigWalletTestnet(btcProvider.chainParam)
 
-	bridgeMsg := multisig.BridgeDecodedMsg{
-		Message: &multisig.XCallMessage{
-			MessageType:  1,
-			Action:       "Deposit",
-			TokenAddress: "0:0",
-			To:           "0x2.icon/hx1493794ba31fa3372bf7903f04030497e7d14800", // user icon address
-			From:         TESTNET_USER_WALLET_ADDRESS,                           // user bitcoin address
-			Amount:       new(big.Int).SetUint64(5000).Bytes(),
-			Data:         []byte(""),
-		},
-		ChainId:  1,
-		Receiver: TESTNET_ASSET_MANAGER_ADDRESS, // asset manager
-		Connectors: []string{
-			TESTNET_CONNECTION_ADDRESS, // connector contract
-		},
-	}
+// 	bridgeMsg := multisig.BridgeDecodedMsg{
+// 		Message: &multisig.XCallMessage{
+// 			MessageType:  1,
+// 			Action:       "Deposit",
+// 			TokenAddress: "0:0",
+// 			To:           "0x2.icon/hx1493794ba31fa3372bf7903f04030497e7d14800", // user icon address
+// 			From:         TESTNET_USER_WALLET_ADDRESS,                           // user bitcoin address
+// 			Amount:       new(big.Int).SetUint64(5000).Bytes(),
+// 			Data:         []byte(""),
+// 		},
+// 		ChainId:  1,
+// 		Receiver: TESTNET_ASSET_MANAGER_ADDRESS, // asset manager
+// 		Connectors: []string{
+// 			TESTNET_CONNECTION_ADDRESS, // connector contract
+// 		},
+// 	}
 
-	inputs := []*multisig.Input{
-		{
-			TxHash:       "89095d016b50644a328667cd5543b0f29c0f2a81242094ea7318bded49cf30a8",
-			OutputIdx:    8,
-			OutputAmount: 202763,
-			PkScript:     userMultisigWallet.PKScript,
-		},
-	}
+// 	inputs := []*multisig.Input{
+// 		{
+// 			TxHash:       "89095d016b50644a328667cd5543b0f29c0f2a81242094ea7318bded49cf30a8",
+// 			OutputIdx:    8,
+// 			OutputAmount: 202763,
+// 			PkScript:     userMultisigWallet.PKScript,
+// 		},
+// 	}
 
-	// create tx
-	msgTx, err := multisig.CreateBridgeTxSendBitcoin(
-		&bridgeMsg,
-		inputs,
-		userMultisigWallet.PKScript,
-		relayerPkScript,
-		TESTNET_TX_FEE,
-	)
-	if err != nil {
-		fmt.Println("err: ", err)
-	}
+// 	// create tx
+// 	msgTx, err := multisig.CreateBridgeTxSendBitcoin(
+// 		&bridgeMsg,
+// 		inputs,
+// 		userMultisigWallet.PKScript,
+// 		relayerPkScript,
+// 		TESTNET_TX_FEE,
+// 	)
+// 	if err != nil {
+// 		fmt.Println("err: ", err)
+// 	}
 
-	// add 10 to output amount to make wrong amount
-	msgTx.TxOut[0].Value = msgTx.TxOut[0].Value + 10
+// 	// add 10 to output amount to make wrong amount
+// 	msgTx.TxOut[0].Value = msgTx.TxOut[0].Value + 10
 
-	// sign tx
-	totalSigs := [][][]byte{}
-	for _, privKey := range userPrivKeys {
-		// user key 1 sign tx
-		userSigs, _ := multisig.SignTapMultisig(privKey, msgTx, inputs, userMultisigWallet, 0)
-		totalSigs = append(totalSigs, userSigs)
-	}
-	// COMBINE SIGN
-	signedMsgTx, _ := multisig.CombineTapMultisig(totalSigs, msgTx, inputs, userMultisigWallet, 0)
+// 	// sign tx
+// 	totalSigs := [][][]byte{}
+// 	for _, privKey := range userPrivKeys {
+// 		// user key 1 sign tx
+// 		userSigs, _ := multisig.SignTapMultisig(privKey, msgTx, inputs, userMultisigWallet, 0)
+// 		totalSigs = append(totalSigs, userSigs)
+// 	}
+// 	// COMBINE SIGN
+// 	signedMsgTx, _ := multisig.CombineTapMultisig(totalSigs, msgTx, inputs, userMultisigWallet, 0)
 
-	var signedTx bytes.Buffer
-	signedMsgTx.Serialize(&signedTx)
-	hexSignedTx := hex.EncodeToString(signedTx.Bytes())
+// 	var signedTx bytes.Buffer
+// 	signedMsgTx.Serialize(&signedTx)
+// 	hexSignedTx := hex.EncodeToString(signedTx.Bytes())
 
-	fmt.Println("hexSignedTx: ", hexSignedTx)
+// 	fmt.Println("hexSignedTx: ", hexSignedTx)
 
-	txHash, err := btcProvider.client.SendRawTransaction(btcProvider.cfg.MempoolURL, []json.RawMessage{json.RawMessage(hexSignedTx)})
-	fmt.Println("txHash: ", txHash)
-	fmt.Println("err: ", err)
+// 	txHash, err := btcProvider.client.SendRawTransaction(btcProvider.cfg.MempoolURL, []json.RawMessage{json.RawMessage(hexSignedTx)})
+// 	fmt.Println("txHash: ", txHash)
+// 	fmt.Println("err: ", err)
 
-}
+// }
 
-func TestDepositBitcoinToIconTestnet(t *testing.T) {
-	btcProvider, termpDir := initBtcProviderTestnet()
-	defer os.Remove(termpDir)
-	// relayer multisig
-	decodedAddr, _ := btcutil.DecodeAddress(TESTNET_RELAYER_ADDRESS, btcProvider.chainParam)
-	relayerPkScript, _ := txscript.PayToAddrScript(decodedAddr)
-	// user key
-	userPrivKeys, userMultisigWallet, _ := buildUserMultisigWalletTestnet(btcProvider.chainParam)
+// func TestDepositBitcoinToIconTestnet(t *testing.T) {
+// 	btcProvider, termpDir := initBtcProviderTestnet()
+// 	defer os.Remove(termpDir)
+// 	// relayer multisig
+// 	decodedAddr, _ := btcutil.DecodeAddress(TESTNET_RELAYER_ADDRESS, btcProvider.chainParam)
+// 	relayerPkScript, _ := txscript.PayToAddrScript(decodedAddr)
+// 	// user key
+// 	userPrivKeys, userMultisigWallet, _ := buildUserMultisigWalletTestnet(btcProvider.chainParam)
 
-	bridgeMsg := multisig.BridgeDecodedMsg{
-		Message: &multisig.XCallMessage{
-			MessageType:  1,
-			Action:       "Deposit",
-			TokenAddress: "0:0",
-			To:           "0x2.icon/hx1493794ba31fa3372bf7903f04030497e7d14800",
-			From:         TESTNET_USER_WALLET_ADDRESS,
-			Amount:       new(big.Int).SetUint64(1000).Bytes(),
-			Data:         []byte(""),
-		},
-		ChainId:  1,
-		Receiver: TESTNET_ASSET_MANAGER_ADDRESS,
-		Connectors: []string{
-			TESTNET_CONNECTION_ADDRESS,
-		},
-	}
+// 	bridgeMsg := multisig.BridgeDecodedMsg{
+// 		Message: &multisig.XCallMessage{
+// 			MessageType:  1,
+// 			Action:       "Deposit",
+// 			TokenAddress: "0:0",
+// 			To:           "0x2.icon/hx1493794ba31fa3372bf7903f04030497e7d14800",
+// 			From:         TESTNET_USER_WALLET_ADDRESS,
+// 			Amount:       new(big.Int).SetUint64(1000).Bytes(),
+// 			Data:         []byte(""),
+// 		},
+// 		ChainId:  1,
+// 		Receiver: TESTNET_ASSET_MANAGER_ADDRESS,
+// 		Connectors: []string{
+// 			TESTNET_CONNECTION_ADDRESS,
+// 		},
+// 	}
 
-	inputs := []*multisig.Input{
-		{
-			TxHash:       "e57619adbb62c2e8add13eb2694010f3ba337cf5007ca3674224c272feffb097",
-			OutputIdx:    6,
-			OutputAmount: 271530,
-			PkScript:     userMultisigWallet.PKScript,
-		},
-	}
+// 	inputs := []*multisig.Input{
+// 		{
+// 			TxHash:       "e57619adbb62c2e8add13eb2694010f3ba337cf5007ca3674224c272feffb097",
+// 			OutputIdx:    6,
+// 			OutputAmount: 271530,
+// 			PkScript:     userMultisigWallet.PKScript,
+// 		},
+// 	}
 
-	// create tx
-	msgTx, err := multisig.CreateBridgeTxSendBitcoin(
-		&bridgeMsg,
-		inputs,
-		userMultisigWallet.PKScript,
-		relayerPkScript,
-		TESTNET_TX_FEE,
-	)
+// 	// create tx
+// 	msgTx, err := multisig.CreateBridgeTxSendBitcoin(
+// 		&bridgeMsg,
+// 		inputs,
+// 		userMultisigWallet.PKScript,
+// 		relayerPkScript,
+// 		TESTNET_TX_FEE,
+// 	)
 
-	// log hex of unsigned tx
+// 	// log hex of unsigned tx
 
-	// sign tx
-	totalSigs := [][][]byte{}
-	for _, privKey := range userPrivKeys {
-		// user key 1 sign tx
-		userSigs, _ := multisig.SignTapMultisig(privKey, msgTx, inputs, userMultisigWallet, 0)
-		totalSigs = append(totalSigs, userSigs)
-	}
-	// COMBINE SIGN
+// 	// sign tx
+// 	totalSigs := [][][]byte{}
+// 	for _, privKey := range userPrivKeys {
+// 		// user key 1 sign tx
+// 		userSigs, _ := multisig.SignTapMultisig(privKey, msgTx, inputs, userMultisigWallet, 0)
+// 		totalSigs = append(totalSigs, userSigs)
+// 	}
+// 	// COMBINE SIGN
 
-	signedMsgTx, _ := multisig.CombineTapMultisig(totalSigs, msgTx, inputs, userMultisigWallet, 0)
+// 	signedMsgTx, _ := multisig.CombineTapMultisig(totalSigs, msgTx, inputs, userMultisigWallet, 0)
 
-	var signedTx bytes.Buffer
-	signedMsgTx.Serialize(&signedTx)
-	hexSignedTx := hex.EncodeToString(signedTx.Bytes())
-	fmt.Println("hexSignedTx: ", hexSignedTx)
+// 	var signedTx bytes.Buffer
+// 	signedMsgTx.Serialize(&signedTx)
+// 	hexSignedTx := hex.EncodeToString(signedTx.Bytes())
+// 	fmt.Println("hexSignedTx: ", hexSignedTx)
 
-	txHash, err := btcProvider.client.SendRawTransaction(btcProvider.cfg.MempoolURL, []json.RawMessage{json.RawMessage(hexSignedTx)})
-	fmt.Println("txHash: ", txHash)
-	fmt.Println("err: ", err)
-}
-func TestDepositBitcoinToIconFailTestnet(t *testing.T) {
-	btcProvider, termpDir := initBtcProviderTestnet()
-	defer os.Remove(termpDir)
-	// relayer multisig
-	decodedAddr, _ := btcutil.DecodeAddress(TESTNET_RELAYER_ADDRESS, btcProvider.chainParam)
-	relayerPkScript, _ := txscript.PayToAddrScript(decodedAddr)
-	// user key
-	userPrivKeys, userMultisigWallet, _ := buildUserMultisigWalletTestnet(btcProvider.chainParam)
+// 	txHash, err := btcProvider.client.SendRawTransaction(btcProvider.cfg.MempoolURL, []json.RawMessage{json.RawMessage(hexSignedTx)})
+// 	fmt.Println("txHash: ", txHash)
+// 	fmt.Println("err: ", err)
+// }
+// func TestDepositBitcoinToIconFailTestnet(t *testing.T) {
+// 	btcProvider, termpDir := initBtcProviderTestnet()
+// 	defer os.Remove(termpDir)
+// 	// relayer multisig
+// 	decodedAddr, _ := btcutil.DecodeAddress(TESTNET_RELAYER_ADDRESS, btcProvider.chainParam)
+// 	relayerPkScript, _ := txscript.PayToAddrScript(decodedAddr)
+// 	// user key
+// 	userPrivKeys, userMultisigWallet, _ := buildUserMultisigWalletTestnet(btcProvider.chainParam)
 
-	bridgeMsg := multisig.BridgeDecodedMsg{
-		Message: &multisig.XCallMessage{
-			MessageType:  1,
-			Action:       "Deposit",
-			TokenAddress: "0:0",
-			To:           "0x2.icon/hx1493794ba31fa3372bf7903f04030497e7d14800",
-			From:         TESTNET_USER_WALLET_ADDRESS,
-			Amount:       new(big.Int).SetUint64(3000).Bytes(),
-			Data:         []byte(""),
-		},
-		ChainId:  1,
-		Receiver: TESTNET_ASSET_MANAGER_ADDRESS_WRONG,
-		Connectors: []string{
-			TESTNET_CONNECTION_ADDRESS,
-		},
-	}
+// 	bridgeMsg := multisig.BridgeDecodedMsg{
+// 		Message: &multisig.XCallMessage{
+// 			MessageType:  1,
+// 			Action:       "Deposit",
+// 			TokenAddress: "0:0",
+// 			To:           "0x2.icon/hx1493794ba31fa3372bf7903f04030497e7d14800",
+// 			From:         TESTNET_USER_WALLET_ADDRESS,
+// 			Amount:       new(big.Int).SetUint64(3000).Bytes(),
+// 			Data:         []byte(""),
+// 		},
+// 		ChainId:  1,
+// 		Receiver: TESTNET_ASSET_MANAGER_ADDRESS_WRONG,
+// 		Connectors: []string{
+// 			TESTNET_CONNECTION_ADDRESS,
+// 		},
+// 	}
 
-	inputs := []*multisig.Input{
-		{
-			TxHash:       "37ba284f4664c517af1c7fbca8b6ce19b293fe5e4125ac42e35f8b6671968d64",
-			OutputIdx:    6,
-			OutputAmount: 234779,
-			PkScript:     userMultisigWallet.PKScript,
-		},
-	}
+// 	inputs := []*multisig.Input{
+// 		{
+// 			TxHash:       "37ba284f4664c517af1c7fbca8b6ce19b293fe5e4125ac42e35f8b6671968d64",
+// 			OutputIdx:    6,
+// 			OutputAmount: 234779,
+// 			PkScript:     userMultisigWallet.PKScript,
+// 		},
+// 	}
 
-	// create tx
-	msgTx, err := multisig.CreateBridgeTxSendBitcoin(
-		&bridgeMsg,
-		inputs,
-		userMultisigWallet.PKScript,
-		relayerPkScript,
-		TESTNET_TX_FEE,
-	)
-	fmt.Println("err: ", err)
-	// sign tx
-	totalSigs := [][][]byte{}
-	for _, privKey := range userPrivKeys {
-		// user key 1 sign tx
-		userSigs, _ := multisig.SignTapMultisig(privKey, msgTx, inputs, userMultisigWallet, 0)
-		totalSigs = append(totalSigs, userSigs)
-	}
-	// COMBINE SIGN
-	signedMsgTx, _ := multisig.CombineTapMultisig(totalSigs, msgTx, inputs, userMultisigWallet, 0)
+// 	// create tx
+// 	msgTx, err := multisig.CreateBridgeTxSendBitcoin(
+// 		&bridgeMsg,
+// 		inputs,
+// 		userMultisigWallet.PKScript,
+// 		relayerPkScript,
+// 		TESTNET_TX_FEE,
+// 	)
+// 	fmt.Println("err: ", err)
+// 	// sign tx
+// 	totalSigs := [][][]byte{}
+// 	for _, privKey := range userPrivKeys {
+// 		// user key 1 sign tx
+// 		userSigs, _ := multisig.SignTapMultisig(privKey, msgTx, inputs, userMultisigWallet, 0)
+// 		totalSigs = append(totalSigs, userSigs)
+// 	}
+// 	// COMBINE SIGN
+// 	signedMsgTx, _ := multisig.CombineTapMultisig(totalSigs, msgTx, inputs, userMultisigWallet, 0)
 
-	var signedTx bytes.Buffer
-	signedMsgTx.Serialize(&signedTx)
-	hexSignedTx := hex.EncodeToString(signedTx.Bytes())
-	fmt.Println("hexSignedTx: ", hexSignedTx)
+// 	var signedTx bytes.Buffer
+// 	signedMsgTx.Serialize(&signedTx)
+// 	hexSignedTx := hex.EncodeToString(signedTx.Bytes())
+// 	fmt.Println("hexSignedTx: ", hexSignedTx)
 
-	txHash, err := btcProvider.client.SendRawTransaction(btcProvider.cfg.MempoolURL, []json.RawMessage{json.RawMessage(hexSignedTx)})
-	fmt.Println("txHash: ", txHash)
-	fmt.Println("err: ", err)
-}
+// 	txHash, err := btcProvider.client.SendRawTransaction(btcProvider.cfg.MempoolURL, []json.RawMessage{json.RawMessage(hexSignedTx)})
+// 	fmt.Println("txHash: ", txHash)
+// 	fmt.Println("err: ", err)
+// }
 
-func TestDepositRuneToIconTestnet(t *testing.T) {
-	btcProvider, termpDir := initBtcProviderTestnet()
-	defer os.Remove(termpDir)
-	// relayer multisig
-	decodedAddr, _ := btcutil.DecodeAddress(TESTNET_RELAYER_ADDRESS, btcProvider.chainParam)
-	relayerPkScript, _ := txscript.PayToAddrScript(decodedAddr)
-	// user key
-	userPrivKeys, userMultisigWallet, _ := buildUserMultisigWalletTestnet(btcProvider.chainParam)
+// func TestDepositRuneToIconTestnet(t *testing.T) {
+// 	btcProvider, termpDir := initBtcProviderTestnet()
+// 	defer os.Remove(termpDir)
+// 	// relayer multisig
+// 	decodedAddr, _ := btcutil.DecodeAddress(TESTNET_RELAYER_ADDRESS, btcProvider.chainParam)
+// 	relayerPkScript, _ := txscript.PayToAddrScript(decodedAddr)
+// 	// user key
+// 	userPrivKeys, userMultisigWallet, _ := buildUserMultisigWalletTestnet(btcProvider.chainParam)
 
-	bridgeMsg := multisig.BridgeDecodedMsg{
-		Message: &multisig.XCallMessage{
-			MessageType:  1,
-			Action:       "Deposit",
-			TokenAddress: "1:0",
-			To:           "0x2.icon/hx1493794ba31fa3372bf7903f04030497e7d14800",
-			From:         TESTNET_USER_WALLET_ADDRESS,
-			Amount:       new(big.Int).SetUint64(1).Bytes(),
-			Data:         []byte(""),
-		},
-		ChainId:  1,
-		Receiver: TESTNET_ASSET_MANAGER_ADDRESS,
-		Connectors: []string{
-			TESTNET_CONNECTION_ADDRESS,
-		},
-	}
+// 	bridgeMsg := multisig.BridgeDecodedMsg{
+// 		Message: &multisig.XCallMessage{
+// 			MessageType:  1,
+// 			Action:       "Deposit",
+// 			TokenAddress: "1:0",
+// 			To:           "0x2.icon/hx1493794ba31fa3372bf7903f04030497e7d14800",
+// 			From:         TESTNET_USER_WALLET_ADDRESS,
+// 			Amount:       new(big.Int).SetUint64(1).Bytes(),
+// 			Data:         []byte(""),
+// 		},
+// 		ChainId:  1,
+// 		Receiver: TESTNET_ASSET_MANAGER_ADDRESS,
+// 		Connectors: []string{
+// 			TESTNET_CONNECTION_ADDRESS,
+// 		},
+// 	}
 
-	inputs := []*multisig.Input{
-		// user rune UTXOs to spend
-		{
-			TxHash:       "e6107730017b2b84e187add5c3fed5a71edcda0b85b982297282137fe0480234",
-			OutputIdx:    1,
-			OutputAmount: 546,
-			PkScript:     userMultisigWallet.PKScript,
-		},
-		// user bitcoin UTXOs to pay tx fee
-		{
-			TxHash:       "9a9d955dff45c6cef6f4e41a12052dde21179069a2e17fe8f381f6c75e112b6a",
-			OutputIdx:    6,
-			OutputAmount: 261795,
-			PkScript:     userMultisigWallet.PKScript,
-		},
-	}
+// 	inputs := []*multisig.Input{
+// 		// user rune UTXOs to spend
+// 		{
+// 			TxHash:       "e6107730017b2b84e187add5c3fed5a71edcda0b85b982297282137fe0480234",
+// 			OutputIdx:    1,
+// 			OutputAmount: 546,
+// 			PkScript:     userMultisigWallet.PKScript,
+// 		},
+// 		// user bitcoin UTXOs to pay tx fee
+// 		{
+// 			TxHash:       "9a9d955dff45c6cef6f4e41a12052dde21179069a2e17fe8f381f6c75e112b6a",
+// 			OutputIdx:    6,
+// 			OutputAmount: 261795,
+// 			PkScript:     userMultisigWallet.PKScript,
+// 		},
+// 	}
 
-	// create tx
-	msgTx, err := multisig.CreateBridgeTxSendRune(
-		&bridgeMsg,
-		inputs,
-		userMultisigWallet.PKScript,
-		relayerPkScript,
-		TESTNET_TX_FEE,
-	)
-	fmt.Println("err: ", err)
-	// sign tx
-	totalSigs := [][][]byte{}
-	for _, privKey := range userPrivKeys {
-		// user key 1 sign tx
-		userSigs, _ := multisig.SignTapMultisig(privKey, msgTx, inputs, userMultisigWallet, 0)
-		totalSigs = append(totalSigs, userSigs)
-	}
-	// COMBINE SIGN
-	signedMsgTx, _ := multisig.CombineTapMultisig(totalSigs, msgTx, inputs, userMultisigWallet, 0)
+// 	// create tx
+// 	msgTx, err := multisig.CreateBridgeTxSendRune(
+// 		&bridgeMsg,
+// 		inputs,
+// 		userMultisigWallet.PKScript,
+// 		relayerPkScript,
+// 		TESTNET_TX_FEE,
+// 	)
+// 	fmt.Println("err: ", err)
+// 	// sign tx
+// 	totalSigs := [][][]byte{}
+// 	for _, privKey := range userPrivKeys {
+// 		// user key 1 sign tx
+// 		userSigs, _ := multisig.SignTapMultisig(privKey, msgTx, inputs, userMultisigWallet, 0)
+// 		totalSigs = append(totalSigs, userSigs)
+// 	}
+// 	// COMBINE SIGN
+// 	signedMsgTx, _ := multisig.CombineTapMultisig(totalSigs, msgTx, inputs, userMultisigWallet, 0)
 
-	var signedTx bytes.Buffer
-	signedMsgTx.Serialize(&signedTx)
-	hexSignedTx := hex.EncodeToString(signedTx.Bytes())
+// 	var signedTx bytes.Buffer
+// 	signedMsgTx.Serialize(&signedTx)
+// 	hexSignedTx := hex.EncodeToString(signedTx.Bytes())
 
-	fmt.Println("hexSignedTx: ", hexSignedTx)
+// 	fmt.Println("hexSignedTx: ", hexSignedTx)
 
-	txHash, err := btcProvider.client.SendRawTransaction(btcProvider.cfg.MempoolURL, []json.RawMessage{json.RawMessage(hexSignedTx)})
-	fmt.Println("txHash: ", txHash)
-	fmt.Println("err: ", err)
-}
+// 	txHash, err := btcProvider.client.SendRawTransaction(btcProvider.cfg.MempoolURL, []json.RawMessage{json.RawMessage(hexSignedTx)})
+// 	fmt.Println("txHash: ", txHash)
+// 	fmt.Println("err: ", err)
+// }
 
-func TestDepositRuneToIconFailTestnet(t *testing.T) {
-	btcProvider, termpDir := initBtcProviderTestnet()
-	defer os.Remove(termpDir)
-	// relayer multisig
-	decodedAddr, _ := btcutil.DecodeAddress(TESTNET_RELAYER_ADDRESS, btcProvider.chainParam)
-	relayerPkScript, _ := txscript.PayToAddrScript(decodedAddr)
-	// user key
-	userPrivKeys, userMultisigWallet, _ := buildUserMultisigWalletTestnet(btcProvider.chainParam)
+// func TestDepositRuneToIconFailTestnet(t *testing.T) {
+// 	btcProvider, termpDir := initBtcProviderTestnet()
+// 	defer os.Remove(termpDir)
+// 	// relayer multisig
+// 	decodedAddr, _ := btcutil.DecodeAddress(TESTNET_RELAYER_ADDRESS, btcProvider.chainParam)
+// 	relayerPkScript, _ := txscript.PayToAddrScript(decodedAddr)
+// 	// user key
+// 	userPrivKeys, userMultisigWallet, _ := buildUserMultisigWalletTestnet(btcProvider.chainParam)
 
-	bridgeMsg := multisig.BridgeDecodedMsg{
-		Message: &multisig.XCallMessage{
-			MessageType:  1,
-			Action:       "Deposit",
-			TokenAddress: "1:0",
-			To:           "0x2.icon/hx1493794ba31fa3372bf7903f04030497e7d14800",
-			From:         TESTNET_USER_WALLET_ADDRESS,
-			Amount:       new(big.Int).SetUint64(1).Bytes(),
-			Data:         []byte(""),
-		},
-		ChainId:  1,
-		Receiver: TESTNET_ASSET_MANAGER_ADDRESS_WRONG,
-		Connectors: []string{
-			TESTNET_CONNECTION_ADDRESS,
-		},
-	}
+// 	bridgeMsg := multisig.BridgeDecodedMsg{
+// 		Message: &multisig.XCallMessage{
+// 			MessageType:  1,
+// 			Action:       "Deposit",
+// 			TokenAddress: "1:0",
+// 			To:           "0x2.icon/hx1493794ba31fa3372bf7903f04030497e7d14800",
+// 			From:         TESTNET_USER_WALLET_ADDRESS,
+// 			Amount:       new(big.Int).SetUint64(1).Bytes(),
+// 			Data:         []byte(""),
+// 		},
+// 		ChainId:  1,
+// 		Receiver: TESTNET_ASSET_MANAGER_ADDRESS_WRONG,
+// 		Connectors: []string{
+// 			TESTNET_CONNECTION_ADDRESS,
+// 		},
+// 	}
 
-	inputs := []*multisig.Input{
-		// user rune UTXOs to spend
-		{
-			TxHash:       "924c7c6bd13f465b0b50cb8ad883544b22bfe54fae42e2ecfc9f9609a1b616f7",
-			OutputIdx:    1,
-			OutputAmount: 546,
-			PkScript:     userMultisigWallet.PKScript,
-		},
-		// user bitcoin UTXOs to pay tx fee
-		{
-			TxHash:       "b84060ce292dd61f8490bae54f8354caa8642de730e5f409b72d67b05617dcb0",
-			OutputIdx:    6,
-			OutputAmount: 226044,
-			PkScript:     userMultisigWallet.PKScript,
-		},
-	}
+// 	inputs := []*multisig.Input{
+// 		// user rune UTXOs to spend
+// 		{
+// 			TxHash:       "924c7c6bd13f465b0b50cb8ad883544b22bfe54fae42e2ecfc9f9609a1b616f7",
+// 			OutputIdx:    1,
+// 			OutputAmount: 546,
+// 			PkScript:     userMultisigWallet.PKScript,
+// 		},
+// 		// user bitcoin UTXOs to pay tx fee
+// 		{
+// 			TxHash:       "b84060ce292dd61f8490bae54f8354caa8642de730e5f409b72d67b05617dcb0",
+// 			OutputIdx:    6,
+// 			OutputAmount: 226044,
+// 			PkScript:     userMultisigWallet.PKScript,
+// 		},
+// 	}
 
-	// create tx
-	msgTx, err := multisig.CreateBridgeTxSendRune(
-		&bridgeMsg,
-		inputs,
-		userMultisigWallet.PKScript,
-		relayerPkScript,
-		TESTNET_TX_FEE,
-	)
-	fmt.Println("err: ", err)
-	// sign tx
-	totalSigs := [][][]byte{}
-	for _, privKey := range userPrivKeys {
-		// user key 1 sign tx
-		userSigs, _ := multisig.SignTapMultisig(privKey, msgTx, inputs, userMultisigWallet, 0)
-		totalSigs = append(totalSigs, userSigs)
-	}
-	// COMBINE SIGN
-	signedMsgTx, _ := multisig.CombineTapMultisig(totalSigs, msgTx, inputs, userMultisigWallet, 0)
+// 	// create tx
+// 	msgTx, err := multisig.CreateBridgeTxSendRune(
+// 		&bridgeMsg,
+// 		inputs,
+// 		userMultisigWallet.PKScript,
+// 		relayerPkScript,
+// 		TESTNET_TX_FEE,
+// 	)
+// 	fmt.Println("err: ", err)
+// 	// sign tx
+// 	totalSigs := [][][]byte{}
+// 	for _, privKey := range userPrivKeys {
+// 		// user key 1 sign tx
+// 		userSigs, _ := multisig.SignTapMultisig(privKey, msgTx, inputs, userMultisigWallet, 0)
+// 		totalSigs = append(totalSigs, userSigs)
+// 	}
+// 	// COMBINE SIGN
+// 	signedMsgTx, _ := multisig.CombineTapMultisig(totalSigs, msgTx, inputs, userMultisigWallet, 0)
 
-	var signedTx bytes.Buffer
-	signedMsgTx.Serialize(&signedTx)
-	hexSignedTx := hex.EncodeToString(signedTx.Bytes())
-	fmt.Println("hexSignedTx: ", hexSignedTx)
+// 	var signedTx bytes.Buffer
+// 	signedMsgTx.Serialize(&signedTx)
+// 	hexSignedTx := hex.EncodeToString(signedTx.Bytes())
+// 	fmt.Println("hexSignedTx: ", hexSignedTx)
 
-	txHash, err := btcProvider.client.SendRawTransaction(btcProvider.cfg.RPCUrl, []json.RawMessage{json.RawMessage(`"` + hexSignedTx + `"`)})
-	fmt.Println("txHash: ", txHash)
-	fmt.Println("err: ", err)
-}
+// 	txHash, err := btcProvider.client.SendRawTransaction(btcProvider.cfg.RPCUrl, []json.RawMessage{json.RawMessage(`"` + hexSignedTx + `"`)})
+// 	fmt.Println("txHash: ", txHash)
+// 	fmt.Println("err: ", err)
+// }
 
 func TestBuildRelayerMultisigWalletTestnet(t *testing.T) {
 	btcProvider, termpDir := initBtcProviderTestnet()

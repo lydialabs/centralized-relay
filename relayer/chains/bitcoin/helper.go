@@ -90,7 +90,7 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 		mintParams := radfiAbi.INonfungiblePositionManagerMintParams{
 			Token0:         token0,
 			Token1:         token1,
-			Fee:            big.NewInt(int64(dataMint.Fee) * 100),
+			Fee:            big.NewInt(int64(dataMint.Fee)),
 			TickLower:      big.NewInt(int64(dataMint.Ticks.LowerTick)),
 			TickUpper:      big.NewInt(int64(dataMint.Ticks.UpperTick)),
 			Amount0Desired: dataMint.Amount0Desired.Big(),
@@ -102,7 +102,7 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 		}
 
 		if !dataMint.InitPrice.IsZero() {
-			encodeInitPoolArgs, err := nonfungibleABI.Pack("initPoolHelper", mintParams, token0, token1, dataMint.InitPrice.Big())
+			encodeInitPoolArgs, err := nonfungibleABI.Pack("initPoolHelper", mintParams, dataMint.Token0Id.String(), dataMint.Token0Decimal, dataMint.Token1Id.String(), dataMint.Token1Decimal, dataMint.InitPrice.Big())
 			if err != nil {
 				return nil, nil, err
 			}

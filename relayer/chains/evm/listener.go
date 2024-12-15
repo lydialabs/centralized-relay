@@ -3,7 +3,7 @@ package evm
 import (
 	"context"
 	"math"
-	"math/big"
+	// "math/big"
 	"runtime"
 	"strings"
 	"time"
@@ -49,94 +49,98 @@ func (r *Provider) latestHeight(ctx context.Context) uint64 {
 }
 
 func (p *Provider) Listener(ctx context.Context, lastProcessedTx relayertypes.LastProcessedTx, blockInfoChan chan *relayertypes.BlockInfo) error {
-	lastSavedHeight := lastProcessedTx.Height
+	// lastSavedHeight := lastProcessedTx.Height
 
-	startHeight, err := p.startFromHeight(ctx, lastSavedHeight)
-	if err != nil {
-		return err
-	}
-	p.log.Info("Start from height ", zap.Uint64("height", startHeight), zap.Uint64("finality block", p.FinalityBlock(ctx)))
+	// startHeight, err := p.startFromHeight(ctx, lastSavedHeight)
+	// if err != nil {
+	// 	return err
+	// }
+	// p.log.Info("Start from height ", zap.Uint64("height", startHeight), zap.Uint64("finality block", p.FinalityBlock(ctx)))
 
-	var (
-		subscribeStart = time.NewTicker(time.Second * 1)
-		errChan        = make(chan error)
-	)
+	// var (
+	// 	subscribeStart = time.NewTicker(time.Second * 1)
+	// 	errChan        = make(chan error)
+	// )
 
-	for {
-		select {
-		case <-ctx.Done():
-			p.log.Debug("evm listener: done")
-			return ctx.Err()
-		case err := <-errChan:
-			if p.isConnectionError(err) {
-				p.log.Error("connection error", zap.Error(err))
-				clientReconnected := false
-				for !clientReconnected {
-					p.log.Info("reconnecting client")
-					client, err := p.client.Reconnect()
-					if err == nil {
-						clientReconnected = true
-						p.log.Info("client reconnected")
-						p.client = client
-					} else {
-						p.log.Error("failed to re-connect", zap.Error(err))
-						time.Sleep(ClientReconnectDelay)
-					}
-				}
-			}
-			startHeight = p.GetLastSavedBlockHeight()
-			subscribeStart.Reset(time.Second * 1)
-		case <-subscribeStart.C:
-			subscribeStart.Stop()
-			go p.Subscribe(ctx, blockInfoChan, errChan)
+	// for {
+	// 	select {
+	// 	case <-ctx.Done():
+	// 		p.log.Debug("evm listener: done")
+	// 		return ctx.Err()
+	// 	case err := <-errChan:
+	// 		if p.isConnectionError(err) {
+	// 			p.log.Error("connection error", zap.Error(err))
+	// 			clientReconnected := false
+	// 			for !clientReconnected {
+	// 				p.log.Info("reconnecting client")
+	// 				client, err := p.client.Reconnect()
+	// 				if err == nil {
+	// 					clientReconnected = true
+	// 					p.log.Info("client reconnected")
+	// 					p.client = client
+	// 				} else {
+	// 					p.log.Error("failed to re-connect", zap.Error(err))
+	// 					time.Sleep(ClientReconnectDelay)
+	// 				}
+	// 			}
+	// 		}
+	// 		startHeight = p.GetLastSavedBlockHeight()
+	// 		subscribeStart.Reset(time.Second * 1)
+	// 	case <-subscribeStart.C:
+	// 		subscribeStart.Stop()
+	// 		go p.Subscribe(ctx, blockInfoChan, errChan)
 
-			latestHeight := p.latestHeight(ctx)
-			if startHeight == 0 {
-				startHeight = latestHeight
-			}
+	// 		latestHeight := p.latestHeight(ctx)
+	// 		if startHeight == 0 {
+	// 			startHeight = latestHeight
+	// 		}
 
-			var blockReqs []*blockReq
-			for start := startHeight; start <= latestHeight; start += p.cfg.BlockBatchSize {
-				end := min(start+p.cfg.BlockBatchSize-1, latestHeight)
-				blockReqs = append(blockReqs, &blockReq{start, end, nil})
-			}
+	// 		var blockReqs []*blockReq
+	// 		for start := startHeight; start <= latestHeight; start += p.cfg.BlockBatchSize {
+	// 			end := min(start+p.cfg.BlockBatchSize-1, latestHeight)
+	// 			blockReqs = append(blockReqs, &blockReq{start, end, nil})
+	// 		}
 
-			for _, br := range blockReqs {
-				filter := ethereum.FilterQuery{
-					FromBlock: new(big.Int).SetUint64(br.start),
-					ToBlock:   new(big.Int).SetUint64(br.end),
-					Addresses: p.blockReq.Addresses,
-					Topics:    p.blockReq.Topics,
-				}
-				p.log.Info("syncing", zap.Uint64("start", br.start), zap.Uint64("end", br.end), zap.Uint64("latest", latestHeight), zap.Uint64("delta", latestHeight-br.end))
-				logs, err := p.getLogsRetry(ctx, filter)
-				if err != nil {
-					p.log.Warn("failed to fetch blocks", zap.Uint64("from", br.start), zap.Uint64("to", br.end), zap.Error(err))
-					continue
-				}
-				p.log.Info("synced", zap.Uint64("start", br.start), zap.Uint64("end", br.end), zap.Uint64("latest", latestHeight), zap.Uint64("delta", latestHeight-br.end))
-				for _, log := range logs {
-					message, err := p.getRelayMessageFromLog(log)
-					if err != nil {
-						p.log.Error("failed to get relay message from log", zap.Error(err))
-						continue
-					}
-					p.log.Info("Detected eventlog",
-						zap.String("dst", message.Dst),
-						zap.Uint64("sn", message.Sn.Uint64()),
-						zap.Any("req_id", message.ReqID),
-						zap.String("event_type", message.EventType),
-						zap.String("tx_hash", log.TxHash.String()),
-						zap.Uint64("height", log.BlockNumber),
-					)
-					blockInfoChan <- &relayertypes.BlockInfo{
-						Height:   log.BlockNumber,
-						Messages: []*relayertypes.Message{message},
-					}
-				}
-			}
-		}
-	}
+	// 		for _, br := range blockReqs {
+	// 			filter := ethereum.FilterQuery{
+	// 				FromBlock: new(big.Int).SetUint64(br.start),
+	// 				ToBlock:   new(big.Int).SetUint64(br.end),
+	// 				Addresses: p.blockReq.Addresses,
+	// 				Topics:    p.blockReq.Topics,
+	// 			}
+	// 			p.log.Info("syncing", zap.Uint64("start", br.start), zap.Uint64("end", br.end), zap.Uint64("latest", latestHeight), zap.Uint64("delta", latestHeight-br.end))
+	// 			logs, err := p.getLogsRetry(ctx, filter)
+	// 			if err != nil {
+	// 				p.log.Warn("failed to fetch blocks", zap.Uint64("from", br.start), zap.Uint64("to", br.end), zap.Error(err))
+	// 				continue
+	// 			}
+	// 			p.log.Info("synced", zap.Uint64("start", br.start), zap.Uint64("end", br.end), zap.Uint64("latest", latestHeight), zap.Uint64("delta", latestHeight-br.end))
+	// 			for _, log := range logs {
+	// 				message, err := p.getRelayMessageFromLog(log)
+	// 				if err != nil {
+	// 					p.log.Error("failed to get relay message from log", zap.Error(err))
+	// 					continue
+	// 				}
+	// 				p.log.Info("Detected eventlog",
+	// 					zap.String("dst", message.Dst),
+	// 					zap.Uint64("sn", message.Sn.Uint64()),
+	// 					zap.Any("req_id", message.ReqID),
+	// 					zap.String("event_type", message.EventType),
+	// 					zap.String("tx_hash", log.TxHash.String()),
+	// 					zap.Uint64("height", log.BlockNumber),
+	// 				)
+	// 				blockInfoChan <- &relayertypes.BlockInfo{
+	// 					Height:   log.BlockNumber,
+	// 					Messages: []*relayertypes.Message{message},
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
+
+	// evm do nothing
+
+	return nil
 }
 
 func (p *Provider) getLogsRetry(ctx context.Context, filter ethereum.FilterQuery) ([]ethTypes.Log, error) {
