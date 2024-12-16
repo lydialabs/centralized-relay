@@ -62,7 +62,6 @@ type RadFiSwapMsg struct {
 	AmountIn 		uint128.Uint128
 	AmountOut 		uint128.Uint128
 	SequenceNumber	uint128.Uint128
-	NftIds	        []uint128.Uint128
 	Fees 			[]uint32
 	Tokens			[]*runestone.RuneId
 }
@@ -203,9 +202,6 @@ func CreateSwapScript(msg *RadFiSwapMsg) ([]byte, error) {
 	data = append(data, runestone.EncodeUint128(msg.AmountIn)...)
 	data = append(data, runestone.EncodeUint128(msg.AmountOut)...)
 	data = append(data, runestone.EncodeUint128(msg.SequenceNumber)...)
-	for _, nftId := range msg.NftIds {
-		data = append(data, runestone.EncodeUint128(nftId)...)
-	}
 	for _, fee := range msg.Fees {
 		data = append(data, runestone.EncodeUint32(fee)...)
 	}
@@ -345,14 +341,12 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 			singleByte := uint8(payload[1])
 			isExactIn := (singleByte >> 7) != 0
 			poolsCount := singleByte << 1 >> 1
-			nftIds := []uint128.Uint128{}
 			fees := []uint32{}
-			nftIds = append(nftIds, integers[3:3+poolsCount]...)
-			for _, fee := range(integers[3+poolsCount:3+poolsCount*2]) {
+			for _, fee := range(integers[3:3+poolsCount]) {
 				fees = append(fees, uint32(fee.Lo))
 			}
 			tokens := []*runestone.RuneId{}
-			for i := 3+int(poolsCount*2); i < len(integers)-1 ; i += 2 {
+			for i := 3+int(poolsCount); i < len(integers)-1 ; i += 2 {
 				tokens = append(tokens, &runestone.RuneId{
 					Block: integers[i].Lo,
 					Tx: uint32(integers[i+1].Lo),
@@ -367,7 +361,6 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 					AmountIn:		integers[0],
 					AmountOut:		integers[1],
 					SequenceNumber: integers[2],
-					NftIds:         nftIds,
 					Fees:			fees,
 					Tokens:			tokens,
 				},

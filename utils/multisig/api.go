@@ -850,14 +850,7 @@ func VerifyRadfiTx(timeout int64, server, bear string, relayersMultisigInfo *Mul
 		case OP_RADFI_SWAP:
 			plMessage := radFiMessage.SwapMsg
 			poolWalletPkScripts := []string{}
-			for _, nftId := range(plMessage.NftIds) {
-				poolWalletPkScript, err := GetPoolWalletPkScript(relayersMultisigInfo, nftId)
-				if err != nil {
-					return nil, err
-				}
-				poolWalletPkScripts = append(poolWalletPkScripts, poolWalletPkScript)
-			}
-
+	
 			// check if pool liquidity really increased and decreased by the amounts in radfiMsg
 			if !outputsTokenBalance[poolWalletPkScripts[0]][plMessage.Tokens[0].String()].Equals(inputsTokenBalance[poolWalletPkScripts[0]][plMessage.Tokens[0].String()].Add(plMessage.AmountIn)) {
 				return nil, fmt.Errorf("OP_RADFI_SWAP - the AmountIn mismatch with the amount pool0 received")
