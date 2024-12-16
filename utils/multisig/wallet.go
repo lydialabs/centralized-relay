@@ -11,8 +11,6 @@ import (
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
-	"github.com/studyzy/runestone"
-	"lukechampine.com/uint128"
 )
 
 func toXOnly(pubKey []byte) []byte {
@@ -82,7 +80,10 @@ func buildMultisigWalletFromScripts(scripts [][]byte, sharedRandomHex string) (*
 	tapScriptTree := txscript.AssembleTaprootScriptTree(tapLeaves...)
 	tapScriptRootHash := tapScriptTree.RootNode.TapHash()
 
-	sharedRandomBytes, _ := hex.DecodeString(sharedRandomHex)
+	sharedRandomBytes, err := hex.DecodeString(sharedRandomHex)
+	if err != nil {
+		return nil, err
+	}
 	sharedRandom := new(big.Int).SetBytes(sharedRandomBytes)
 
 	sharedPublicKey, _, err := genSharedInternalPubKey(sharedRandom)
@@ -215,12 +216,16 @@ func DecodeAddress(chainParam *chaincfg.Params, addr string) ([]byte, error) {
 	return destinationAddrByte, nil
 }
 
-func GetPoolSharedRandomHex(poolId uint128.Uint128) string {
-	return SHARED_RANDOM_HEX_PREFIX + hex.EncodeToString(runestone.EncodeUint128(poolId))
+func GetPoolSharedRandomHex(token0Id, token1Id string, feeRate uint32) string {
+	return SHARED_RANDOM_HEX_PREFIX + hex.EncodeToString([]byte(token0Id+"-"+token1Id+"-"+fmt.Sprint(feeRate)))
 }
 
-func GetPoolWalletPkScript(relayersMultisigInfo *MultisigInfo, poolId uint128.Uint128) (string, error) {
-	poolMultisigWallet, err := BuildMultisigWallet(relayersMultisigInfo, GetPoolSharedRandomHex(poolId))
+func GetPoolMultisigWallet(relayersMultisigInfo *MultisigInfo, token0Id, token1Id string, feeRate uint32) (*MultisigWallet, error) {
+	return BuildMultisigWallet(relayersMultisigInfo, GetPoolSharedRandomHex(token0Id, token1Id, feeRate))
+}
+
+func GetPoolWalletPkScript(relayersMultisigInfo *MultisigInfo, token0Id, token1Id string, feeRate uint32) (string, error) {
+	poolMultisigWallet, err := GetPoolMultisigWallet(relayersMultisigInfo, token0Id, token1Id, feeRate)
 	if err != nil {
 		return "", err
 	}

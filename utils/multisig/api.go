@@ -795,186 +795,186 @@ func GetInputOutputBalance(timeout int64, server, bear string, transaction *wire
 }
 
 // call testmempoolaccept RPC to validate the UTXO and bitcoin amount
-func VerifyRadfiTx(timeout int64, server, bear string, relayersMultisigInfo *MultisigInfo, transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
-	// Decipher runestone
-	r := &runestone.Runestone{}
-	runeArtifact, err := r.Decipher(transaction)
-	if err != nil {
-		return nil, fmt.Errorf("could not decipher runestone - Error %v", err)
-	}
+// func VerifyRadfiTx(timeout int64, server, bear string, relayersMultisigInfo *MultisigInfo, transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
+// 	// Decipher runestone
+// 	r := &runestone.Runestone{}
+// 	runeArtifact, err := r.Decipher(transaction)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("could not decipher runestone - Error %v", err)
+// 	}
 
-	inputsTokenBalance, outputsTokenBalance, runeChangePKScript, err := GetInputOutputBalance(timeout, server, bear, transaction, runeArtifact)
-	if err != nil {
-		return nil, err
-	}
+// 	inputsTokenBalance, outputsTokenBalance, runeChangePKScript, err := GetInputOutputBalance(timeout, server, bear, transaction, runeArtifact)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	// decode tx
-	radFiMessage, err := ReadRadFiMessage(transaction)
-	if err != nil {
-		return nil, err
-	}
-	// verify tx data
-	switch radFiMessage.Flag {
-		case OP_RADFI_PROVIDE_LIQUIDITY:
-			plMessage := radFiMessage.ProvideLiquidityMsg
-			poolWalletPkScript, err := GetPoolWalletPkScript(relayersMultisigInfo, plMessage.NftId)
-			if err != nil {
-				return nil, err
-			}
+// 	// decode tx
+// 	radFiMessage, err := ReadRadFiMessage(transaction)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	// verify tx data
+// 	switch radFiMessage.Flag {
+// 		case OP_RADFI_PROVIDE_LIQUIDITY:
+// 			plMessage := radFiMessage.ProvideLiquidityMsg
+// 			poolWalletPkScript, err := GetPoolWalletPkScript(relayersMultisigInfo, plMessage.NftId)
+// 			if err != nil {
+// 				return nil, err
+// 			}
 
-			// check if pool liquidity really increased by the amounts in radfiMsg
-			if !outputsTokenBalance[poolWalletPkScript][plMessage.Token0Id.String()].Equals(inputsTokenBalance[poolWalletPkScript][plMessage.Token0Id.String()].Add(plMessage.Amount0Desired)) {
-				return nil, fmt.Errorf("OP_RADFI_PROVIDE_LIQUIDITY - the amount0 mismatch with the liquidity pool received")
-			}
-			if !outputsTokenBalance[poolWalletPkScript][plMessage.Token1Id.String()].Equals(inputsTokenBalance[poolWalletPkScript][plMessage.Token1Id.String()].Add(plMessage.Amount1Desired)) {
-				return nil, fmt.Errorf("OP_RADFI_PROVIDE_LIQUIDITY - the amount1 mismatch with the liquidity pool received")
-			}
-			// check if user rune balance really decreased
-			for userTokenId, userTokenBalanceOut := range(outputsTokenBalance[runeChangePKScript]) {
-				if userTokenId == plMessage.Token0Id.String() {
-					if !userTokenBalanceOut.Add(plMessage.Amount0Desired).Equals(inputsTokenBalance[runeChangePKScript][userTokenId]) {
-						return nil, fmt.Errorf("OP_RADFI_PROVIDE_LIQUIDITY - the amount0 mismatch with the rune user provided")
-					}
-				} else if userTokenId == plMessage.Token1Id.String() {
-					if !userTokenBalanceOut.Add(plMessage.Amount1Desired).Equals(inputsTokenBalance[runeChangePKScript][userTokenId]) {
-						return nil, fmt.Errorf("OP_RADFI_PROVIDE_LIQUIDITY - the amount1 mismatch with the rune user provided")
-					}
-				} else {
-					// the other token balance not for the pool should be unchanged
-					if !userTokenBalanceOut.Equals(inputsTokenBalance[runeChangePKScript][userTokenId]) {
-						return nil, fmt.Errorf("OP_RADFI_PROVIDE_LIQUIDITY - the non liquidity token balance should not changed")
-					}
-				}
-			}
+// 			// check if pool liquidity really increased by the amounts in radfiMsg
+// 			if !outputsTokenBalance[poolWalletPkScript][plMessage.Token0Id.String()].Equals(inputsTokenBalance[poolWalletPkScript][plMessage.Token0Id.String()].Add(plMessage.Amount0Desired)) {
+// 				return nil, fmt.Errorf("OP_RADFI_PROVIDE_LIQUIDITY - the amount0 mismatch with the liquidity pool received")
+// 			}
+// 			if !outputsTokenBalance[poolWalletPkScript][plMessage.Token1Id.String()].Equals(inputsTokenBalance[poolWalletPkScript][plMessage.Token1Id.String()].Add(plMessage.Amount1Desired)) {
+// 				return nil, fmt.Errorf("OP_RADFI_PROVIDE_LIQUIDITY - the amount1 mismatch with the liquidity pool received")
+// 			}
+// 			// check if user rune balance really decreased
+// 			for userTokenId, userTokenBalanceOut := range(outputsTokenBalance[runeChangePKScript]) {
+// 				if userTokenId == plMessage.Token0Id.String() {
+// 					if !userTokenBalanceOut.Add(plMessage.Amount0Desired).Equals(inputsTokenBalance[runeChangePKScript][userTokenId]) {
+// 						return nil, fmt.Errorf("OP_RADFI_PROVIDE_LIQUIDITY - the amount0 mismatch with the rune user provided")
+// 					}
+// 				} else if userTokenId == plMessage.Token1Id.String() {
+// 					if !userTokenBalanceOut.Add(plMessage.Amount1Desired).Equals(inputsTokenBalance[runeChangePKScript][userTokenId]) {
+// 						return nil, fmt.Errorf("OP_RADFI_PROVIDE_LIQUIDITY - the amount1 mismatch with the rune user provided")
+// 					}
+// 				} else {
+// 					// the other token balance not for the pool should be unchanged
+// 					if !userTokenBalanceOut.Equals(inputsTokenBalance[runeChangePKScript][userTokenId]) {
+// 						return nil, fmt.Errorf("OP_RADFI_PROVIDE_LIQUIDITY - the non liquidity token balance should not changed")
+// 					}
+// 				}
+// 			}
 
-		case OP_RADFI_SWAP:
-			plMessage := radFiMessage.SwapMsg
-			poolWalletPkScripts := []string{}
-	
-			// check if pool liquidity really increased and decreased by the amounts in radfiMsg
-			if !outputsTokenBalance[poolWalletPkScripts[0]][plMessage.Tokens[0].String()].Equals(inputsTokenBalance[poolWalletPkScripts[0]][plMessage.Tokens[0].String()].Add(plMessage.AmountIn)) {
-				return nil, fmt.Errorf("OP_RADFI_SWAP - the AmountIn mismatch with the amount pool0 received")
-			}
-			if !outputsTokenBalance[poolWalletPkScripts[len(poolWalletPkScripts)-1]][plMessage.Tokens[len(plMessage.Tokens)-1].String()].Add(plMessage.AmountOut).Equals(inputsTokenBalance[poolWalletPkScripts[len(poolWalletPkScripts)-1]][plMessage.Tokens[len(plMessage.Tokens)-1].String()]) {
-				return nil, fmt.Errorf("OP_RADFI_SWAP - the AmountIn mismatch with the amount pool0 received")
-			}
-			// check if user rune balance really changed
-			for userTokenId, userTokenBalanceOut := range(outputsTokenBalance[runeChangePKScript]) {
-				if userTokenId == plMessage.Tokens[0].String() {
-					if !userTokenBalanceOut.Add(plMessage.AmountIn).Equals(inputsTokenBalance[runeChangePKScript][userTokenId]) {
-						return nil, fmt.Errorf("OP_RADFI_SWAP - the amount0 mismatch with the rune user swap")
-					}
-				} else if userTokenId == plMessage.Tokens[len(plMessage.Tokens)-1].String() {
-					if !userTokenBalanceOut.Equals(inputsTokenBalance[runeChangePKScript][userTokenId].Add(plMessage.AmountOut)) {
-						return nil, fmt.Errorf("OP_RADFI_SWAP - the amount1 mismatch with the rune user swap")
-					}
-				} else {
-					// the other token balance not for swap should be unchanged
-					if !userTokenBalanceOut.Equals(inputsTokenBalance[runeChangePKScript][userTokenId]) {
-						return nil, fmt.Errorf("OP_RADFI_SWAP - the non liquidity token balance should not changed")
-					}
-				}
-			}
+// 		case OP_RADFI_SWAP:
+// 			plMessage := radFiMessage.SwapMsg
+// 			poolWalletPkScripts := []string{}
 
-		case OP_RADFI_WITHDRAW_LIQUIDITY:
-			plMessage := radFiMessage.WithdrawLiquidityMsg
-			poolWalletPkScript, err := GetPoolWalletPkScript(relayersMultisigInfo, plMessage.NftId)
-			if err != nil {
-				return nil, err
-			}
+// 			// check if pool liquidity really increased and decreased by the amounts in radfiMsg
+// 			if !outputsTokenBalance[poolWalletPkScripts[0]][plMessage.Tokens[0].String()].Equals(inputsTokenBalance[poolWalletPkScripts[0]][plMessage.Tokens[0].String()].Add(plMessage.AmountIn)) {
+// 				return nil, fmt.Errorf("OP_RADFI_SWAP - the AmountIn mismatch with the amount pool0 received")
+// 			}
+// 			if !outputsTokenBalance[poolWalletPkScripts[len(poolWalletPkScripts)-1]][plMessage.Tokens[len(plMessage.Tokens)-1].String()].Add(plMessage.AmountOut).Equals(inputsTokenBalance[poolWalletPkScripts[len(poolWalletPkScripts)-1]][plMessage.Tokens[len(plMessage.Tokens)-1].String()]) {
+// 				return nil, fmt.Errorf("OP_RADFI_SWAP - the AmountIn mismatch with the amount pool0 received")
+// 			}
+// 			// check if user rune balance really changed
+// 			for userTokenId, userTokenBalanceOut := range(outputsTokenBalance[runeChangePKScript]) {
+// 				if userTokenId == plMessage.Tokens[0].String() {
+// 					if !userTokenBalanceOut.Add(plMessage.AmountIn).Equals(inputsTokenBalance[runeChangePKScript][userTokenId]) {
+// 						return nil, fmt.Errorf("OP_RADFI_SWAP - the amount0 mismatch with the rune user swap")
+// 					}
+// 				} else if userTokenId == plMessage.Tokens[len(plMessage.Tokens)-1].String() {
+// 					if !userTokenBalanceOut.Equals(inputsTokenBalance[runeChangePKScript][userTokenId].Add(plMessage.AmountOut)) {
+// 						return nil, fmt.Errorf("OP_RADFI_SWAP - the amount1 mismatch with the rune user swap")
+// 					}
+// 				} else {
+// 					// the other token balance not for swap should be unchanged
+// 					if !userTokenBalanceOut.Equals(inputsTokenBalance[runeChangePKScript][userTokenId]) {
+// 						return nil, fmt.Errorf("OP_RADFI_SWAP - the non liquidity token balance should not changed")
+// 					}
+// 				}
+// 			}
 
-			// check if pool liquidity really decreased by the amounts in radfiMsg
-			if !outputsTokenBalance[poolWalletPkScript][plMessage.Token0Id.String()].Add(plMessage.Amount0).Equals(inputsTokenBalance[poolWalletPkScript][plMessage.Token0Id.String()]) {
-				return nil, fmt.Errorf("OP_RADFI_WITHDRAW_LIQUIDITY - the amount0 mismatch with the liquidity pool withdrawed")
-			}
-			if !outputsTokenBalance[poolWalletPkScript][plMessage.Token1Id.String()].Add(plMessage.Amount1).Equals(inputsTokenBalance[poolWalletPkScript][plMessage.Token1Id.String()]) {
-				return nil, fmt.Errorf("OP_RADFI_WITHDRAW_LIQUIDITY - the amount1 mismatch with the liquidity pool withdrawed")
-			}
-			// check if user rune balance really increased
-			for userTokenId, userTokenBalanceOut := range(outputsTokenBalance[runeChangePKScript]) {
-				if userTokenId == plMessage.Token0Id.String() {
-					if !userTokenBalanceOut.Equals(inputsTokenBalance[runeChangePKScript][userTokenId].Add(plMessage.Amount0)) {
-						return nil, fmt.Errorf("OP_RADFI_PROVIDE_LIQUIDITY - the amount0 mismatch with the rune user received")
-					}
-				} else if userTokenId == plMessage.Token1Id.String() {
-					if !userTokenBalanceOut.Equals(inputsTokenBalance[runeChangePKScript][userTokenId].Add(plMessage.Amount1)) {
-						return nil, fmt.Errorf("OP_RADFI_PROVIDE_LIQUIDITY - the amount1 mismatch with the rune user received")
-					}
-				} else {
-					// the other token balance not for the pool should be unchanged
-					if !userTokenBalanceOut.Equals(inputsTokenBalance[runeChangePKScript][userTokenId]) {
-						return nil, fmt.Errorf("OP_RADFI_PROVIDE_LIQUIDITY - the non liquidity token balance should not changed")
-					}
-				}
-			}
+// 		case OP_RADFI_WITHDRAW_LIQUIDITY:
+// 			plMessage := radFiMessage.WithdrawLiquidityMsg
+// 			poolWalletPkScript, err := GetPoolWalletPkScript(relayersMultisigInfo, plMessage.NftId)
+// 			if err != nil {
+// 				return nil, err
+// 			}
 
-		case OP_RADFI_COLLECT_FEES:
-			plMessage := radFiMessage.CollectFeesMsg
-			poolWalletPkScript, err := GetPoolWalletPkScript(relayersMultisigInfo, plMessage.NftId)
-			if err != nil {
-				return nil, err
-			}
+// 			// check if pool liquidity really decreased by the amounts in radfiMsg
+// 			if !outputsTokenBalance[poolWalletPkScript][plMessage.Token0Id.String()].Add(plMessage.Amount0).Equals(inputsTokenBalance[poolWalletPkScript][plMessage.Token0Id.String()]) {
+// 				return nil, fmt.Errorf("OP_RADFI_WITHDRAW_LIQUIDITY - the amount0 mismatch with the liquidity pool withdrawed")
+// 			}
+// 			if !outputsTokenBalance[poolWalletPkScript][plMessage.Token1Id.String()].Add(plMessage.Amount1).Equals(inputsTokenBalance[poolWalletPkScript][plMessage.Token1Id.String()]) {
+// 				return nil, fmt.Errorf("OP_RADFI_WITHDRAW_LIQUIDITY - the amount1 mismatch with the liquidity pool withdrawed")
+// 			}
+// 			// check if user rune balance really increased
+// 			for userTokenId, userTokenBalanceOut := range(outputsTokenBalance[runeChangePKScript]) {
+// 				if userTokenId == plMessage.Token0Id.String() {
+// 					if !userTokenBalanceOut.Equals(inputsTokenBalance[runeChangePKScript][userTokenId].Add(plMessage.Amount0)) {
+// 						return nil, fmt.Errorf("OP_RADFI_PROVIDE_LIQUIDITY - the amount0 mismatch with the rune user received")
+// 					}
+// 				} else if userTokenId == plMessage.Token1Id.String() {
+// 					if !userTokenBalanceOut.Equals(inputsTokenBalance[runeChangePKScript][userTokenId].Add(plMessage.Amount1)) {
+// 						return nil, fmt.Errorf("OP_RADFI_PROVIDE_LIQUIDITY - the amount1 mismatch with the rune user received")
+// 					}
+// 				} else {
+// 					// the other token balance not for the pool should be unchanged
+// 					if !userTokenBalanceOut.Equals(inputsTokenBalance[runeChangePKScript][userTokenId]) {
+// 						return nil, fmt.Errorf("OP_RADFI_PROVIDE_LIQUIDITY - the non liquidity token balance should not changed")
+// 					}
+// 				}
+// 			}
 
-			// check if pool liquidity really decreased by the amounts in radfiMsg
-			if !outputsTokenBalance[poolWalletPkScript][plMessage.Token0Id.String()].Add(plMessage.Amount0).Equals(inputsTokenBalance[poolWalletPkScript][plMessage.Token0Id.String()]) {
-				return nil, fmt.Errorf("OP_RADFI_COLLECT_FEES - the amount0 mismatch with the liquidity pool withdrawed")
-			}
-			if !outputsTokenBalance[poolWalletPkScript][plMessage.Token1Id.String()].Add(plMessage.Amount1).Equals(inputsTokenBalance[poolWalletPkScript][plMessage.Token1Id.String()]) {
-				return nil, fmt.Errorf("OP_RADFI_COLLECT_FEES - the amount1 mismatch with the liquidity pool withdrawed")
-			}
-			// check if user rune balance really increased
-			for userTokenId, userTokenBalanceOut := range(outputsTokenBalance[runeChangePKScript]) {
-				if userTokenId == plMessage.Token0Id.String() {
-					if !userTokenBalanceOut.Equals(inputsTokenBalance[runeChangePKScript][userTokenId].Add(plMessage.Amount0)) {
-						return nil, fmt.Errorf("OP_RADFI_COLLECT_FEES - the amount0 mismatch with the rune user received")
-					}
-				} else if userTokenId == plMessage.Token1Id.String() {
-					if !userTokenBalanceOut.Equals(inputsTokenBalance[runeChangePKScript][userTokenId].Add(plMessage.Amount1)) {
-						return nil, fmt.Errorf("OP_RADFI_COLLECT_FEES - the amount1 mismatch with the rune user received")
-					}
-				} else {
-					// the other token balance not for the pool should be unchanged
-					if !userTokenBalanceOut.Equals(inputsTokenBalance[runeChangePKScript][userTokenId]) {
-						return nil, fmt.Errorf("OP_RADFI_COLLECT_FEES - the non liquidity token balance should not changed")
-					}
-				}
-			}
+// 		case OP_RADFI_COLLECT_FEES:
+// 			plMessage := radFiMessage.CollectFeesMsg
+// 			poolWalletPkScript, err := GetPoolWalletPkScript(relayersMultisigInfo, plMessage.NftId)
+// 			if err != nil {
+// 				return nil, err
+// 			}
 
-		case OP_RADFI_INCREASE_LIQUIDITY:
-			plMessage := radFiMessage.IncreaseLiquidityMsg
-			poolWalletPkScript, err := GetPoolWalletPkScript(relayersMultisigInfo, plMessage.NftId)
-			if err != nil {
-				return nil, err
-			}
+// 			// check if pool liquidity really decreased by the amounts in radfiMsg
+// 			if !outputsTokenBalance[poolWalletPkScript][plMessage.Token0Id.String()].Add(plMessage.Amount0).Equals(inputsTokenBalance[poolWalletPkScript][plMessage.Token0Id.String()]) {
+// 				return nil, fmt.Errorf("OP_RADFI_COLLECT_FEES - the amount0 mismatch with the liquidity pool withdrawed")
+// 			}
+// 			if !outputsTokenBalance[poolWalletPkScript][plMessage.Token1Id.String()].Add(plMessage.Amount1).Equals(inputsTokenBalance[poolWalletPkScript][plMessage.Token1Id.String()]) {
+// 				return nil, fmt.Errorf("OP_RADFI_COLLECT_FEES - the amount1 mismatch with the liquidity pool withdrawed")
+// 			}
+// 			// check if user rune balance really increased
+// 			for userTokenId, userTokenBalanceOut := range(outputsTokenBalance[runeChangePKScript]) {
+// 				if userTokenId == plMessage.Token0Id.String() {
+// 					if !userTokenBalanceOut.Equals(inputsTokenBalance[runeChangePKScript][userTokenId].Add(plMessage.Amount0)) {
+// 						return nil, fmt.Errorf("OP_RADFI_COLLECT_FEES - the amount0 mismatch with the rune user received")
+// 					}
+// 				} else if userTokenId == plMessage.Token1Id.String() {
+// 					if !userTokenBalanceOut.Equals(inputsTokenBalance[runeChangePKScript][userTokenId].Add(plMessage.Amount1)) {
+// 						return nil, fmt.Errorf("OP_RADFI_COLLECT_FEES - the amount1 mismatch with the rune user received")
+// 					}
+// 				} else {
+// 					// the other token balance not for the pool should be unchanged
+// 					if !userTokenBalanceOut.Equals(inputsTokenBalance[runeChangePKScript][userTokenId]) {
+// 						return nil, fmt.Errorf("OP_RADFI_COLLECT_FEES - the non liquidity token balance should not changed")
+// 					}
+// 				}
+// 			}
 
-			// check if pool liquidity really increased by the amounts in radfiMsg
-			if !outputsTokenBalance[poolWalletPkScript][plMessage.Token0Id.String()].Equals(inputsTokenBalance[poolWalletPkScript][plMessage.Token0Id.String()].Add(plMessage.Amount0)) {
-				return nil, fmt.Errorf("OP_RADFI_INCREASE_LIQUIDITY - the amount0 mismatch with the liquidity pool received")
-			}
-			if !outputsTokenBalance[poolWalletPkScript][plMessage.Token1Id.String()].Equals(inputsTokenBalance[poolWalletPkScript][plMessage.Token1Id.String()].Add(plMessage.Amount1)) {
-				return nil, fmt.Errorf("OP_RADFI_INCREASE_LIQUIDITY - the amount1 mismatch with the liquidity pool received")
-			}
-			// check if user rune balance really decreased
-			for userTokenId, userTokenBalanceOut := range(outputsTokenBalance[runeChangePKScript]) {
-				if userTokenId == plMessage.Token0Id.String() {
-					if !userTokenBalanceOut.Add(plMessage.Amount0).Equals(inputsTokenBalance[runeChangePKScript][userTokenId]) {
-						return nil, fmt.Errorf("OP_RADFI_INCREASE_LIQUIDITY - the amount0 mismatch with the rune user provided")
-					}
-				} else if userTokenId == plMessage.Token1Id.String() {
-					if !userTokenBalanceOut.Add(plMessage.Amount1).Equals(inputsTokenBalance[runeChangePKScript][userTokenId]) {
-						return nil, fmt.Errorf("OP_RADFI_INCREASE_LIQUIDITY - the amount1 mismatch with the rune user provided")
-					}
-				} else {
-					// the other token balance not for the pool should be unchanged
-					if !userTokenBalanceOut.Equals(inputsTokenBalance[runeChangePKScript][userTokenId]) {
-						return nil, fmt.Errorf("OP_RADFI_INCREASE_LIQUIDITY - the non liquidity token balance should not changed")
-					}
-				}
-			}
+// 		case OP_RADFI_INCREASE_LIQUIDITY:
+// 			plMessage := radFiMessage.IncreaseLiquidityMsg
+// 			poolWalletPkScript, err := GetPoolWalletPkScript(relayersMultisigInfo, plMessage.NftId)
+// 			if err != nil {
+// 				return nil, err
+// 			}
 
-		default:
-			return nil, fmt.Errorf("ReadRadFiMessage - invalid flag")
-	}
+// 			// check if pool liquidity really increased by the amounts in radfiMsg
+// 			if !outputsTokenBalance[poolWalletPkScript][plMessage.Token0Id.String()].Equals(inputsTokenBalance[poolWalletPkScript][plMessage.Token0Id.String()].Add(plMessage.Amount0)) {
+// 				return nil, fmt.Errorf("OP_RADFI_INCREASE_LIQUIDITY - the amount0 mismatch with the liquidity pool received")
+// 			}
+// 			if !outputsTokenBalance[poolWalletPkScript][plMessage.Token1Id.String()].Equals(inputsTokenBalance[poolWalletPkScript][plMessage.Token1Id.String()].Add(plMessage.Amount1)) {
+// 				return nil, fmt.Errorf("OP_RADFI_INCREASE_LIQUIDITY - the amount1 mismatch with the liquidity pool received")
+// 			}
+// 			// check if user rune balance really decreased
+// 			for userTokenId, userTokenBalanceOut := range(outputsTokenBalance[runeChangePKScript]) {
+// 				if userTokenId == plMessage.Token0Id.String() {
+// 					if !userTokenBalanceOut.Add(plMessage.Amount0).Equals(inputsTokenBalance[runeChangePKScript][userTokenId]) {
+// 						return nil, fmt.Errorf("OP_RADFI_INCREASE_LIQUIDITY - the amount0 mismatch with the rune user provided")
+// 					}
+// 				} else if userTokenId == plMessage.Token1Id.String() {
+// 					if !userTokenBalanceOut.Add(plMessage.Amount1).Equals(inputsTokenBalance[runeChangePKScript][userTokenId]) {
+// 						return nil, fmt.Errorf("OP_RADFI_INCREASE_LIQUIDITY - the amount1 mismatch with the rune user provided")
+// 					}
+// 				} else {
+// 					// the other token balance not for the pool should be unchanged
+// 					if !userTokenBalanceOut.Equals(inputsTokenBalance[runeChangePKScript][userTokenId]) {
+// 						return nil, fmt.Errorf("OP_RADFI_INCREASE_LIQUIDITY - the non liquidity token balance should not changed")
+// 					}
+// 				}
+// 			}
 
-	return radFiMessage, nil
-}
+// 		default:
+// 			return nil, fmt.Errorf("ReadRadFiMessage - invalid flag")
+// 	}
+
+// 	return radFiMessage, nil
+// }

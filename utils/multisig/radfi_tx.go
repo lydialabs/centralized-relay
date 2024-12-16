@@ -107,17 +107,17 @@ func CreateRadFiTxInitPool(
 		// only some pool UTXOs have liquidity due to runestone limit
 		if poolUTXOIdx < poolUTXOsContainLiquidityCount {
 			if msg.Token0Id == BitcoinRuneId() {
-					bitcoinAmount += int64(msg.Amount0Desired.Lo / poolUTXOsContainLiquidityCount)
+					bitcoinAmount += int64(msg.Amount0.Lo / poolUTXOsContainLiquidityCount)
 			} else {
 				runeOutput.Edicts = append(runeOutput.Edicts, runestone.Edict{
 					ID:	msg.Token0Id,
-					Amount: msg.Amount0Desired.Div64(poolUTXOsContainLiquidityCount),
+					Amount: msg.Amount0.Div64(poolUTXOsContainLiquidityCount),
 					Output: uint32(poolUTXOIdx+1),
 				})
 			}
 			runeOutput.Edicts = append(runeOutput.Edicts, runestone.Edict{
 				ID:	msg.Token1Id,
-				Amount: msg.Amount1Desired.Div64(poolUTXOsContainLiquidityCount),
+				Amount: msg.Amount1.Div64(poolUTXOsContainLiquidityCount),
 				Output: uint32(poolUTXOIdx+1),
 			})
 		}
@@ -128,11 +128,11 @@ func CreateRadFiTxInitPool(
 		})
 	}
 	if msg.Token0Id == BitcoinRuneId() {
-		outputs[0].Value += int64(msg.Amount0Desired.Lo % poolUTXOsContainLiquidityCount)
-		runeOutput.Edicts[0].Amount = runeOutput.Edicts[0].Amount.Add64(msg.Amount1Desired.Mod64(poolUTXOsContainLiquidityCount))
+		outputs[0].Value += int64(msg.Amount0.Lo % poolUTXOsContainLiquidityCount)
+		runeOutput.Edicts[0].Amount = runeOutput.Edicts[0].Amount.Add64(msg.Amount1.Mod64(poolUTXOsContainLiquidityCount))
 	} else {
-		runeOutput.Edicts[0].Amount = runeOutput.Edicts[0].Amount.Add64(msg.Amount0Desired.Mod64(poolUTXOsContainLiquidityCount))
-		runeOutput.Edicts[1].Amount = runeOutput.Edicts[1].Amount.Add64(msg.Amount1Desired.Mod64(poolUTXOsContainLiquidityCount))
+		runeOutput.Edicts[0].Amount = runeOutput.Edicts[0].Amount.Add64(msg.Amount0.Mod64(poolUTXOsContainLiquidityCount))
+		runeOutput.Edicts[1].Amount = runeOutput.Edicts[1].Amount.Add64(msg.Amount1.Mod64(poolUTXOsContainLiquidityCount))
 	}
 	runeScript, _ := runeOutput.Encipher()
 
@@ -202,19 +202,19 @@ func CreateRadFiTxProvideLiquidity(
 		bitcoinAmount := inputs[poolUTXOIdx].OutputAmount
 		var inputToken1Amount uint128.Uint128
 		if msg.Token0Id == BitcoinRuneId() {
-				bitcoinAmount += int64(msg.Amount0Desired.Lo / poolUTXOsCount)
+				bitcoinAmount += int64(msg.Amount0.Lo / poolUTXOsCount)
 				inputToken1Amount = inputs[poolUTXOIdx].Runes[0].Amount
 		} else {
 			runeOutput.Edicts = append(runeOutput.Edicts, runestone.Edict{
 				ID:	msg.Token0Id,
-				Amount: inputs[poolUTXOIdx].Runes[0].Amount.Add(msg.Amount0Desired.Div64(poolUTXOsCount)),
+				Amount: inputs[poolUTXOIdx].Runes[0].Amount.Add(msg.Amount0.Div64(poolUTXOsCount)),
 				Output: uint32(poolUTXOIdx),
 			})
 			inputToken1Amount = inputs[poolUTXOIdx].Runes[1].Amount
 		}
 		runeOutput.Edicts = append(runeOutput.Edicts, runestone.Edict{
 			ID:	msg.Token1Id,
-			Amount: inputToken1Amount.Add(msg.Amount1Desired.Div64(poolUTXOsCount)),
+			Amount: inputToken1Amount.Add(msg.Amount1.Div64(poolUTXOsCount)),
 			Output: uint32(poolUTXOIdx),
 		})
 
@@ -225,11 +225,11 @@ func CreateRadFiTxProvideLiquidity(
 		})
 	}
 	if msg.Token0Id == BitcoinRuneId() {
-		outputs[0].Value += int64(msg.Amount0Desired.Lo % poolUTXOsCount)
-		runeOutput.Edicts[0].Amount = runeOutput.Edicts[0].Amount.Add64(msg.Amount1Desired.Mod64(poolUTXOsCount))
+		outputs[0].Value += int64(msg.Amount0.Lo % poolUTXOsCount)
+		runeOutput.Edicts[0].Amount = runeOutput.Edicts[0].Amount.Add64(msg.Amount1.Mod64(poolUTXOsCount))
 	} else {
-		runeOutput.Edicts[0].Amount = runeOutput.Edicts[0].Amount.Add64(msg.Amount0Desired.Mod64(poolUTXOsCount))
-		runeOutput.Edicts[1].Amount = runeOutput.Edicts[1].Amount.Add64(msg.Amount1Desired.Mod64(poolUTXOsCount))
+		runeOutput.Edicts[0].Amount = runeOutput.Edicts[0].Amount.Add64(msg.Amount0.Mod64(poolUTXOsCount))
+		runeOutput.Edicts[1].Amount = runeOutput.Edicts[1].Amount.Add64(msg.Amount1.Mod64(poolUTXOsCount))
 	}
 	runeScript, _ := runeOutput.Encipher()
 
