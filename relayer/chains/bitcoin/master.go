@@ -2,6 +2,7 @@ package bitcoin
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"sync"
+
 	"go.uber.org/zap"
 )
 
@@ -67,7 +69,7 @@ func handleExecute(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleBroadcastNewRequest(w http.ResponseWriter, r *http.Request, p *Provider) {
-	if r.Method != http.MethodGet {
+	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
@@ -102,9 +104,23 @@ func handleBroadcastNewRequest(w http.ResponseWriter, r *http.Request, p *Provid
 	// Send a response
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-	response := map[string]string{"status": "success", "msg": string(msg.RawTransction)}
+	response := map[string]string{"status": "success", "msg": msg.RawTransaction}
 	json.NewEncoder(w).Encode(response)
 
+	// todo: validation raw tx
+	// store the request to db 
+	storeData, err := hex.DecodeString(msg.RawTransaction)
+	if err != nil {
+		p.logger.Error("Error decoding hex string", zap.Error(err))
+		http.Error(w, "Error decoding hex string", http.StatusInternalServerError)
+		return
+	}
+	err = p.StoreNewPendingRequest(storeData)
+	if err != nil {
+		http.Error(w, "Failed to store new request", http.StatusBadRequest)
+		return
+	}
+	
 	// route
 	route := "/add-new-request"
 
