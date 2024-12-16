@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/icon-project/centralized-relay/relayer"
@@ -37,7 +38,7 @@ func startCmd(a *appState) *cobra.Command {
 				return err
 			}
 
-			db, err := lvldb.NewLvlDB(a.dbPath)
+			db, err := lvldb.NewLvlDB(a.dbPath + os.Getenv("NODE_ID"))
 			if err != nil {
 				return err
 			}

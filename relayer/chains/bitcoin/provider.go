@@ -8,11 +8,13 @@ import (
 	"fmt"
 	"math/big"
 	"runtime"
-	"slices"
 	"sort"
 	"strings"
 	"sync"
 	"time"
+	"strconv"
+	
+	"os"
 
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -23,7 +25,6 @@ import (
 
 	"path/filepath"
 
-	"github.com/icon-project/centralized-relay/relayer/chains/wasm/types"
 	"github.com/icon-project/centralized-relay/relayer/events"
 	"github.com/icon-project/centralized-relay/relayer/kms"
 	"github.com/icon-project/centralized-relay/relayer/provider"
@@ -31,8 +32,14 @@ import (
 	"github.com/icon-project/centralized-relay/utils/multisig"
 	"github.com/icon-project/goloop/common/codec"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/icon-project/centralized-relay/relayer/chains/bitcoin/abi"
 	"github.com/syndtr/goleveldb/leveldb"
 	"go.uber.org/zap"
+	"github.com/icon-project/centralized-relay/relayer/chains/bitcoin/helper"
+	ethabi	"github.com/ethereum/go-ethereum/accounts/abi"
+	ethereum "github.com/ethereum/go-ethereum"
 )
 
 var (
@@ -46,6 +53,11 @@ var (
 	BtcDB              = "btc.db"
 	WitnessSize        = 380
 	NumberRequiredSigs = 3
+
+	// Define DB key
+	LastPendingSequenceNumber = "LastPendingSequenceNumber"
+	DefaultCreateTimeout   = time.Second * 10
+	
 )
 
 var chainIdToName = map[uint8]string{
@@ -53,6 +65,9 @@ var chainIdToName = map[uint8]string{
 	2: "0x1.btc",
 	3: "0x2.icon",
 	4: "0x2.btc",
+	5: "0x2105.base",
+	6: "0x14a34.base",
+	7: "0xaa37dc.op", // op testnet
 }
 
 var (
@@ -90,6 +105,10 @@ type slaveRequestUpdateRelayMessageStatus struct {
 	TxHash string `json:"txHash"`
 }
 
+type slaveNewRequest struct {
+	RawTransction []byte `json:"rawTransction"` // bitcoin 
+}
+
 type slaveResponse struct {
 	order int
 	sigs  [][]byte
@@ -120,11 +139,15 @@ type Provider struct {
 	cfg                 *Config
 	client              IClient
 	LastSavedHeightFunc func() uint64
-	LastSerialNumFunc   func() *big.Int
 	multisigAddrScript  []byte
 	httpServer          chan struct{}
 	db                  *leveldb.DB
 	chainParam          *chaincfg.Params
+	eth       			*ethclient.Client
+	bitcoinState        *abi.Bitcoinstate
+	runeFactory         *abi.Runefactory
+	connections 		[]string
+	destChainId         int
 }
 
 type Config struct {
@@ -149,10 +172,17 @@ type Config struct {
 	RelayerPrivKey        string   `json:"relayerPrivKey" yaml:"relayerPrivKey"`
 	RecoveryLockTime      int      `json:"recoveryLockTime" yaml:"recoveryLockTime"`
 	Connections           []string `json:"connections" yaml:"connections"`
+	EthRPC           	  string   `json:"eth-prc" yaml:"eth-rpc"`
+	RuneFactory           string   `json:"rune-factory" yaml:"rune-factory"`
+	BitcoinState          string   `json:"bitcoin-state" yaml:"bitcoin-state"`
+	SequenceBatchSize     int      `json:"sequence-batch-size" yaml:"sequence-batch-size"`
+	DestChainId 		  int      `json:"dest-chain-id" yaml:"dest-chain-id"`
 }
 
 // NewProvider returns new Icon provider
 func (c *Config) NewProvider(ctx context.Context, log *zap.Logger, homepath string, debug bool, chainName string) (provider.ChainProvider, error) {
+	log.Info("starting bitcoin provider")
+
 	if err := c.Validate(); err != nil {
 		return nil, err
 	}
@@ -161,13 +191,14 @@ func (c *Config) NewProvider(ctx context.Context, log *zap.Logger, homepath stri
 	}
 
 	// Create the database file path
-	dbPath := filepath.Join(homepath+"/data", BtcDB)
+	dbPath := filepath.Join(homepath+ "/data" + os.Getenv("NODE_ID"), BtcDB)
 
 	// Open the database, creating it if it doesn't exist
 	db, err := leveldb.OpenFile(dbPath, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open or create database: %v", err)
 	}
+
 
 	client, err := newClient(ctx, c.RPCUrl, c.User, c.Password, true, false, log)
 	if err != nil {
@@ -179,9 +210,27 @@ func (c *Config) NewProvider(ctx context.Context, log *zap.Logger, homepath stri
 		chainParam = &chaincfg.MainNetParams
 	}
 	c.HomeDir = homepath
-	c.HomeDir = homepath
 
 	msPubkey, err := client.DecodeAddress(c.Address)
+	if err != nil {
+		return nil, err
+	}
+
+	createCtx, cancel := context.WithTimeout(ctx, DefaultCreateTimeout)
+	defer cancel()
+	rpc, err := ethclient.DialContext(createCtx, c.EthRPC)
+	if err != nil {
+		return nil, err
+	}
+
+	// init rune contract instance
+	runeFactory, err := abi.NewRunefactory(common.HexToAddress(c.RuneFactory), rpc)
+	if err != nil {
+		return nil, err
+	}
+
+	// init bitcoinState contract instance
+	bitcoinState, err := abi.NewBitcoinstate(common.HexToAddress(c.BitcoinState), rpc)
 	if err != nil {
 		return nil, err
 	}
@@ -190,16 +239,18 @@ func (c *Config) NewProvider(ctx context.Context, log *zap.Logger, homepath stri
 		logger:             log.With(zap.Stringp("nid", &c.NID), zap.Stringp("name", &c.ChainName)),
 		cfg:                c,
 		client:             client,
-		LastSerialNumFunc:  func() *big.Int { return big.NewInt(0) },
 		httpServer:         make(chan struct{}),
 		db:                 db, // Add the database to the Provider
 		chainParam:         chainParam,
 		multisigAddrScript: msPubkey,
+		eth: rpc,
+		runeFactory: runeFactory,
+		bitcoinState: bitcoinState,
 	}
 	// Run an http server to help btc interact each others
 	go func() {
 		if c.Mode == MasterMode {
-			startMaster(c)
+			startMaster(c, p)
 		} else {
 			startSlave(c, p)
 		}
@@ -278,42 +329,168 @@ func (p *Provider) Config() provider.Config {
 }
 
 func (p *Provider) Listener(ctx context.Context, lastProcessedTx relayTypes.LastProcessedTx, blockInfoChan chan *relayTypes.BlockInfo) error {
-	// run http server to help btc interact each others
-	latestHeight, err := p.QueryLatestHeight(ctx)
+	p.logger.Info("starting bitcoin Listener")
+
+	// get last sqn from the contract
+	lastSqnNumberBig, err := p.bitcoinState.RequestCount(nil)
 	if err != nil {
-		p.logger.Error("failed to get latest block height", zap.Error(err))
+		p.logger.Error(err.Error())
+		return err
+	} 
+	lastSqnNumber := lastSqnNumberBig.Uint64()
+	// init sequence number if needed
+	lastSeqKey := AddPrefixChainName(p.NID(), []byte(LastPendingSequenceNumber))
+	lastPendingSqnBytes, err := p.db.Get(lastSeqKey, nil)
+	//
+	var lastPendingSqn uint64
+	if err == leveldb.ErrNotFound {
+		lastPendingSqn = lastSqnNumber	
+		p.db.Put(AddPrefixChainName(p.NID(), []byte(LastPendingSequenceNumber)), []byte(fmt.Sprintf("%d", lastPendingSqn)), nil)	
+	} else if err != nil && err != leveldb.ErrNotFound {
+		p.logger.Error(err.Error())
+		return err
+	} else {
+		lastPendingSqn, err = strconv.ParseUint(string(lastPendingSqnBytes), 10, 64)
+		if err != nil {
+			p.logger.Error(err.Error())
+			return err
+		} 
+
+		// compare sqn
+		if lastPendingSqn < lastSqnNumber {
+			lastPendingSqn = lastSqnNumber
+			p.db.Put(AddPrefixChainName(p.NID(), []byte(LastPendingSequenceNumber)), []byte(fmt.Sprintf("%d", lastPendingSqn)), nil)
+		}
+	}
+	
+	// loop thru 
+	var (
+		subscribeStart = time.NewTicker(time.Second * 1)
+		// errChan        = make(chan error)
+		checkSqnUpdatedContract = time.NewTicker(time.Second * 1)
+	)
+
+	// bitcoin state
+	bitcoinStateAddr := common.HexToAddress(p.cfg.BitcoinState)
+	bitcoinStateAbi, err := ethabi.JSON(strings.NewReader(abi.BitcoinstateABI))
+	if err != nil {
+		p.logger.Error(fmt.Sprintln("fail to get bitcoin state abi"), zap.Error(err))
 		return err
 	}
-	lastSavedHeight := lastProcessedTx.Height
-	startHeight, err := p.getStartHeight(latestHeight, lastSavedHeight)
-	if err != nil {
-		p.logger.Error("failed to determine start height", zap.Error(err))
-		return err
-	}
-
-	pollHeightTicker := time.NewTicker(time.Second * 60)
-	pollHeightTicker.Stop()
-
-	p.logger.Info("Start from height", zap.Uint64("height", startHeight), zap.Uint64("finality block", p.FinalityBlock(ctx)))
 
 	for {
 		select {
-		case <-pollHeightTicker.C:
-			pollHeightTicker.Stop()
-			latestHeight, err = p.QueryLatestHeight(ctx)
+		case <-ctx.Done():
+			p.logger.Debug("radfi listener: done")
+			return ctx.Err()
+		case <-subscribeStart.C:
+			lastPendingSqnBytes, err = p.db.Get(lastSeqKey, nil)
 			if err != nil {
-				p.logger.Error("failed to get latest block height", zap.Error(err))
-				pollHeightTicker.Reset(time.Second * 60)
-			} else if latestHeight <= startHeight {
-				p.logger.Warn("latest block height is less than start height, sleep 3 minutes to wait for new block", zap.Uint64("latest-height", latestHeight), zap.Uint64("start-height", startHeight))
-				pollHeightTicker.Reset(time.Minute * 3)
+				p.logger.Error(fmt.Sprintln("fail to get bitcoin sequnce number"), zap.Error(err))
+				continue
 			}
-		default:
-			if startHeight < latestHeight {
-				p.logger.Debug("Query started", zap.Uint64("from-height", startHeight), zap.Uint64("to-height", latestHeight))
-				startHeight = p.runBlockQuery(ctx, blockInfoChan, startHeight, latestHeight)
-				pollHeightTicker.Reset(time.Second * 60)
+
+			lastPendingSqn, err = strconv.ParseUint(string(lastPendingSqnBytes), 10, 64)
+			if err != nil {
+				p.logger.Error(err.Error())
+				continue
+			} 
+
+			p.logger.Info(fmt.Sprintf("lastPendingSqn 2 : %v \n", lastPendingSqn))
+			p.logger.Info(fmt.Sprintf("lastSqnNumber 2 : %v \n", lastSqnNumber))
+
+			if lastPendingSqn > lastSqnNumber {
+				subscribeStart.Stop()
+
+				for {
+					// 
+					lastSqnNumber++
+					
+					// get data from level db
+					lastSqnNumberBytes := []byte(fmt.Sprintf("%d", lastSqnNumber))
+					requestData, err := p.db.Get(AddPrefixChainName(p.NID(), lastSqnNumberBytes), nil)
+					if err != nil {
+						p.logger.Error(fmt.Sprintf("failed to get data at sequence number %v", lastSqnNumber), zap.Error(err))
+						break
+					}
+
+					// todo: handle batching
+					// todo: validation 
+
+					// todo: parse it from tx
+					from := "bc1pn55rnm2a883y2v0znk9ek5mmt7agtp8pue8ugacdkjgc56dhhetql5dpek"
+
+					// buidl xcall message
+					calldata, uniswapCalldata, err := ToXCallMessage(requestData, from, p.cfg.BitcoinState, uint(lastSqnNumber), p.connections, from, p.runeFactory)
+					if err != nil {
+						p.logger.Error(fmt.Sprintln("failed to build xcall message ", lastSqnNumber), zap.Error(err))
+						break
+					}
+
+					simulateCalldata, err := bitcoinStateAbi.Pack("simulateRequest", big.NewInt(0), from, uniswapCalldata)
+					if err != nil {
+						p.logger.Error(fmt.Sprintln("pack simuate calldata"), zap.Error(err))
+						break
+					}
+
+					// run simulate before deliver it to evm channel
+					gasLimit, err := helper.EstimateGas(
+						ethereum.CallMsg{From: common.HexToAddress("0x000000000000000000000000000000000000dEaD"), To: &bitcoinStateAddr, Data: simulateCalldata},
+						p.cfg.EthRPC,
+					)
+
+					if err != nil || gasLimit == 0 {
+						p.logger.Error(fmt.Sprintln("simulate fail because of err"), zap.Error(err))
+						lastSqnNumber--
+						break
+					}
+
+					relayMessage := &relayTypes.Message{
+						Dst:           chainIdToName[uint8(p.destChainId)],
+						Src:           p.NID(),
+						Sn:            big.NewInt(int64(lastSqnNumber)),
+						Data:          calldata,
+						MessageHeight: lastSqnNumber,
+						EventType:     events.EmitMessage,
+					}
+
+					p.logger.Info("Detected radfi request",
+						zap.Uint64("last sequence number", relayMessage.MessageHeight),
+						zap.String("target_network", relayMessage.Dst),
+						zap.Uint64("sn", relayMessage.Sn.Uint64()),
+						zap.String("event_type", relayMessage.EventType),
+					)
+
+					// handle batching later
+					blockInfoChan <- &relayTypes.BlockInfo{
+						Height:   lastSqnNumber,
+						Messages: []*relayTypes.Message{relayMessage},
+					}
+
+					// check the sqn number on contract is updated
+					tempSqn := 0
+					for {
+						<-checkSqnUpdatedContract.C
+						// get last sqn from the contract
+						lastSqnNumberBig, err = p.bitcoinState.RequestCount(nil)
+						if err != nil {
+							p.logger.Error(fmt.Sprintln("retry: get sequence error"), zap.Error(err))
+						} else {
+							tempSqn = int(lastSqnNumberBig.Int64())
+						}
+						if lastSqnNumber == uint64(tempSqn) {
+							checkSqnUpdatedContract.Stop()
+							break
+						}
+					}
+
+					if lastPendingSqn == lastSqnNumber {
+						break
+					}
+				}
 			}
+
+			subscribeStart.Reset(time.Second * 1)
 		}
 	}
 }
@@ -481,12 +658,12 @@ func (p *Provider) CreateBitcoinMultisigTx(
 			outputs = []*wire.TxOut{
 				// rune send to receiver
 				{
-					Value:    multisig.RUNE_DUST_UTXO_AMOUNT,
+					Value:    multisig.DUST_UTXO_AMOUNT,
 					PkScript: receiverPkScript,
 				},
 				// rune change output
 				{
-					Value:    multisig.RUNE_DUST_UTXO_AMOUNT,
+					Value:    multisig.DUST_UTXO_AMOUNT,
 					PkScript: msWallet.PKScript,
 				},
 				// rune OP_RETURN
@@ -496,7 +673,7 @@ func (p *Provider) CreateBitcoinMultisigTx(
 				},
 			}
 
-			bitcoinAmountRequired = multisig.RUNE_DUST_UTXO_AMOUNT * 2
+			bitcoinAmountRequired = multisig.DUST_UTXO_AMOUNT * 2
 		}
 	} else if decodedData.Action == MethodRefundTo {
 		if decodedData.TokenAddress != BTCToken {
@@ -840,6 +1017,7 @@ func (p *Provider) storedDataToMessageDecoded(sn string) (*MessageDecoded, []byt
 	return decodedData, decodeDataBuffer, nil
 }
 
+// todo: back to this fucntion later
 func (p *Provider) buildTxMessage(message *relayTypes.Message, feeRate int64, msWallet *multisig.MultisigWallet, reqInputs []slaveRequestInput) ([]*multisig.Input, *wire.MsgTx, error) {
 	outputs := []*wire.TxOut{}
 	decodedData := &MessageDecoded{}
@@ -857,39 +1035,39 @@ func (p *Provider) buildTxMessage(message *relayTypes.Message, feeRate int64, ms
 
 			// message code 0 is need to rollback
 			// Process RollbackMessage
-			p.logger.Info("Detected rollback message", zap.String("sn", messageDecoded.Sn.String()))
-			messageDecoded, decodeDataBuffer, err := p.storedDataToMessageDecoded(messageDecoded.Sn.String())
-			if err != nil {
-				p.logger.Error("failed to get decode data: %v", zap.Error(err))
-				return nil, nil, err
-			}
-			scripts, _ := multisig.EncodePayloadToScripts(decodeDataBuffer)
-			outputs = multisig.BuildBridgeScriptsOutputs(outputs, scripts)
-			decodedData = messageDecoded
+			// p.logger.Info("Detected rollback message", zap.String("sn", messageDecoded.Sn.String()))
+			// messageDecoded, decodeDataBuffer, err := p.storedDataToMessageDecoded(messageDecoded.Sn.String())
+			// if err != nil {
+			// 	p.logger.Error("failed to get decode data: %v", zap.Error(err))
+			// 	return nil, nil, err
+			// }
+			// scripts, _ := multisig.EncodePayloadToScripts(decodeDataBuffer)
+			// outputs = multisig.BuildBridgeScriptsOutputs(outputs, scripts)
+			// decodedData = messageDecoded
 		} else {
 			// Perform WithdrawData
-			data, opBufferData, err := p.decodeWithdrawToMessage(message.Data)
-			decodedData = data
-			if err != nil {
-				p.logger.Error("failed to decode message: %v", zap.Error(err))
-				return nil, nil, err
-			}
-			scripts, _ := multisig.EncodePayloadToScripts(opBufferData)
-			outputs = multisig.BuildBridgeScriptsOutputs(outputs, scripts)
+			// data, opBufferData, err := p.decodeWithdrawToMessage(message.Data)
+			// decodedData = data
+			// if err != nil {
+			// 	p.logger.Error("failed to decode message: %v", zap.Error(err))
+			// 	return nil, nil, err
+			// }
+			// scripts, _ := multisig.EncodePayloadToScripts(opBufferData)
+			// outputs = multisig.BuildBridgeScriptsOutputs(outputs, scripts)
 		}
 	case events.RollbackMessage:
-		p.logger.Info("Detected refund message", zap.String("sn", message.Sn.String()))
-		messageDecoded, decodeDataBuffer, err := p.storedDataToMessageDecoded(message.Sn.String())
-		if err != nil {
-			p.logger.Error("failed to get decode data: %v", zap.Error(err))
-			return nil, nil, err
-		}
-		if messageDecoded.TokenAddress != BTCToken {
-			return nil, nil, fmt.Errorf("only support refund for BTC")
-		}
-		decodedData = messageDecoded
-		scripts, _ := multisig.EncodePayloadToScripts(decodeDataBuffer)
-		outputs = multisig.BuildBridgeScriptsOutputs(outputs, scripts)
+		// p.logger.Info("Detected refund message", zap.String("sn", message.Sn.String()))
+		// messageDecoded, decodeDataBuffer, err := p.storedDataToMessageDecoded(message.Sn.String())
+		// if err != nil {
+		// 	p.logger.Error("failed to get decode data: %v", zap.Error(err))
+		// 	return nil, nil, err
+		// }
+		// if messageDecoded.TokenAddress != BTCToken {
+		// 	return nil, nil, fmt.Errorf("only support refund for BTC")
+		// }
+		// decodedData = messageDecoded
+		// scripts, _ := multisig.EncodePayloadToScripts(decodeDataBuffer)
+		// outputs = multisig.BuildBridgeScriptsOutputs(outputs, scripts)
 
 	default:
 		return nil, nil, fmt.Errorf("unknown event type: %s", message.EventType)
@@ -979,16 +1157,6 @@ func (p *Provider) waitForTxResult(ctx context.Context, mk *relayTypes.MessageKe
 
 }
 
-func (p *Provider) pollTxResultStream(ctx context.Context, txHash string, maxWaitInterval time.Duration) <-chan *types.TxResult {
-	txResChan := make(chan *types.TxResult)
-	return txResChan
-}
-
-func (p *Provider) subscribeTxResultStream(ctx context.Context, txHash string, maxWaitInterval time.Duration) <-chan *types.TxResult {
-	txResChan := make(chan *types.TxResult)
-	return txResChan
-}
-
 func (p *Provider) MessageReceived(ctx context.Context, key *relayTypes.MessageKey) (bool, error) {
 	return false, nil
 }
@@ -1006,15 +1174,17 @@ func (p *Provider) ShouldSendMessage(ctx context.Context, message *relayTypes.Me
 }
 
 func (p *Provider) GenerateMessages(ctx context.Context, fromHeight, toHeight uint64) ([]*relayTypes.Message, error) {
-	blocks, err := p.fetchBlockMessages(ctx, &HeightRange{fromHeight, toHeight})
-	if err != nil {
-		return nil, err
-	}
-	var messages []*relayTypes.Message
-	for _, block := range blocks {
-		messages = append(messages, block.Messages...)
-	}
-	return messages, nil
+	// blocks, err := p.fetchBlockMessages(ctx, &HeightRange{fromHeight, toHeight})
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// var messages []*relayTypes.Message
+	// for _, block := range blocks {
+	// 	messages = append(messages, block.Messages...)
+	// }
+
+	// todo: update generate mess here
+	return nil, nil
 }
 
 func (p *Provider) FinalityBlock(ctx context.Context) uint64 {
@@ -1105,33 +1275,6 @@ func (p *Provider) getHeightStream(done <-chan bool, fromHeight, toHeight uint64
 	return heightChan
 }
 
-func (p *Provider) fetchBlockMessages(ctx context.Context, heightInfo *HeightRange) ([]*relayTypes.BlockInfo, error) {
-
-	var (
-		multisigAddress = p.cfg.Address
-		preFixOP        = p.cfg.OpCode
-	)
-
-	multiSigScript, err := p.client.DecodeAddress(multisigAddress)
-	if err != nil {
-		return nil, err
-	}
-	p.logger.Info("Fetching Block Messages", zap.String("StartHeight", fmt.Sprintf("%d", heightInfo.Start)), zap.String("EndHeight", fmt.Sprintf("%d", heightInfo.End)))
-	searchParam := TxSearchParam{
-		StartHeight:    heightInfo.Start,
-		EndHeight:      heightInfo.End,
-		BitcoinScript:  multiSigScript,
-		OPReturnPrefix: preFixOP,
-	}
-
-	messages, err := p.client.TxSearch(context.Background(), searchParam)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return p.getMessagesFromTxList(messages)
-}
 func (p *Provider) extractOutputReceiver(tx *wire.MsgTx) []string {
 	receiverAddresses := []string{}
 	for _, out := range tx.TxOut {
@@ -1140,243 +1283,11 @@ func (p *Provider) extractOutputReceiver(tx *wire.MsgTx) []string {
 	return receiverAddresses
 }
 
-func (p *Provider) parseMessageFromTx(tx *TxSearchRes) (*relayTypes.Message, error) {
-	receiverAddresses := []string{}
-	runeId := ""
-	runeAmount := big.NewInt(0)
-	isMatchAmount := true
-	// handle for bitcoin bridge
-	// decode message from OP_RETURN
-	p.logger.Info("parseMessageFromTx",
-		zap.Uint64("height", tx.Height))
-
-	bridgeMessage := tx.BridgeMessage
-	messageInfo := bridgeMessage.Message
-
-	isValidConnector := false
-	for _, connector := range bridgeMessage.Connectors {
-		if slices.Contains(p.cfg.Connections, connector) {
-			isValidConnector = true
-			break
-		}
-	}
-
-	if messageInfo.Action == MethodDeposit && isValidConnector {
-		tokenId := messageInfo.TokenAddress
-		destContract := messageInfo.To
-		p.logger.Info("tokenId", zap.String("tokenId", tokenId))
-		p.logger.Info("destContract", zap.String("destContract", destContract))
-
-		receiverAddresses = p.extractOutputReceiver(tx.Tx)
-		_runeId, _runeAmount, _isMatchAmount, err := p.verifyBridgeTx(tx, messageInfo)
-		if err != nil {
-			return nil, err
-		}
-		runeId = _runeId
-		runeAmount = _runeAmount
-		isMatchAmount = _isMatchAmount
-	}
-
-	sn := new(big.Int).SetUint64(tx.Height<<32 + tx.TxIndex)
-
-	from := p.cfg.NID + "/" + p.cfg.Address
-
-	xCallMessage := XCallMessage{
-		Action:       messageInfo.Action,
-		TokenAddress: messageInfo.TokenAddress,
-		From:         messageInfo.From,
-		To:           messageInfo.To,
-		Amount:       messageInfo.Amount,
-		Data:         messageInfo.Data,
-	}
-	decodeMessage, _ := codec.RLP.MarshalToBytes(xCallMessage)
-
-	data, _ := XcallFormat(decodeMessage, from, bridgeMessage.Receiver, uint(sn.Uint64()), bridgeMessage.Connectors, uint8(messageInfo.MessageType))
-	relayMessage := &relayTypes.Message{
-		Dst:           chainIdToName[bridgeMessage.ChainId],
-		Src:           p.NID(),
-		Sn:            sn,
-		Data:          data,
-		MessageHeight: tx.Height,
-		EventType:     events.EmitMessage,
-	}
-
-	actionMethod := MethodRollback
-
-	// validate message amount failed -> refund to user
-	if !isMatchAmount {
-		actionMethod = MethodRefundTo
-		// only set rollbackMessage because eventType variable can not be changed
-		relayMessage.EventType = events.RollbackMessage
-		// set dst to the same chain as source for relayer provider detection
-		relayMessage.Dst = relayMessage.Src
-	}
-
-	var senderAddress string
-	// Find sender address to store in db
-	for _, address := range receiverAddresses {
-		if address != p.cfg.Address {
-			senderAddress = address
-			break
-		}
-	}
-
-	byteAmount := big.NewInt(0).SetBytes(messageInfo.Amount)
-	// stored message for rollback and refund case
-	storedData := StoredMessageData{
-		OriginalMessage:  relayMessage,
-		TxHash:           tx.Tx.TxHash().String(),
-		OutputIndex:      uint32(tx.TxIndex),
-		Amount:           byteAmount.Uint64(),
-		RecipientAddress: p.cfg.Address,
-		SenderAddress:    senderAddress,
-		RuneId:           runeId,
-		RuneAmount:       runeAmount.Uint64(),
-		ActionMethod:     actionMethod,
-		TokenAddress:     messageInfo.TokenAddress,
-	}
-
-	p.logger.Info("Stored message for rollback case", zap.Any("storedData", storedData))
-
-	data, err := json.Marshal(storedData)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal stored rollback message data: %v", err)
-	}
-	key := "RB" + sn.String()
-	p.logger.Info("stored rollback message key", zap.String("key", key))
-	err = p.db.Put([]byte(key), data, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to store rollback message data: %v", err)
-	}
-	return relayMessage, nil
-}
-
-func (p *Provider) verifyBridgeTx(tx *TxSearchRes, messageInfo *multisig.XCallMessage) (string, *big.Int, bool, error) {
-	verified := false
-	isMatchAmount := false
-	runeId := ""
-	runeAmount := big.NewInt(0)
-	amount := big.NewInt(0)
-	amount.SetBytes(messageInfo.Amount)
-
-	for i, out := range tx.Tx.TxOut {
-		if !bytes.Equal(out.PkScript, p.multisigAddrScript) {
-			continue
-		}
-
-		if messageInfo.TokenAddress == BTCToken {
-			verified = true
-			btcAmount := big.NewInt(out.Value)
-			if amount.Cmp(btcAmount) == 0 {
-				isMatchAmount = true
-				break
-			} else {
-				messageInfo.Amount = btcAmount.Bytes()
-			}
-		} else {
-			runes, err := p.GetUTXORuneBalance(p.cfg.UniSatURL, tx.Tx.TxHash().String(), i)
-			if err != nil {
-				return "", nil, false, err
-			}
-
-			if len(runes.Data) == 0 {
-				continue
-			}
-
-			for _, runeOut := range runes.Data {
-				runeTokenBal, ok := big.NewInt(0).SetString(runeOut.Amount, 10)
-				if !ok {
-					return "", nil, false, fmt.Errorf("rune amount out invalid")
-				}
-
-				if amount.Cmp(runeTokenBal) == 0 && runeOut.RuneId == messageInfo.TokenAddress {
-					runeId = runeOut.RuneId
-					runeAmount = runeTokenBal
-					// runes tx is not verified if amount is not match
-					verified = true
-					isMatchAmount = true
-					break
-				}
-			}
-		}
-	}
-	if !verified {
-		return "", nil, false, fmt.Errorf("failed to verify transaction %v", tx.Tx.TxHash().String())
-	}
-	return runeId, runeAmount, isMatchAmount, nil
-}
-
-func (p *Provider) getMessagesFromTxList(resultTxList []*TxSearchRes) ([]*relayTypes.BlockInfo, error) {
-	var messages []*relayTypes.BlockInfo
-	for _, resultTx := range resultTxList {
-		msg, err := p.parseMessageFromTx(resultTx)
-		if err != nil {
-			p.logger.Error("Failed to parse message from tx", zap.Error(err))
-			continue
-		}
-		if msg == nil {
-			continue
-		}
-
-		msg.MessageHeight = resultTx.Height
-		p.logger.Info("Detected eventlog",
-			zap.Uint64("height", msg.MessageHeight),
-			zap.String("target_network", msg.Dst),
-			zap.Uint64("sn", msg.Sn.Uint64()),
-			zap.String("event_type", msg.EventType),
-		)
-		messages = append(messages, &relayTypes.BlockInfo{
-			Height:   resultTx.Height,
-			Messages: []*relayTypes.Message{msg},
-		})
-	}
-	return messages, nil
-}
-
 func (p *Provider) getNumOfPipelines(diff int) int {
 	if diff <= runtime.NumCPU() {
 		return diff
 	}
 	return runtime.NumCPU() / 2
-}
-
-func (p *Provider) runBlockQuery(ctx context.Context, blockInfoChan chan *relayTypes.BlockInfo, fromHeight, toHeight uint64) uint64 {
-	done := make(chan bool)
-	defer close(done)
-
-	heightStream := p.getHeightStream(done, fromHeight, toHeight)
-
-	diff := int(toHeight-fromHeight) / 2
-	remain := (toHeight - fromHeight) % 2
-	if remain == 1 {
-		diff += 1
-	}
-
-	numOfPipelines := p.getNumOfPipelines(diff)
-	wg := &sync.WaitGroup{}
-	for i := 0; i < numOfPipelines; i++ {
-		wg.Add(1)
-		go func(wg *sync.WaitGroup, heightStream <-chan *HeightRange) {
-			defer wg.Done()
-			for heightRange := range heightStream {
-				blockInfo, err := p.fetchBlockMessages(ctx, heightRange)
-				if err != nil {
-					p.logger.Error("failed to fetch block messages", zap.Error(err))
-					continue
-				}
-				var messages []*relayTypes.Message
-				for _, block := range blockInfo {
-					messages = append(messages, block.Messages...)
-				}
-				blockInfoChan <- &relayTypes.BlockInfo{
-					Height:   heightRange.End,
-					Messages: messages,
-				}
-			}
-		}(wg, heightStream)
-	}
-	wg.Wait()
-	return toHeight
 }
 
 func (p *Provider) getAddressesFromTx(txOut *wire.TxOut, chainParams *chaincfg.Params) []string {
@@ -1398,9 +1309,9 @@ func (p *Provider) getAddressesFromTx(txOut *wire.TxOut, chainParams *chaincfg.P
 
 // SubscribeMessageEvents subscribes to the message events
 // Expermental: Allows to subscribe to the message events realtime without fully syncing the chain
-func (p *Provider) SubscribeMessageEvents(ctx context.Context, blockInfoChan chan *relayTypes.BlockInfo, opts *types.SubscribeOpts, resetFunc func()) error {
-	return nil
-}
+// func (p *Provider) SubscribeMessageEvents(ctx context.Context, blockInfoChan chan *relayTypes.BlockInfo, opts *types.SubscribeOpts, resetFunc func()) error {
+// 	return nil
+// }
 
 // SetLastSavedHeightFunc sets the function to save the last saved height
 func (p *Provider) SetLastSavedHeightFunc(f func() uint64) {
@@ -1410,14 +1321,6 @@ func (p *Provider) SetLastSavedHeightFunc(f func() uint64) {
 // GetLastSavedHeight returns the last saved height
 func (p *Provider) GetLastSavedHeight() uint64 {
 	return p.LastSavedHeightFunc()
-}
-
-func (p *Provider) SetSerialNumberFunc(f func() *big.Int) {
-	p.LastSerialNumFunc = f
-}
-
-func (p *Provider) GetSerialNumber() *big.Int {
-	return p.LastSerialNumFunc()
 }
 
 func (p *Provider) FetchTxMessages(ctx context.Context, txHash string) ([]*relayTypes.Message, error) {

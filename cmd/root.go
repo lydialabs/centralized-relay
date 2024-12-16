@@ -35,7 +35,18 @@ var (
 		return filepath.Join(home, ".centralized-relay")
 	}()
 	defaultDBName = "data"
-	defaultConfig = "config.yaml"
+
+	defaultConfig = func() string {
+		node_id := os.Getenv("NODE_ID")
+
+		if node_id == "1" {
+			return "config1.yaml"
+		} else if node_id == "2" {
+			return "config2.yaml"
+		}
+
+		return "config.yaml"
+	}()
 )
 
 // Execute adds all child commands to the root command and sets flags appropriately.

@@ -17,7 +17,17 @@ import (
 )
 
 var (
-	SocketPath = getEnvOrFallback("SOCKET_PATH", path.Join(os.TempDir(), "relayer.sock"))
+	SocketPath = func () string {
+		node_id := os.Getenv("NODE_ID")
+		relayerSock := "relayer.sock"
+		if node_id == "1" {
+			relayerSock = "relayer1.sock"
+		} else if node_id == "2" {
+			relayerSock = "relayer2.sock"
+		}
+
+		return getEnvOrFallback("SOCKET_PATH", path.Join(os.TempDir(), relayerSock))
+	}()
 	network    = "unix"
 )
 

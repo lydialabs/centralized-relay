@@ -1,8 +1,10 @@
 package bitcoin
 
 import (
-	"github.com/btcsuite/btcd/wire"
-	"github.com/icon-project/centralized-relay/utils/multisig"
+	// "github.com/btcsuite/btcd/wire"
+	// "github.com/icon-project/centralized-relay/utils/multisig"
+	// relayerTypes "github.com/icon-project/centralized-relay/relayer/types"
+	// abiTypes "github.com/cometbft/cometbft/abci/types"
 )
 
 type MessageType int
@@ -27,12 +29,12 @@ type TxSearchParam struct {
 	OPReturnPrefix         int
 }
 
-type TxSearchRes struct {
-	Tx            *wire.MsgTx
-	Height        uint64
-	TxIndex       uint64
-	BridgeMessage *multisig.BridgeDecodedMsg
-}
+// type TxSearchRes struct {
+// 	Tx            *wire.MsgTx
+// 	Height        uint64
+// 	TxIndex       uint64
+// 	BridgeMessage *multisig.BridgeDecodedMsg
+// }
 
 // HightRange is a struct to represent a range of heights
 type HeightRange struct {
@@ -125,3 +127,18 @@ type QuicknodeRequest struct {
 	Method string        `json:"method"`
 	Params []interface{} `json:"params"`
 }
+
+type TxResultResponse struct {
+	Height int64 `json:"height"`
+	Result struct {
+		Code      int              `json:"code"`
+		Codespace string           `json:"codespace"`
+		Data      []byte           `json:"data"`
+		Log       string           `json:"log"`
+	} `json:"result"`
+}
+
+// type TxResult struct {
+// 	TxResult *relayerTypes.TxResponse
+// 	Error    error
+// }

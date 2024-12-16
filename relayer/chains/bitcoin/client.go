@@ -13,7 +13,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/txscript"
-	"github.com/icon-project/centralized-relay/utils/multisig"
+	// "github.com/icon-project/centralized-relay/utils/multisig"
 	"go.uber.org/zap"
 
 	// "github.com/btcsuite/btcd/wire"
@@ -39,7 +39,6 @@ type IClient interface {
 	Unsubscribe(ctx context.Context, _, query string) error
 	GetFee(ctx context.Context) (uint64, error)
 	DecodeAddress(btcAddr string) ([]byte, error)
-	TxSearch(ctx context.Context, param TxSearchParam) ([]*TxSearchRes, error)
 	SendRawTransaction(url string, rawMsg []json.RawMessage) (string, error)
 }
 
@@ -117,36 +116,6 @@ func (c *Client) Unsubscribe(ctx context.Context, _, query string) error {
 // test data
 func (c *Client) GetFee(ctx context.Context) (uint64, error) {
 	return 10, nil
-}
-
-func (c *Client) TxSearch(ctx context.Context, param TxSearchParam) ([]*TxSearchRes, error) {
-	//
-	res := []*TxSearchRes{}
-
-	for i := param.StartHeight; i <= param.EndHeight; i++ {
-
-		blockHash, err := c.client.GetBlockHash(int64(i))
-		if err != nil {
-			c.log.Error("Failed to get block hash", zap.Error(err))
-			return nil, err
-		}
-
-		block, err := c.client.GetBlock(blockHash)
-		if err != nil {
-			c.log.Error("Failed to get block", zap.Error(err))
-			return nil, err
-		}
-		// loop thru transactions
-		for j, tx := range block.Transactions {
-			bridgeMessage, err := multisig.ReadBridgeMessage(tx)
-			if err != nil {
-				continue
-			}
-			res = append(res, &TxSearchRes{Height: i, Tx: tx, TxIndex: uint64(j), BridgeMessage: bridgeMessage})
-		}
-	}
-
-	return res, nil
 }
 
 func (c *Client) DecodeAddress(btcAddr string) ([]byte, error) {

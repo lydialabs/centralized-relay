@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"fmt"
 
 	"go.uber.org/zap"
 )
@@ -15,6 +16,9 @@ func startSlave(c *Config, p *Provider) {
 	})
 	http.HandleFunc("/update-relayer-message-status", func(w http.ResponseWriter, r *http.Request) {
 		handleUpdateRelayerMessageStatus(w, r, p)
+	})
+	http.HandleFunc("/add-new-request", func(w http.ResponseWriter, r *http.Request) {
+		handleAddNewRequest(w, r, p)
 	})
 	port := c.Port
 	server := &http.Server{
@@ -76,6 +80,42 @@ func handleUpdateRelayerMessageStatus(w http.ResponseWriter, r *http.Request, p 
 	}
 	p.logger.Info("Slave update relayer message status", zap.String("sn", rsi.MsgSn))
 	p.updateRelayerMessageStatus(rsi)
+}
+
+func handleAddNewRequest(w http.ResponseWriter, r *http.Request, p *Provider) {
+	if !validateMethod(w, r, p) {
+		return
+	}
+	if !authorizeRequest(w, r, p) {
+		return
+	}
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		p.logger.Error("Error reading request body", zap.Error(err))
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+	var rsi slaveNewRequest
+	err = json.Unmarshal(body, &rsi)
+	if err != nil {
+		p.logger.Error("Error decoding request body", zap.Error(err))
+		http.Error(w, "Error decoding request body", http.StatusInternalServerError)
+		return
+	}
+	
+	// handle add new request 
+	// todo: validate sequnence number 
+	// parse sequence number from 
+	lastSqnNumber := 10
+
+	lastSqnNumberBytes := []byte(fmt.Sprintf("%d", lastSqnNumber))
+	// store to db
+	err = p.db.Put(AddPrefixChainName(p.NID(), lastSqnNumberBytes), lastSqnNumberBytes, nil)
+	if err != nil {
+		p.logger.Error(fmt.Sprintln("failed to store data at sequence number ", lastSqnNumber), zap.Error(err))
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
 }
 
 func authorizeRequest(w http.ResponseWriter, r *http.Request, p *Provider) bool {
