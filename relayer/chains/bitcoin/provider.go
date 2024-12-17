@@ -433,9 +433,6 @@ func (p *Provider) Listener(ctx context.Context, lastProcessedTx relayTypes.Last
 				continue
 			}
 
-			// p.logger.Info(fmt.Sprintf("lastPendingSqn 2 : %v \n", lastPendingSqn))
-			// p.logger.Info(fmt.Sprintf("lastSqnNumber 2 : %v \n", lastSqnNumber))
-
 			if lastPendingSqn > lastSqnNumber {
 				subscribeStart.Stop()
 
@@ -492,7 +489,7 @@ func (p *Provider) Listener(ctx context.Context, lastProcessedTx relayTypes.Last
 					relayMessage := &relayTypes.Message{
 						Dst:           chainIdToName[uint8(p.cfg.DestChainId)],
 						Src:           p.NID(),
-						Sn:            big.NewInt(int64(lastSqnNumber + 2)),
+						Sn:            big.NewInt(int64(lastSqnNumber)),
 						Data:          calldata,
 						MessageHeight: lastSqnNumber,
 						EventType:     events.EmitMessage,
