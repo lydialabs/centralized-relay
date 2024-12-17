@@ -3,10 +3,12 @@ package bitcoin
 import (
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
 
+	"github.com/icon-project/centralized-relay/utils/multisig"
 	"go.uber.org/zap"
 )
 
@@ -45,7 +47,7 @@ func handleRoot(w http.ResponseWriter, r *http.Request, p *Provider) {
 		return
 	}
 
-	var rsi slaveRequestParams
+	var rsi slaveRequestSigsParams
 	err = json.Unmarshal(body, &rsi)
 	if err != nil {
 		p.logger.Error("Error decoding request body", zap.Error(err))
@@ -102,10 +104,10 @@ func handleAddNewRequest(w http.ResponseWriter, r *http.Request, p *Provider) {
 		http.Error(w, "Error decoding request body", http.StatusInternalServerError)
 		return
 	}
-	
-	// handle add new request 
-	// todo: validate sequnence number 
-	// parse sequence number from 
+
+	// handle add new request
+	// todo: validate sequnence number
+	// parse sequence number from
 	storeData, err := hex.DecodeString(rsi.RawTransaction)
 	if err != nil {
 		p.logger.Error("Error decoding hex string", zap.Error(err))
@@ -144,26 +146,37 @@ func validateMethod(w http.ResponseWriter, r *http.Request, p *Provider) bool {
 	return true
 }
 
-func buildAndSignTxFromDbMessage(params slaveRequestParams, p *Provider) ([][]byte, error) {
+func buildAndSignTxFromDbMessage(params slaveRequestSigsParams, p *Provider) ([][]byte, error) {
 	p.logger.Info("Slave start to build and sign tx from db message", zap.String("sn", params.MsgSn))
-	key := params.MsgSn
-	data, err := p.db.Get([]byte(key), nil)
+	// make sure sequence number is ready to sign
+	// get last sqn from the contract
+	lastSqnNumber, err := p.bitcoinState.RequestCount(nil)
+	if err != nil {
+		p.logger.Error("buildAndSignTxFromDbMessage: get sequence error", zap.Error(err))
+		return nil, err
+	}
+	if lastSqnNumber.String() != params.MsgSn {
+		p.logger.Error("buildAndSignTxFromDbMessage: invalid sequence number")
+		return nil, fmt.Errorf("invalid sequence number: %v", lastSqnNumber)
+	}
+
+	data, err := p.db.Get([]byte(params.MsgSn), nil)
 	if err != nil {
 		return nil, err
 	}
 
 	if strings.Contains(params.MsgSn, "RB") {
-		p.logger.Info("Rollback message", zap.String("sn", params.MsgSn))
+		p.logger.Info("buildAndSignTxFromDbMessage: Rollback message", zap.String("sn", params.MsgSn))
 		return nil, nil
 	}
 
-	var message *StoredRelayMessage
-	err = json.Unmarshal(data, &message)
+
+	msgTx, err := multisig.ParseTxBytes(data)
 	if err != nil {
 		return nil, err
 	}
 
-	_, _, _, relayerSigns, _, err := p.HandleBitcoinMessageTx(message.Message, params.FeeRate, params.Inputs)
+	relayerSigns, _, err := p.HandleBitcoinMessageTx(msgTx, params.Inputs)
 	if err != nil {
 		return nil, err
 	}

@@ -29,19 +29,23 @@ func TransposeSigs(sigs [][][]byte) [][][]byte {
 	return result
 }
 
+func ParseTxBytes(dataBytes []byte) (*wire.MsgTx, error) {
+	tx := &wire.MsgTx{}
+	err := tx.Deserialize(strings.NewReader(string(dataBytes)))
+	if err != nil {
+		return nil, err
+	}
+
+	return tx, nil
+}
+
 func ParseTx(data string) (*wire.MsgTx, error) {
 	dataBytes, err := hex.DecodeString(data)
 	if err != nil {
 		return nil, err
 	}
 
-	tx := &wire.MsgTx{}
-	err = tx.Deserialize(strings.NewReader(string(dataBytes)))
-	if err != nil {
-		return nil, err
-	}
-
-	return tx, nil
+	return ParseTxBytes(dataBytes)
 }
 
 func CreateTx(
@@ -138,6 +142,61 @@ func SignTapMultisig(
 	return sigs, nil
 }
 
+func SignTapMultisigMultiWallets(
+	privKey string,
+	msgTx *wire.MsgTx,
+	inputs []Input,
+	multisigWallets []*MultisigWallet,
+	indexTapLeaf int,
+) ([][]byte, error) {
+	if len(inputs) != len(msgTx.TxIn) {
+		return nil, fmt.Errorf("len of inputs %v and TxIn %v mismatch", len(inputs), len(msgTx.TxIn))
+	}
+	prevOuts := txscript.NewMultiPrevOutFetcher(nil)
+	for _, input := range inputs {
+		utxoHash, err := chainhash.NewHashFromStr(input.TxHash)
+		if err != nil {
+			return nil, err
+		}
+		outPoint := wire.NewOutPoint(utxoHash, input.OutputIdx)
+
+		prevOuts.AddPrevOut(*outPoint, &wire.TxOut{
+			Value:    input.OutputAmount,
+			PkScript: input.PkScript,
+		})
+	}
+	txSigHashes := txscript.NewTxSigHashes(msgTx, prevOuts)
+
+	wif, err := btcutil.DecodeWIF(privKey)
+	if err != nil {
+		return nil, fmt.Errorf("[PartSignOnRawExternalTx] Error when generate btc private key from seed: %v", err)
+	}
+	// sign on each TxIn
+	sigs := [][]byte{}
+	for i, input := range inputs {
+		isSigned := false
+		for _, multisigWallet := range(multisigWallets) {
+			if bytes.Equal(input.PkScript, multisigWallet.PKScript) {
+				tapLeaf := multisigWallet.TapLeaves[indexTapLeaf]
+				sig, err := txscript.RawTxInTapscriptSignature(
+					msgTx, txSigHashes, i, int64(inputs[i].OutputAmount), multisigWallet.PKScript, tapLeaf, txscript.SigHashDefault, wif.PrivKey)
+				if err != nil {
+					return nil, fmt.Errorf("fail to sign tx: %v", err)
+				}
+
+				sigs = append(sigs, sig)
+				isSigned = true
+				break
+			}
+		}
+		if !isSigned {
+			sigs = append(sigs, []byte{})
+		}
+	}
+
+	return sigs, nil
+}
+
 func CombineTapMultisig(
 	totalSigs [][][]byte,
 	msgTx *wire.MsgTx,
@@ -167,4 +226,37 @@ func CombineTapMultisig(
 	}
 
 	return msgTx, nil
+}
+
+func CombineTapMultisigMultiWallets(
+	totalSigs [][][]byte,
+	msgTx *wire.MsgTx,
+	inputs []Input,
+	multisigWallets []*MultisigWallet,
+	indexTapLeaf int,
+) (*wire.MsgTx, error) {
+	signedMsgTx := *msgTx.Copy()
+	transposedSigs := TransposeSigs(totalSigs)
+	for idx, v := range transposedSigs {
+		for _, multisigWallet := range(multisigWallets) {
+			if bytes.Equal(inputs[idx].PkScript, multisigWallet.PKScript) {
+				tapLeafScript := multisigWallet.TapLeaves[indexTapLeaf].Script
+				multisigControlBlock := multisigWallet.TapScriptTree.LeafMerkleProofs[indexTapLeaf].ToControlBlock(multisigWallet.SharedPublicKey)
+				multisigControlBlockBytes, err := multisigControlBlock.ToBytes()
+				if err != nil {
+					return nil, err
+				}
+
+				reverseV := [][]byte{}
+				for i := len(v) - 1; i >= 0; i-- {
+						reverseV = append(reverseV, v[i])
+				}
+
+				signedMsgTx.TxIn[idx].Witness = append(reverseV, tapLeafScript, multisigControlBlockBytes)
+				break
+			}
+		}
+	}
+
+	return &signedMsgTx, nil
 }

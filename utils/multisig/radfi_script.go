@@ -108,6 +108,8 @@ type RadFiDecodedMsg struct {
 	WithdrawLiquidityMsg	*RadFiWithdrawLiquidityMsg
 	CollectFeesMsg			*RadFiCollectFeesMsg
 	IncreaseLiquidityMsg	*RadFiIncreaseLiquidityMsg
+	Fees 			[]uint32
+	Tokens			[]*runestone.RuneId
 }
 
 func BitcoinRuneId() (runestone.RuneId) {
@@ -320,6 +322,15 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 			if err := binary.Read(r, binary.BigEndian, &ticks); err != nil {
 				return nil, fmt.Errorf("OP_RADFI_PROVIDE_LIQUIDITY could not read ticks data - Error %v", err)
 			}
+			fee := uint32(integers[8].Lo)
+			token0Id := runestone.RuneId{
+				Block: integers[9].Lo,
+				Tx: uint32(integers[10].Lo),
+			}
+			token1Id := runestone.RuneId{
+				Block: integers[11].Lo,
+				Tx: uint32(integers[12].Lo),
+			}
 			// TODO: check if integers overflow
 			return &RadFiDecodedMsg {
 				Flag:					flag,
@@ -333,16 +344,12 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 					Token0Decimal:  uint8(integers[5].Lo),
 					Token1Decimal:  uint8(integers[6].Lo),
 					SequenceNumber: integers[7],
-					Fee:			uint32(integers[8].Lo),
-					Token0Id:		runestone.RuneId{
-										Block: integers[9].Lo,
-										Tx: uint32(integers[10].Lo),
-									},
-					Token1Id:		runestone.RuneId{
-										Block: integers[11].Lo,
-										Tx: uint32(integers[12].Lo),
-									},
+					Fee:			fee,
+					Token0Id:		token0Id,
+					Token1Id:		token1Id,
 				},
+				Fees:					[]uint32{fee},
+				Tokens:					[]*runestone.RuneId{&token0Id, &token1Id},
 			}, nil
 
 		case OP_RADFI_SWAP:
@@ -372,9 +379,20 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 					Fees:			fees,
 					Tokens:			tokens,
 				},
+				Fees:		fees,
+				Tokens:		tokens,
 			}, nil
 
 		case OP_RADFI_WITHDRAW_LIQUIDITY:
+			fee := uint32(integers[5].Lo)
+			token0Id := runestone.RuneId{
+				Block: integers[6].Lo,
+				Tx: uint32(integers[7].Lo),
+			}
+			token1Id := runestone.RuneId{
+				Block: integers[8].Lo,
+				Tx: uint32(integers[9].Lo),
+			}
 			return &RadFiDecodedMsg {
 				Flag: 					flag,
 				WithdrawLiquidityMsg:	&RadFiWithdrawLiquidityMsg{
@@ -383,19 +401,24 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 					Amount0:		integers[2],
 					Amount1:		integers[3],
 					SequenceNumber: integers[4],
-					Fee:			uint32(integers[5].Lo),
-					Token0Id:		runestone.RuneId{
-										Block: integers[6].Lo,
-										Tx: uint32(integers[7].Lo),
-									},
-					Token1Id:		runestone.RuneId{
-										Block: integers[8].Lo,
-										Tx: uint32(integers[9].Lo),
-									},
+					Fee:			fee,
+					Token0Id:		token0Id,
+					Token1Id:		token1Id,
 				},
+				Fees:					[]uint32{fee},
+				Tokens:					[]*runestone.RuneId{&token0Id, &token1Id},
 			}, nil
 
 		case OP_RADFI_COLLECT_FEES:
+			fee := uint32(integers[4].Lo)
+			token0Id := runestone.RuneId{
+				Block: integers[5].Lo,
+				Tx: uint32(integers[6].Lo),
+			}
+			token1Id := runestone.RuneId{
+				Block: integers[7].Lo,
+				Tx: uint32(integers[8].Lo),
+			}
 			return &RadFiDecodedMsg {
 				Flag:			flag,
 				CollectFeesMsg:	&RadFiCollectFeesMsg{
@@ -403,19 +426,24 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 					Amount0:		integers[1],
 					Amount1:		integers[2],
 					SequenceNumber: integers[3],
-					Fee:			uint32(integers[4].Lo),
-					Token0Id:		runestone.RuneId{
-										Block: integers[5].Lo,
-										Tx: uint32(integers[6].Lo),
-									},
-					Token1Id:		runestone.RuneId{
-										Block: integers[7].Lo,
-										Tx: uint32(integers[8].Lo),
-									},
+					Fee:			fee,
+					Token0Id:		token0Id,
+					Token1Id:		token1Id,
 				},
+				Fees:					[]uint32{fee},
+				Tokens:					[]*runestone.RuneId{&token0Id, &token1Id},
 			}, nil
 
 		case OP_RADFI_INCREASE_LIQUIDITY:
+			fee := uint32(integers[6].Lo)
+			token0Id := runestone.RuneId{
+				Block: integers[7].Lo,
+				Tx: uint32(integers[8].Lo),
+			}
+			token1Id := runestone.RuneId{
+				Block: integers[9].Lo,
+				Tx: uint32(integers[10].Lo),
+			}
 			return &RadFiDecodedMsg {
 				Flag:					flag,
 				IncreaseLiquidityMsg:	&RadFiIncreaseLiquidityMsg{
@@ -425,16 +453,12 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 					Amount0:	    integers[3],
 					Amount1:	    integers[4],
 					SequenceNumber: integers[5],
-					Fee:			uint32(integers[6].Lo),
-					Token0Id:		runestone.RuneId{
-										Block: integers[7].Lo,
-										Tx: uint32(integers[8].Lo),
-									},
-					Token1Id:		runestone.RuneId{
-										Block: integers[9].Lo,
-										Tx: uint32(integers[10].Lo),
-									},
+					Fee:			fee,
+					Token0Id:		token0Id,
+					Token1Id:		token1Id,
 				},
+				Fees:					[]uint32{fee},
+				Tokens:					[]*runestone.RuneId{&token0Id, &token1Id},
 			}, nil
 
 		default:

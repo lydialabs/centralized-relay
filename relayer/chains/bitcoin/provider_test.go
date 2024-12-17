@@ -1,23 +1,14 @@
 package bitcoin
 
 import (
-	"bytes"
-	"encoding/base64"
-	"encoding/hex"
-	"encoding/json"
 	"fmt"
-	"math/big"
 	"os"
 	"path/filepath"
-	"testing"
 
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/txscript"
-	"github.com/icon-project/centralized-relay/relayer/events"
-	relayTypes "github.com/icon-project/centralized-relay/relayer/types"
-	"github.com/icon-project/centralized-relay/utils/multisig"
 	"github.com/syndtr/goleveldb/leveldb"
 	"go.uber.org/zap"
 )
@@ -92,134 +83,134 @@ func initBtcProviderTestnet() (*Provider, string) {
 	return provider, tempDir
 }
 
-func buildUserMultisigWalletTestnet(chainParam *chaincfg.Params) ([]string, *multisig.MultisigWallet, error) {
-	userPrivKeys, userMultisigInfo := multisig.RandomMultisigInfo(2, 2, chainParam, []int{0, 1}, 1, 1)
-	userMultisigWallet, _ := multisig.BuildMultisigWallet(userMultisigInfo)
-	return userPrivKeys, userMultisigWallet, nil
-}
+// func buildUserMultisigWalletTestnet(chainParam *chaincfg.Params) ([]string, *multisig.MultisigWallet, error) {
+// 	userPrivKeys, userMultisigInfo := multisig.RandomMultisigInfo(2, 2, chainParam, []int{0, 1}, 1, 1)
+// 	userMultisigWallet, _ := multisig.BuildMultisigWallet(userMultisigInfo)
+// 	return userPrivKeys, userMultisigWallet, nil
+// }
 
 // parse message from icon and build withdraw btc tx
-func TestBuildWithdrawBtcTxMessageTestnet(t *testing.T) {
-	btcProvider, termpDir := initBtcProviderTestnet()
-	defer os.Remove(termpDir)
+// func TestBuildWithdrawBtcTxMessageTestnet(t *testing.T) {
+// 	btcProvider, termpDir := initBtcProviderTestnet()
+// 	defer os.Remove(termpDir)
 
-	// decode message from icon
-	data, _ := base64.StdEncoding.DecodeString("+QEfAbkBG/kBGLMweDIuaWNvbi9jeGZjODZlZTc2ODdlMWJmNjgxYjU1NDhiMjY2Nzg0NDQ4NWMwZTcxOTK4PnRiMXBmMGF0cHQyZDN6ZWw2dWR3czM4cGtyaDJlNDl2cWQzYzVqY3VkM2E4MnNycGhubXBlNTVxMGVjcnprgi5kAbhU+FKKV2l0aGRyYXdUb4MwOjG4PnRiMXBnZTh0aHUzdTBreXF3NXY1dmxoamd0eWR6MzJtbWtkeGRnanRsOTlqcjVmNTlxczB5YXhzNTZ3a3l6gicQ+Ei4RjB4Mi5idGMvdGIxcGd6eDg4MHlmcjdxOGRnejhkcWh3NTBzbmN1NGY0aG13NWNuMzgwMDM1NHR1emN5OWp4NXNodnY3c3U=")
-	message := &relayTypes.Message{
-		Src:           "0x2.icon",
-		Dst:           "0x2.btc",
-		Sn:            big.NewInt(11),
-		MessageHeight: 1000000,
-		EventType:     events.EmitMessage,
-		Data:          data,
-	}
-	feeRate := 10
+// 	// decode message from icon
+// 	data, _ := base64.StdEncoding.DecodeString("+QEfAbkBG/kBGLMweDIuaWNvbi9jeGZjODZlZTc2ODdlMWJmNjgxYjU1NDhiMjY2Nzg0NDQ4NWMwZTcxOTK4PnRiMXBmMGF0cHQyZDN6ZWw2dWR3czM4cGtyaDJlNDl2cWQzYzVqY3VkM2E4MnNycGhubXBlNTVxMGVjcnprgi5kAbhU+FKKV2l0aGRyYXdUb4MwOjG4PnRiMXBnZTh0aHUzdTBreXF3NXY1dmxoamd0eWR6MzJtbWtkeGRnanRsOTlqcjVmNTlxczB5YXhzNTZ3a3l6gicQ+Ei4RjB4Mi5idGMvdGIxcGd6eDg4MHlmcjdxOGRnejhkcWh3NTBzbmN1NGY0aG13NWNuMzgwMDM1NHR1emN5OWp4NXNodnY3c3U=")
+// 	message := &relayTypes.Message{
+// 		Src:           "0x2.icon",
+// 		Dst:           "0x2.btc",
+// 		Sn:            big.NewInt(11),
+// 		MessageHeight: 1000000,
+// 		EventType:     events.EmitMessage,
+// 		Data:          data,
+// 	}
+// 	feeRate := 10
 
-	inputs, msWallet, msgTx, relayerSigs, feeRate, err := btcProvider.HandleBitcoinMessageTx(message, feeRate, []slaveRequestInput{})
-	if err != nil {
-		btcProvider.logger.Error("failed to handle bitcoin message tx: %v", zap.Error(err))
-		// return
-	}
-	totalSigs := [][][]byte{relayerSigs}
-	// send unsigned raw tx and message sn to 2 slave relayers to get sign
-	rsi := slaveRequestParams{
-		MsgSn:   message.Sn.String(),
-		FeeRate: feeRate,
-	}
+// 	inputs, msWallet, msgTx, relayerSigs, feeRate, err := btcProvider.HandleBitcoinMessageTx(message, feeRate, []slaveRequestInput{})
+// 	if err != nil {
+// 		btcProvider.logger.Error("failed to handle bitcoin message tx: %v", zap.Error(err))
+// 		// return
+// 	}
+// 	totalSigs := [][][]byte{relayerSigs}
+// 	// send unsigned raw tx and message sn to 2 slave relayers to get sign
+// 	rsi := slaveRequestParams{
+// 		MsgSn:   message.Sn.String(),
+// 		FeeRate: feeRate,
+// 	}
 
-	slaveRequestData, _ := json.Marshal(rsi)
-	slaveSigs := btcProvider.CallSlaves(slaveRequestData, "")
-	btcProvider.logger.Info("Slave signatures", zap.Any("slave sigs", slaveSigs))
-	totalSigs = append(totalSigs, slaveSigs...)
-	// combine sigs
-	signedMsgTx, err := multisig.CombineTapMultisig(totalSigs, msgTx, inputs, msWallet, 0)
+// 	slaveRequestData, _ := json.Marshal(rsi)
+// 	slaveSigs := btcProvider.CallSlaves(slaveRequestData, "")
+// 	btcProvider.logger.Info("Slave signatures", zap.Any("slave sigs", slaveSigs))
+// 	totalSigs = append(totalSigs, slaveSigs...)
+// 	// combine sigs
+// 	signedMsgTx, err := multisig.CombineTapMultisig(totalSigs, msgTx, inputs, msWallet, 0)
 
-	if err != nil {
-		btcProvider.logger.Error("err combine tx: ", zap.Error(err))
-	}
+// 	if err != nil {
+// 		btcProvider.logger.Error("err combine tx: ", zap.Error(err))
+// 	}
 
-	var buf bytes.Buffer
-	err = signedMsgTx.Serialize(&buf)
+// 	var buf bytes.Buffer
+// 	err = signedMsgTx.Serialize(&buf)
 
-	if err != nil {
-		btcProvider.logger.Error("err combine tx: ", zap.Error(err))
-	}
+// 	if err != nil {
+// 		btcProvider.logger.Error("err combine tx: ", zap.Error(err))
+// 	}
 
-	signedMsgTxHex := hex.EncodeToString(buf.Bytes())
-	btcProvider.logger.Info("signedMsgTxHex", zap.String("transaction_hex", signedMsgTxHex))
+// 	signedMsgTxHex := hex.EncodeToString(buf.Bytes())
+// 	btcProvider.logger.Info("signedMsgTxHex", zap.String("transaction_hex", signedMsgTxHex))
 
-	btcProvider.cacheSpentUTXOs(inputs)
+// 	btcProvider.cacheSpentUTXOs(inputs)
 
-	// Broadcast transaction to bitcoin network
-	txHash, err := btcProvider.client.SendRawTransaction(btcProvider.cfg.MempoolURL, []json.RawMessage{json.RawMessage(signedMsgTxHex)})
-	if err != nil {
-		btcProvider.removeCachedSpentUTXOs(inputs)
-		btcProvider.logger.Error("failed to send raw transaction", zap.Error(err))
-		// return
-	}
+// 	// Broadcast transaction to bitcoin network
+// 	txHash, err := btcProvider.client.SendRawTransaction(btcProvider.cfg.MempoolURL, []json.RawMessage{json.RawMessage(signedMsgTxHex)})
+// 	if err != nil {
+// 		btcProvider.removeCachedSpentUTXOs(inputs)
+// 		btcProvider.logger.Error("failed to send raw transaction", zap.Error(err))
+// 		// return
+// 	}
 
-	btcProvider.logger.Info("txHash", zap.String("transaction_hash", txHash))
-}
+// 	btcProvider.logger.Info("txHash", zap.String("transaction_hash", txHash))
+// }
 
 // parse message from icon and build withdraw rune tx
-func TestBuildWithdrawRunesTxMessageTestnet(t *testing.T) {
-	btcProvider, termpDir := initBtcProviderTestnet()
-	defer os.Remove(termpDir)
-	// decode message from icon
-	data, _ := base64.StdEncoding.DecodeString("+QEoAbkBJPkBIbMweDIuaWNvbi9jeDhjOWEyMTNjZDVkY2ViZmI1MzljMzBlMWFmNmQ3Nzk5MGIyMDBjYTS4PnRiMXBmMGF0cHQyZDN6ZWw2dWR3czM4cGtyaDJlNDl2cWQzYzVqY3VkM2E4MnNycGhubXBlNTVxMGVjcnprgi6wArhd+FuKV2l0aGRyYXdUb4wyOTA0MzU0OjMxMTm4PnRiMXB5OHZ4ZTdlY3dqdGRsdmNjcmVrZ3E1dTkwcnpzZzV3djZhamg0YXZjcDRxNXBrdjYyOWRxeDZlZGg5gg+g+Ei4RjB4Mi5idGMvdGIxcGYwYXRwdDJkM3plbDZ1ZHdzMzhwa3JoMmU0OXZxZDNjNWpjdWQzYTgyc3JwaG5tcGU1NXEwZWNyems=")
-	message := &relayTypes.Message{
-		Src:           "0x2.icon",
-		Dst:           "0x2.btc",
-		Sn:            big.NewInt(12),
-		MessageHeight: 46166601,
-		EventType:     events.EmitMessage,
-		Data:          data,
-	}
-	feeRate := 10
-	inputs, msWallet, msgTx, relayerSigs, feeRate, err := btcProvider.HandleBitcoinMessageTx(message, feeRate, []slaveRequestInput{})
-	if err != nil {
-		btcProvider.logger.Error("failed to handle bitcoin message tx: %v", zap.Error(err))
-		// return
-	}
-	totalSigs := [][][]byte{relayerSigs}
-	// send unsigned raw tx and message sn to 2 slave relayers to get sign
-	rsi := slaveRequestParams{
-		MsgSn:   message.Sn.String(),
-		FeeRate: feeRate,
-	}
+// func TestBuildWithdrawRunesTxMessageTestnet(t *testing.T) {
+// 	btcProvider, termpDir := initBtcProviderTestnet()
+// 	defer os.Remove(termpDir)
+// 	// decode message from icon
+// 	data, _ := base64.StdEncoding.DecodeString("+QEoAbkBJPkBIbMweDIuaWNvbi9jeDhjOWEyMTNjZDVkY2ViZmI1MzljMzBlMWFmNmQ3Nzk5MGIyMDBjYTS4PnRiMXBmMGF0cHQyZDN6ZWw2dWR3czM4cGtyaDJlNDl2cWQzYzVqY3VkM2E4MnNycGhubXBlNTVxMGVjcnprgi6wArhd+FuKV2l0aGRyYXdUb4wyOTA0MzU0OjMxMTm4PnRiMXB5OHZ4ZTdlY3dqdGRsdmNjcmVrZ3E1dTkwcnpzZzV3djZhamg0YXZjcDRxNXBrdjYyOWRxeDZlZGg5gg+g+Ei4RjB4Mi5idGMvdGIxcGYwYXRwdDJkM3plbDZ1ZHdzMzhwa3JoMmU0OXZxZDNjNWpjdWQzYTgyc3JwaG5tcGU1NXEwZWNyems=")
+// 	message := &relayTypes.Message{
+// 		Src:           "0x2.icon",
+// 		Dst:           "0x2.btc",
+// 		Sn:            big.NewInt(12),
+// 		MessageHeight: 46166601,
+// 		EventType:     events.EmitMessage,
+// 		Data:          data,
+// 	}
+// 	feeRate := 10
+// 	inputs, msWallet, msgTx, relayerSigs, feeRate, err := btcProvider.HandleBitcoinMessageTx(message, feeRate, []slaveRequestInput{})
+// 	if err != nil {
+// 		btcProvider.logger.Error("failed to handle bitcoin message tx: %v", zap.Error(err))
+// 		// return
+// 	}
+// 	totalSigs := [][][]byte{relayerSigs}
+// 	// send unsigned raw tx and message sn to 2 slave relayers to get sign
+// 	rsi := slaveRequestParams{
+// 		MsgSn:   message.Sn.String(),
+// 		FeeRate: feeRate,
+// 	}
 
-	slaveRequestData, _ := json.Marshal(rsi)
-	slaveSigs := btcProvider.CallSlaves(slaveRequestData, "")
-	btcProvider.logger.Info("Slave signatures", zap.Any("slave sigs", slaveSigs))
-	totalSigs = append(totalSigs, slaveSigs...)
-	// combine sigs
-	signedMsgTx, err := multisig.CombineTapMultisig(totalSigs, msgTx, inputs, msWallet, 0)
+// 	slaveRequestData, _ := json.Marshal(rsi)
+// 	slaveSigs := btcProvider.CallSlaves(slaveRequestData, "")
+// 	btcProvider.logger.Info("Slave signatures", zap.Any("slave sigs", slaveSigs))
+// 	totalSigs = append(totalSigs, slaveSigs...)
+// 	// combine sigs
+// 	signedMsgTx, err := multisig.CombineTapMultisig(totalSigs, msgTx, inputs, msWallet, 0)
 
-	if err != nil {
-		btcProvider.logger.Error("err combine tx: ", zap.Error(err))
-	}
+// 	if err != nil {
+// 		btcProvider.logger.Error("err combine tx: ", zap.Error(err))
+// 	}
 
-	var buf bytes.Buffer
-	err = signedMsgTx.Serialize(&buf)
+// 	var buf bytes.Buffer
+// 	err = signedMsgTx.Serialize(&buf)
 
-	if err != nil {
-		btcProvider.logger.Error("err combine tx: ", zap.Error(err))
-	}
+// 	if err != nil {
+// 		btcProvider.logger.Error("err combine tx: ", zap.Error(err))
+// 	}
 
-	signedMsgTxHex := hex.EncodeToString(buf.Bytes())
-	btcProvider.logger.Info("signedMsgTxHex", zap.String("transaction_hex", signedMsgTxHex))
+// 	signedMsgTxHex := hex.EncodeToString(buf.Bytes())
+// 	btcProvider.logger.Info("signedMsgTxHex", zap.String("transaction_hex", signedMsgTxHex))
 
-	btcProvider.cacheSpentUTXOs(inputs)
+// 	btcProvider.cacheSpentUTXOs(inputs)
 
-	// Broadcast transaction to bitcoin network
-	txHash, err := btcProvider.client.SendRawTransaction(btcProvider.cfg.MempoolURL, []json.RawMessage{json.RawMessage(signedMsgTxHex)})
-	if err != nil {
-		btcProvider.removeCachedSpentUTXOs(inputs)
-		btcProvider.logger.Error("failed to send raw transaction", zap.Error(err))
-	}
+// 	// Broadcast transaction to bitcoin network
+// 	txHash, err := btcProvider.client.SendRawTransaction(btcProvider.cfg.MempoolURL, []json.RawMessage{json.RawMessage(signedMsgTxHex)})
+// 	if err != nil {
+// 		btcProvider.removeCachedSpentUTXOs(inputs)
+// 		btcProvider.logger.Error("failed to send raw transaction", zap.Error(err))
+// 	}
 
-	btcProvider.logger.Info("txHash", zap.String("transaction_hash", txHash))
-}
+// 	btcProvider.logger.Info("txHash", zap.String("transaction_hash", txHash))
+// }
 
 // func TestBuildRollbackBtcTxMessageTestnet(t *testing.T) {
 // 	// Create a mock Provider
@@ -569,28 +560,28 @@ func TestBuildWithdrawRunesTxMessageTestnet(t *testing.T) {
 // 	fmt.Println("err: ", err)
 // }
 
-func TestBuildRelayerMultisigWalletTestnet(t *testing.T) {
-	btcProvider, termpDir := initBtcProviderTestnet()
-	defer os.Remove(termpDir)
-	msWallet, err := btcProvider.buildMultisigWallet()
-	fmt.Println("err: ", err)
-	fmt.Println("msWallet TapScriptTree: ", msWallet.TapScriptTree)
-	fmt.Println("msWallet TapLeaves: ", msWallet.TapLeaves)
-	fmt.Println("msWallet PKScript: ", hex.EncodeToString(msWallet.PKScript))
-	fmt.Println("msWallet SharedPublicKey: ", msWallet.SharedPublicKey.ToECDSA())
-	// log msWallet address
-	addr, err := multisig.AddressOnChain(btcProvider.chainParam, msWallet)
-	fmt.Println("msWallet Address: ", addr.String())
-	fmt.Println("err: ", err)
-}
+// func TestBuildRelayerMultisigWalletTestnet(t *testing.T) {
+// 	btcProvider, termpDir := initBtcProviderTestnet()
+// 	defer os.Remove(termpDir)
+// 	msWallet, err := btcProvider.buildMultisigWallet()
+// 	fmt.Println("err: ", err)
+// 	fmt.Println("msWallet TapScriptTree: ", msWallet.TapScriptTree)
+// 	fmt.Println("msWallet TapLeaves: ", msWallet.TapLeaves)
+// 	fmt.Println("msWallet PKScript: ", hex.EncodeToString(msWallet.PKScript))
+// 	fmt.Println("msWallet SharedPublicKey: ", msWallet.SharedPublicKey.ToECDSA())
+// 	// log msWallet address
+// 	addr, err := multisig.AddressOnChain(btcProvider.chainParam, msWallet)
+// 	fmt.Println("msWallet Address: ", addr.String())
+// 	fmt.Println("err: ", err)
+// }
 
-func TestBuildUserMultisigWalletTestnet(t *testing.T) {
-	btcProvider, termpDir := initBtcProviderTestnet()
-	defer os.Remove(termpDir)
-	userPrivKeys, userMultisigWallet, _ := buildUserMultisigWalletTestnet(btcProvider.chainParam)
-	fmt.Println("userPrivKeys: ", userPrivKeys)
-	fmt.Println("userMultisigWallet: ", userMultisigWallet)
-	addr, err := multisig.AddressOnChain(btcProvider.chainParam, userMultisigWallet)
-	fmt.Println("userMultisigWallet Address: ", addr.String())
-	fmt.Println("err: ", err)
-}
+// func TestBuildUserMultisigWalletTestnet(t *testing.T) {
+// 	btcProvider, termpDir := initBtcProviderTestnet()
+// 	defer os.Remove(termpDir)
+// 	userPrivKeys, userMultisigWallet, _ := buildUserMultisigWalletTestnet(btcProvider.chainParam)
+// 	fmt.Println("userPrivKeys: ", userPrivKeys)
+// 	fmt.Println("userMultisigWallet: ", userMultisigWallet)
+// 	addr, err := multisig.AddressOnChain(btcProvider.chainParam, userMultisigWallet)
+// 	fmt.Println("userMultisigWallet Address: ", addr.String())
+// 	fmt.Println("err: ", err)
+// }

@@ -3,7 +3,6 @@ package bitcoin
 import (
 	"context"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"log"
 	"math/big"
@@ -78,34 +77,27 @@ func TestDecodeConnectionContract(t *testing.T) {
 
 func TestEncodeToXcallMessage(t *testing.T) {
 	// init contract  optimism
-
-	ticks := multisig.RadFiProvideLiquidityTicks{
-		UpperTick: -173940,
-		LowerTick: -178320,
-	}
-
-	test1 := multisig.RadFiProvideLiquidityMsg{
-		Fee:       3000,
-		Ticks: ticks,
-		Min0:      0,
-		Min1:      0,
-	}
 	amount0, _ := uint128.FromString("18999999999999999977283654")
 	amount1, _ := uint128.FromString("539580403982610478")
-	test1.Amount0Desired = amount0
-	test1.Amount1Desired = amount1
-	test1.Token0Id = runestone.RuneId{
-		Block: 1,
-		Tx: 5,
-	}
-	test1.Token1Id = runestone.RuneId{
-		Block: 3009542,
-		Tx: 165,
-	}
-	test1.Token0Decimal = 8
-	test1.Token1Decimal = 5
+	initPrice, _ := uint128.FromString("12015251367205891895777574")
 
-	test1.InitPrice, _ = uint128.FromString("12015251367205891895777574")
+	radfiMsg := &multisig.RadFiDecodedMsg{
+		Flag: multisig.OP_RADFI_PROVIDE_LIQUIDITY,
+		ProvideLiquidityMsg: &multisig.RadFiProvideLiquidityMsg{
+			Ticks: 	multisig.RadFiProvideLiquidityTicks{ UpperTick: -173940, LowerTick: -178320 },
+			Min0:	0,
+			Min1:	0,
+			Amount0: amount0,
+			Amount1: amount1,
+			InitPrice: initPrice,
+			Token0Decimal: 8,
+			Token1Decimal: 5,
+			SequenceNumber: uint128.From64(1),
+			Fee:	3000,
+			Token0Id: runestone.RuneId{ Block: 1, Tx: 5},
+			Token1Id: runestone.RuneId{ Block: 3009542, Tx: 165},
+		},
+	}
 
 	protocols := []string{
 		"0xCe3a6E2E32A91744E7028907B6d68599B69d980B",
@@ -124,11 +116,8 @@ func TestEncodeToXcallMessage(t *testing.T) {
 		panic(err)
 	}
 
-	requestBytes, _ := json.Marshal(test1)
-	t.Log(hex.EncodeToString(requestBytes))
-
 	res, radfiCalldata, err := ToXCallMessage(
-		test1,
+		radfiMsg,
 		"0x2.btc/tb1p22rjagtq7e4ckelvvngvt0n7m9g3vnj3f4sk4lh854ad6u43urdqn8g5sv",
 		"0x54b200FF2204D2b8686960Bb8F32F1562d0Acd71",
 		1,

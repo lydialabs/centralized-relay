@@ -26,8 +26,8 @@ type MultisigWallet struct {
 type Input struct {
 	TxHash			string
 	OutputIdx		uint32
-	OutputAmount	int64
-	PkScript		[]byte
+	OutputAmount	int64				`json:"outputAmount"`
+	PkScript		[]byte				`json:"pkScript"`
 	Sigs			[][]byte
 	Runes			[]*runestone.Edict
 }

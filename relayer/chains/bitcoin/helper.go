@@ -54,12 +54,12 @@ func GetRuneTxIndex(endpoint, method, bearToken, txId string, index int) (*RuneT
 	return resp, nil
 }
 
-func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []string, requester string, runeFactory *radfiAbi.Runefactory) ([]byte, []byte, error) {
+func ToXCallMessage(radFiMessage *multisig.RadFiDecodedMsg, from, to string, sn uint, protocols []string, requester string, runeFactory *radfiAbi.Runefactory) ([]byte, []byte, error) {
 	var res, calldata []byte
 	bitcoinStateAbi, _ := abi.JSON(strings.NewReader(radfiAbi.BitcoinstateMetaData.ABI))
 	nonfungibleABI, _ := abi.JSON(strings.NewReader(radfiAbi.NonfungiblePositionManagerMetaData.ABI))
 	routerABI, _ := abi.JSON(strings.NewReader(radfiAbi.IrouterMetaData.ABI))
-	
+
 	// addressTy, _ := abi.NewType("address", "", nil)
 	// bytes, _ := abi.NewType("bytes", "", nil)
 
@@ -72,9 +72,9 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 	// 	},
 	// }
 
-	switch v := data.(type) {
-	case multisig.RadFiProvideLiquidityMsg:
-		dataMint := v
+	switch radFiMessage.Flag {
+	case multisig.OP_RADFI_PROVIDE_LIQUIDITY:
+		dataMint := radFiMessage.ProvideLiquidityMsg
 
 		// get address token0 token1 from contract
 		token0, err := runeFactory.ComputeTokenAddress(nil, dataMint.Token0Id.String())
@@ -93,10 +93,10 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 			Fee:            big.NewInt(int64(dataMint.Fee)),
 			TickLower:      big.NewInt(int64(dataMint.Ticks.LowerTick)),
 			TickUpper:      big.NewInt(int64(dataMint.Ticks.UpperTick)),
-			Amount0Min: big.NewInt(0).Div(big.NewInt(0).Mul(dataMint.Amount0Desired.Big(), big.NewInt(99999)), big.NewInt(100000)),
-			Amount1Min: big.NewInt(0).Div(big.NewInt(0).Mul(dataMint.Amount1Desired.Big(), big.NewInt(99999)), big.NewInt(100000)),
-			Amount0Desired: dataMint.Amount0Desired.Big(),
-			Amount1Desired: dataMint.Amount1Desired.Big(),
+			Amount0Min: big.NewInt(0).Div(big.NewInt(0).Mul(dataMint.Amount0.Big(), big.NewInt(99999)), big.NewInt(100000)),
+			Amount1Min: big.NewInt(0).Div(big.NewInt(0).Mul(dataMint.Amount1.Big(), big.NewInt(99999)), big.NewInt(100000)),
+			Amount0Desired: dataMint.Amount0.Big(),
+			Amount1Desired: dataMint.Amount1.Big(),
 			Recipient:      common.HexToAddress(to),
 			Deadline:       big.NewInt(10000000000),
 		}
@@ -116,8 +116,8 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 			return nil, nil, err
 		}
 
-	case multisig.RadFiWithdrawLiquidityMsg:
-		withdrawLiquidityInfo := v
+	case multisig.OP_RADFI_WITHDRAW_LIQUIDITY:
+		withdrawLiquidityInfo := radFiMessage.WithdrawLiquidityMsg
 
 		decreaseLiquidityData := radfiAbi.INonfungiblePositionManagerDecreaseLiquidityParams{
 			TokenId:    withdrawLiquidityInfo.NftId.Big(),
@@ -137,8 +137,8 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 			return nil, nil, err
 		}
 
-	case multisig.RadFiIncreaseLiquidityMsg:
-		increaseLiquidityInfo := v
+	case multisig.OP_RADFI_INCREASE_LIQUIDITY:
+		increaseLiquidityInfo := radFiMessage.IncreaseLiquidityMsg
 		increaseLiquidityData := radfiAbi.INonfungiblePositionManagerIncreaseLiquidityParams{
 			TokenId:        increaseLiquidityInfo.NftId.Big(),
 			Amount0Desired: increaseLiquidityInfo.Amount0.Big(), //todo fill in
@@ -154,8 +154,8 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 			return nil, nil, err
 		}
 
-	case multisig.RadFiSwapMsg:
-		swapInfo := v
+	case multisig.OP_RADFI_SWAP:
+		swapInfo := radFiMessage.SwapMsg
 		var err error
 
 		// get token from contract to build path
@@ -205,8 +205,8 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 			}
 
 		}
-	case multisig.RadFiCollectFeesMsg:
-		collectInfo := v
+	case multisig.OP_RADFI_COLLECT_FEES:
+		collectInfo := radFiMessage.CollectFeesMsg
 		collectParams := radfiAbi.INonfungiblePositionManagerCollectParams{
 			TokenId:    collectInfo.NftId.Big(),
 			Amount0Max: new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 128), big.NewInt(1)),
@@ -271,7 +271,6 @@ func XcallFormat(callData []byte, from, to string, sn uint, protocols []string) 
 		return nil, err
 	}
 
-	fmt.Println("fucker")
 	fmt.Println(protocols)
 
 	return finalMessage, nil
