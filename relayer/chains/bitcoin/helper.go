@@ -93,10 +93,10 @@ func ToXCallMessage(data interface{}, from, to string, sn uint, protocols []stri
 			Fee:            big.NewInt(int64(dataMint.Fee)),
 			TickLower:      big.NewInt(int64(dataMint.Ticks.LowerTick)),
 			TickUpper:      big.NewInt(int64(dataMint.Ticks.UpperTick)),
+			Amount0Min: big.NewInt(0).Div(big.NewInt(0).Mul(dataMint.Amount0Desired.Big(), big.NewInt(99999)), big.NewInt(100000)),
+			Amount1Min: big.NewInt(0).Div(big.NewInt(0).Mul(dataMint.Amount1Desired.Big(), big.NewInt(99999)), big.NewInt(100000)),
 			Amount0Desired: dataMint.Amount0Desired.Big(),
 			Amount1Desired: dataMint.Amount1Desired.Big(),
-			Amount0Min: dataMint.Amount0Desired.Big(),
-			Amount1Min: dataMint.Amount1Desired.Big(),
 			Recipient:      common.HexToAddress(to),
 			Deadline:       big.NewInt(10000000000),
 		}
@@ -270,6 +270,9 @@ func XcallFormat(callData []byte, from, to string, sn uint, protocols []string) 
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println("fucker")
+	fmt.Println(protocols)
 
 	return finalMessage, nil
 }

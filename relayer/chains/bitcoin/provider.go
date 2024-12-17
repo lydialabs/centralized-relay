@@ -9,11 +9,11 @@ import (
 	"math/big"
 	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
-	"strconv"
-	
+
 	"os"
 
 	"github.com/btcsuite/btcd/btcutil"
@@ -32,14 +32,14 @@ import (
 	"github.com/icon-project/centralized-relay/utils/multisig"
 	"github.com/icon-project/goloop/common/codec"
 
+	ethereum "github.com/ethereum/go-ethereum"
+	ethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/icon-project/centralized-relay/relayer/chains/bitcoin/abi"
+	"github.com/icon-project/centralized-relay/relayer/chains/bitcoin/helper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"go.uber.org/zap"
-	"github.com/icon-project/centralized-relay/relayer/chains/bitcoin/helper"
-	ethabi	"github.com/ethereum/go-ethereum/accounts/abi"
-	ethereum "github.com/ethereum/go-ethereum"
 )
 
 var (
@@ -56,8 +56,7 @@ var (
 
 	// Define DB key
 	LastPendingSequenceNumber = "LastPendingSequenceNumber"
-	DefaultCreateTimeout   = time.Second * 10
-	
+	DefaultCreateTimeout      = time.Second * 10
 )
 
 var chainIdToName = map[uint8]string{
@@ -106,7 +105,7 @@ type slaveRequestUpdateRelayMessageStatus struct {
 }
 
 type slaveNewRequest struct {
-	RawTransction []byte `json:"rawTransction"` // bitcoin 
+	RawTransaction string `json:"rawTransaction"` // bitcoin
 }
 
 type slaveResponse struct {
@@ -143,10 +142,10 @@ type Provider struct {
 	httpServer          chan struct{}
 	db                  *leveldb.DB
 	chainParam          *chaincfg.Params
-	eth       			*ethclient.Client
+	eth                 *ethclient.Client
 	bitcoinState        *abi.Bitcoinstate
 	runeFactory         *abi.Runefactory
-	connections 		[]string
+	connections         []string
 	destChainId         int
 }
 
@@ -172,11 +171,11 @@ type Config struct {
 	RelayerPrivKey        string   `json:"relayerPrivKey" yaml:"relayerPrivKey"`
 	RecoveryLockTime      int      `json:"recoveryLockTime" yaml:"recoveryLockTime"`
 	Connections           []string `json:"connections" yaml:"connections"`
-	EthRPC           	  string   `json:"eth-prc" yaml:"eth-rpc"`
+	EthRPC                string   `json:"eth-prc" yaml:"eth-rpc"`
 	RuneFactory           string   `json:"rune-factory" yaml:"rune-factory"`
 	BitcoinState          string   `json:"bitcoin-state" yaml:"bitcoin-state"`
 	SequenceBatchSize     int      `json:"sequence-batch-size" yaml:"sequence-batch-size"`
-	DestChainId 		  int      `json:"dest-chain-id" yaml:"dest-chain-id"`
+	DestChainId           int      `json:"dest-chain-id" yaml:"dest-chain-id"`
 }
 
 // NewProvider returns new Icon provider
@@ -191,14 +190,13 @@ func (c *Config) NewProvider(ctx context.Context, log *zap.Logger, homepath stri
 	}
 
 	// Create the database file path
-	dbPath := filepath.Join(homepath+ "/data" + os.Getenv("NODE_ID"), BtcDB)
+	dbPath := filepath.Join(homepath+"/data"+os.Getenv("NODE_ID"), BtcDB)
 
 	// Open the database, creating it if it doesn't exist
 	db, err := leveldb.OpenFile(dbPath, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open or create database: %v", err)
 	}
-
 
 	client, err := newClient(ctx, c.RPCUrl, c.User, c.Password, true, false, log)
 	if err != nil {
@@ -243,9 +241,10 @@ func (c *Config) NewProvider(ctx context.Context, log *zap.Logger, homepath stri
 		db:                 db, // Add the database to the Provider
 		chainParam:         chainParam,
 		multisigAddrScript: msPubkey,
-		eth: rpc,
-		runeFactory: runeFactory,
-		bitcoinState: bitcoinState,
+		eth:                rpc,
+		runeFactory:        runeFactory,
+		bitcoinState:       bitcoinState,
+		connections: c.Connections,
 	}
 	// Run an http server to help btc interact each others
 	go func() {
@@ -328,6 +327,41 @@ func (p *Provider) Config() provider.Config {
 	return p.cfg
 }
 
+func (p *Provider) StoreNewPendingRequest(pendingDataRequest []byte) error {
+	// todo: validation
+
+	// get last pending id
+	lastSeqKey := AddPrefixChainName(p.NID(), []byte(LastPendingSequenceNumber))
+	lastPendingSqnBytes, err := p.db.Get(lastSeqKey, nil)
+	if err != nil {
+		p.logger.Error(err.Error())
+		return err
+	}
+
+	lastPendingSqn, err := strconv.ParseUint(string(lastPendingSqnBytes), 10, 64)
+	if err != nil {
+		p.logger.Error(err.Error())
+		return err
+	}
+	lastPendingSqn++
+
+	// store the new last request
+	err = p.db.Put(AddPrefixChainName(p.NID(), []byte(LastPendingSequenceNumber)), []byte(fmt.Sprintf("%d", lastPendingSqn)), nil)
+	if err != nil {
+		p.logger.Error(err.Error())
+		return err
+	}
+
+	// store the data
+	err = p.db.Put(AddPrefixChainName(p.NID(), []byte(fmt.Sprintf("%d", lastPendingSqn))), pendingDataRequest, nil)
+	if err != nil {
+		p.logger.Error(err.Error())
+		return err
+	}
+
+	return nil
+}
+
 func (p *Provider) Listener(ctx context.Context, lastProcessedTx relayTypes.LastProcessedTx, blockInfoChan chan *relayTypes.BlockInfo) error {
 	p.logger.Info("starting bitcoin Listener")
 
@@ -336,7 +370,7 @@ func (p *Provider) Listener(ctx context.Context, lastProcessedTx relayTypes.Last
 	if err != nil {
 		p.logger.Error(err.Error())
 		return err
-	} 
+	}
 	lastSqnNumber := lastSqnNumberBig.Uint64()
 	// init sequence number if needed
 	lastSeqKey := AddPrefixChainName(p.NID(), []byte(LastPendingSequenceNumber))
@@ -344,8 +378,8 @@ func (p *Provider) Listener(ctx context.Context, lastProcessedTx relayTypes.Last
 	//
 	var lastPendingSqn uint64
 	if err == leveldb.ErrNotFound {
-		lastPendingSqn = lastSqnNumber	
-		p.db.Put(AddPrefixChainName(p.NID(), []byte(LastPendingSequenceNumber)), []byte(fmt.Sprintf("%d", lastPendingSqn)), nil)	
+		lastPendingSqn = lastSqnNumber
+		p.db.Put(AddPrefixChainName(p.NID(), []byte(LastPendingSequenceNumber)), []byte(fmt.Sprintf("%d", lastPendingSqn)), nil)
 	} else if err != nil && err != leveldb.ErrNotFound {
 		p.logger.Error(err.Error())
 		return err
@@ -354,16 +388,19 @@ func (p *Provider) Listener(ctx context.Context, lastProcessedTx relayTypes.Last
 		if err != nil {
 			p.logger.Error(err.Error())
 			return err
-		} 
+		}
 
 		// compare sqn
 		if lastPendingSqn < lastSqnNumber {
 			lastPendingSqn = lastSqnNumber
-			p.db.Put(AddPrefixChainName(p.NID(), []byte(LastPendingSequenceNumber)), []byte(fmt.Sprintf("%d", lastPendingSqn)), nil)
+			err = p.db.Put(AddPrefixChainName(p.NID(), []byte(LastPendingSequenceNumber)), []byte(fmt.Sprintf("%d", lastPendingSqn)), nil)
+			if err != nil {
+				return err
+			}
 		}
 	}
-	
-	// loop thru 
+
+	// loop thru
 	var (
 		subscribeStart = time.NewTicker(time.Second * 1)
 		// errChan        = make(chan error)
@@ -394,18 +431,15 @@ func (p *Provider) Listener(ctx context.Context, lastProcessedTx relayTypes.Last
 			if err != nil {
 				p.logger.Error(err.Error())
 				continue
-			} 
-
-			p.logger.Info(fmt.Sprintf("lastPendingSqn 2 : %v \n", lastPendingSqn))
-			p.logger.Info(fmt.Sprintf("lastSqnNumber 2 : %v \n", lastSqnNumber))
+			}
 
 			if lastPendingSqn > lastSqnNumber {
 				subscribeStart.Stop()
 
 				for {
-					// 
+					//
 					lastSqnNumber++
-					
+
 					// get data from level db
 					lastSqnNumberBytes := []byte(fmt.Sprintf("%d", lastSqnNumber))
 					requestData, err := p.db.Get(AddPrefixChainName(p.NID(), lastSqnNumberBytes), nil)
@@ -415,13 +449,20 @@ func (p *Provider) Listener(ctx context.Context, lastProcessedTx relayTypes.Last
 					}
 
 					// todo: handle batching
-					// todo: validation 
+					// todo: validation
 
 					// todo: parse it from tx
-					from := "bc1pn55rnm2a883y2v0znk9ek5mmt7agtp8pue8ugacdkjgc56dhhetql5dpek"
+					from := "0x2.btc/tb1p22rjagtq7e4ckelvvngvt0n7m9g3vnj3f4sk4lh854ad6u43urdqn8g5sv"
+					// todo: parse to message 
+					var request multisig.RadFiProvideLiquidityMsg
+					err = json.Unmarshal(requestData, &request)
+					if err != nil {
+						p.logger.Error("failed to unmarshal request data", zap.Error(err))
+						break
+					}
 
 					// buidl xcall message
-					calldata, uniswapCalldata, err := ToXCallMessage(requestData, from, p.cfg.BitcoinState, uint(lastSqnNumber), p.connections, from, p.runeFactory)
+					calldata, uniswapCalldata, err := ToXCallMessage(request, from, p.cfg.BitcoinState, uint(lastSqnNumber), p.connections, from, p.runeFactory)
 					if err != nil {
 						p.logger.Error(fmt.Sprintln("failed to build xcall message ", lastSqnNumber), zap.Error(err))
 						break
@@ -446,7 +487,7 @@ func (p *Provider) Listener(ctx context.Context, lastProcessedTx relayTypes.Last
 					}
 
 					relayMessage := &relayTypes.Message{
-						Dst:           chainIdToName[uint8(p.destChainId)],
+						Dst:           chainIdToName[uint8(p.cfg.DestChainId)],
 						Src:           p.NID(),
 						Sn:            big.NewInt(int64(lastSqnNumber)),
 						Data:          calldata,

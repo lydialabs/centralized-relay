@@ -1,11 +1,11 @@
 package bitcoin
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"io"
 	"net/http"
 	"strings"
-	"fmt"
 
 	"go.uber.org/zap"
 )
@@ -106,14 +106,15 @@ func handleAddNewRequest(w http.ResponseWriter, r *http.Request, p *Provider) {
 	// handle add new request 
 	// todo: validate sequnence number 
 	// parse sequence number from 
-	lastSqnNumber := 10
-
-	lastSqnNumberBytes := []byte(fmt.Sprintf("%d", lastSqnNumber))
-	// store to db
-	err = p.db.Put(AddPrefixChainName(p.NID(), lastSqnNumberBytes), lastSqnNumberBytes, nil)
+	storeData, err := hex.DecodeString(rsi.RawTransaction)
 	if err != nil {
-		p.logger.Error(fmt.Sprintln("failed to store data at sequence number ", lastSqnNumber), zap.Error(err))
-		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		p.logger.Error("Error decoding hex string", zap.Error(err))
+		http.Error(w, "Error decoding hex string", http.StatusInternalServerError)
+		return
+	}
+	err = p.StoreNewPendingRequest(storeData)
+	if err != nil {
+		http.Error(w, "Failed to store new request", http.StatusBadRequest)
 		return
 	}
 }

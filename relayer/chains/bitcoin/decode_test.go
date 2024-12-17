@@ -3,6 +3,7 @@ package bitcoin
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/big"
@@ -12,10 +13,10 @@ import (
 	"github.com/icon-project/centralized-relay/utils/multisig"
 	"github.com/studyzy/runestone"
 
-	"lukechampine.com/uint128"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/icon-project/centralized-relay/relayer/chains/bitcoin/abi"
 	"github.com/icon-project/icon-bridge/common/codec"
+	"lukechampine.com/uint128"
 )
 
 func TestDecode(t *testing.T) {
@@ -89,13 +90,13 @@ func TestEncodeToXcallMessage(t *testing.T) {
 		Min0:      0,
 		Min1:      0,
 	}
-	amount0, _ := uint128.FromString("18999999999999999977305673")
+	amount0, _ := uint128.FromString("18999999999999999977283654")
 	amount1, _ := uint128.FromString("539580403982610478")
 	test1.Amount0Desired = amount0
 	test1.Amount1Desired = amount1
 	test1.Token0Id = runestone.RuneId{
-		Block: 0,
-		Tx: 0,
+		Block: 1,
+		Tx: 5,
 	}
 	test1.Token1Id = runestone.RuneId{
 		Block: 3009542,
@@ -107,9 +108,9 @@ func TestEncodeToXcallMessage(t *testing.T) {
 	test1.InitPrice, _ = uint128.FromString("12015251367205891895777574")
 
 	protocols := []string{
-		"0xC1D7D50AE2C9187BC4c85B797c18995658a9820C",
-		"0x01f6549BeF494C8b0B00C2790577AcC1A3Fa0Bd0",
-		"0x49f41c66CC99fc34B136c720b176845C84cC8f42",
+		"0xCe3a6E2E32A91744E7028907B6d68599B69d980B",
+        "0x30958E26002E3a1B363b6BD61c79b1E85BeC9E33",
+        "0x501BC1B3fcD3eFEce8B376cCE9bFa2E26B3Da55A",
 	}
 
 	rpcURL := "https://sepolia.optimism.io"
@@ -118,15 +119,18 @@ func TestEncodeToXcallMessage(t *testing.T) {
 		panic(err)
 	}
 
-	runeFactory, err := abi.NewRunefactory(common.HexToAddress("0xaA3BB9e4c3828BfbEe795BA090FA870C95efa199"), rpc)
+	runeFactory, err := abi.NewRunefactory(common.HexToAddress("0xEDB9ABc78A4557b24D06A25675ed99BB02fEe1dA"), rpc)
 	if err != nil {
 		panic(err)
 	}
 
+	requestBytes, _ := json.Marshal(test1)
+	t.Log(hex.EncodeToString(requestBytes))
+
 	res, radfiCalldata, err := ToXCallMessage(
 		test1,
-		"0x3.BTC/tb1p22rjagtq7e4ckelvvngvt0n7m9g3vnj3f4sk4lh854ad6u43urdqn8g5sv",
-		"0x2a68F967bFA230780a385175d0c86AE4048d3096",
+		"0x2.btc/tb1p22rjagtq7e4ckelvvngvt0n7m9g3vnj3f4sk4lh854ad6u43urdqn8g5sv",
+		"0x54b200FF2204D2b8686960Bb8F32F1562d0Acd71",
 		1,
 		protocols,
 		"", // todo: update later

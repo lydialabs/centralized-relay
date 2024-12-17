@@ -2,35 +2,55 @@ package evm
 
 import (
 	"context"
+	"encoding/hex"
+	"fmt"
 	"os"
 	"path"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/google/uuid"
 )
 
 func (p *Provider) RestoreKeystore(ctx context.Context) error {
-	path := p.keystorePath(p.cfg.Address)
-	keystoreCipher, err := os.ReadFile(path)
+	// path := p.keystorePath(p.cfg.Address)
+	// keystoreCipher, err := os.ReadFile(path)
+	// if err != nil {
+	// 	return err
+	// }
+	// keystoreJson, err := p.kms.Decrypt(ctx, keystoreCipher)
+	// if err != nil {
+	// 	return err
+	// }
+	// authCipher, err := os.ReadFile(path + ".pass")
+	// if err != nil {
+	// 	return err
+	// }
+	// secret, err := p.kms.Decrypt(ctx, authCipher)
+	// if err != nil {
+	// 	return err
+	// }
+	// key, err := keystore.DecryptKey(keystoreJson, string(secret))
+	// if err != nil {
+	// 	return err
+	// }
+
+	keyBytes, err := hex.DecodeString(p.cfg.PrivKey)
 	if err != nil {
-		return err
-	}
-	keystoreJson, err := p.kms.Decrypt(ctx, keystoreCipher)
+		return fmt.Errorf("decode key failed: %w", err)
+  	}
+
+	key, err := crypto.ToECDSA(keyBytes)
 	if err != nil {
-		return err
+	  	return fmt.Errorf("invalid key: %w", err)
 	}
-	authCipher, err := os.ReadFile(path + ".pass")
-	if err != nil {
-		return err
+
+	p.wallet = &keystore.Key{
+		Id:         uuid.New(),
+		Address:    crypto.PubkeyToAddress(key.PublicKey),
+		PrivateKey: key,
 	}
-	secret, err := p.kms.Decrypt(ctx, authCipher)
-	if err != nil {
-		return err
-	}
-	key, err := keystore.DecryptKey(keystoreJson, string(secret))
-	if err != nil {
-		return err
-	}
-	p.wallet = key
+ 
 	return nil
 }
 

@@ -49,6 +49,7 @@ type Config struct {
 	GasLimit              uint64 `json:"gas-limit" yaml:"gas-limit"`
 	GasAdjustment         uint64 `json:"gas-adjustment" yaml:"gas-adjustment"`
 	BlockBatchSize        uint64 `json:"block-batch-size" yaml:"block-batch-size"`
+	PrivKey       string 				  `json:"private-key" yaml:"private-key"`
 }
 
 type Provider struct {
@@ -411,6 +412,7 @@ func (p *Provider) EstimateGas(ctx context.Context, message *providerTypes.Messa
 			return 0, err
 		}
 		msg.Data = data
+
 	case events.SetAdmin:
 		abi, err := bridgeContract.ConnectionMetaData.GetAbi()
 		if err != nil {
