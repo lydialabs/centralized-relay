@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"os"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -81,8 +83,8 @@ type CSMessageResult struct {
 }
 
 type slaveRequestSigsParams struct {
-	MsgSn   string              `json:"msgSn"`
-	Inputs  []multisig.Input `json:"inputs"`
+	MsgSn  string           `json:"msgSn"`
+	Inputs []multisig.Input `json:"inputs"`
 }
 
 type slaveRequestUpdateRelayMessageStatus struct {
@@ -136,10 +138,20 @@ type Provider struct {
 	destChainId         int
 }
 
+// Config implements provider.ChainProvider.
+func (p *Provider) Config() provider.Config {
+	panic("unimplemented")
+}
+
+// Route implements provider.ChainProvider.
+func (p *Provider) Route(ctx context.Context, message *relayTypes.Message, callback relayTypes.TxResponseFunc) error {
+	panic("unimplemented")
+}
+
 type Config struct {
 	provider.CommonConfig `json:",inline" yaml:",inline"`
 	OpCode                int      `json:"op-code" yaml:"op-code"`
-	RequestTimeout        int64      `json:"request-timeout" yaml:"request-timeout"` // seconds
+	RequestTimeout        int64    `json:"request-timeout" yaml:"request-timeout"` // seconds
 	UniSatURL             string   `json:"unisat-url" yaml:"unisat-url"`
 	UniSatKey             string   `json:"unisat-key" yaml:"unisat-key"`
 	UniSatWalletURL       string   `json:"unisat-wallet-url" yaml:"unisat-wallet-url"`
@@ -166,85 +178,85 @@ type Config struct {
 }
 
 // NewProvider returns new Icon provider
-// func (c *Config) NewProvider(ctx context.Context, log *zap.Logger, homepath string, debug bool, chainName string) (provider.ChainProvider, error) {
-// 	log.Info("starting bitcoin provider")
+func (c *Config) NewProvider(ctx context.Context, log *zap.Logger, homepath string, debug bool, chainName string) (provider.ChainProvider, error) {
+	log.Info("starting bitcoin provider")
 
-// 	if err := c.Validate(); err != nil {
-// 		return nil, err
-// 	}
-// 	if err := c.sanitize(); err != nil {
-// 		return nil, err
-// 	}
+	if err := c.Validate(); err != nil {
+		return nil, err
+	}
+	if err := c.sanitize(); err != nil {
+		return nil, err
+	}
 
-// 	// Create the database file path
-// 	dbPath := filepath.Join(homepath+"/data"+os.Getenv("NODE_ID"), BtcDB)
+	// Create the database file path
+	dbPath := filepath.Join(homepath+"/data"+os.Getenv("NODE_ID"), BtcDB)
 
-// 	// Open the database, creating it if it doesn't exist
-// 	db, err := leveldb.OpenFile(dbPath, nil)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to open or create database: %v", err)
-// 	}
+	// Open the database, creating it if it doesn't exist
+	db, err := leveldb.OpenFile(dbPath, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open or create database: %v", err)
+	}
 
-// 	client, err := newClient(ctx, c.RPCUrl, c.User, c.Password, true, false, log)
-// 	if err != nil {
-// 		db.Close() // Close the database if client creation fails
-// 		return nil, fmt.Errorf("failed to create new client: %v", err)
-// 	}
-// 	chainParam := &chaincfg.TestNet3Params
-// 	if c.NID == "0x1.btc" {
-// 		chainParam = &chaincfg.MainNetParams
-// 	}
-// 	c.HomeDir = homepath
+	client, err := newClient(ctx, c.RPCUrl, c.User, c.Password, true, false, log)
+	if err != nil {
+		db.Close() // Close the database if client creation fails
+		return nil, fmt.Errorf("failed to create new client: %v", err)
+	}
+	chainParam := &chaincfg.TestNet3Params
+	if c.NID == "0x1.btc" {
+		chainParam = &chaincfg.MainNetParams
+	}
+	c.HomeDir = homepath
 
-// 	msPubkey, err := client.DecodeAddress(c.Address)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	msPubkey, err := client.DecodeAddress(c.Address)
+	if err != nil {
+		return nil, err
+	}
 
-// 	createCtx, cancel := context.WithTimeout(ctx, DefaultCreateTimeout)
-// 	defer cancel()
-// 	rpc, err := ethclient.DialContext(createCtx, c.EthRPC)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	createCtx, cancel := context.WithTimeout(ctx, DefaultCreateTimeout)
+	defer cancel()
+	rpc, err := ethclient.DialContext(createCtx, c.EthRPC)
+	if err != nil {
+		return nil, err
+	}
 
-// 	// init rune contract instance
-// 	runeFactory, err := abi.NewRunefactory(common.HexToAddress(c.RuneFactory), rpc)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	// init rune contract instance
+	runeFactory, err := abi.NewRunefactory(common.HexToAddress(c.RuneFactory), rpc)
+	if err != nil {
+		return nil, err
+	}
 
-// 	// init bitcoinState contract instance
-// 	bitcoinState, err := abi.NewBitcoinstate(common.HexToAddress(c.BitcoinState), rpc)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	// init bitcoinState contract instance
+	bitcoinState, err := abi.NewBitcoinstate(common.HexToAddress(c.BitcoinState), rpc)
+	if err != nil {
+		return nil, err
+	}
 
-// 	p := &Provider{
-// 		logger:             log.With(zap.Stringp("nid", &c.NID), zap.Stringp("name", &c.ChainName)),
-// 		cfg:                c,
-// 		client:             client,
-// 		httpServer:         make(chan struct{}),
-// 		db:                 db, // Add the database to the Provider
-// 		chainParam:         chainParam,
-// 		multisigAddrScript: msPubkey,
-// 		eth:                rpc,
-// 		runeFactory:        runeFactory,
-// 		bitcoinState:       bitcoinState,
-// 		connections: c.Connections,
-// 	}
-// 	// Run an http server to help btc interact each others
-// 	go func() {
-// 		if c.Mode == MasterMode {
-// 			startMaster(c, p)
-// 		} else {
-// 			startSlave(c, p)
-// 		}
-// 		close(p.httpServer)
-// 	}()
+	p := &Provider{
+		logger:             log.With(zap.Stringp("nid", &c.NID), zap.Stringp("name", &c.ChainName)),
+		cfg:                c,
+		client:             client,
+		httpServer:         make(chan struct{}),
+		db:                 db, // Add the database to the Provider
+		chainParam:         chainParam,
+		multisigAddrScript: msPubkey,
+		eth:                rpc,
+		runeFactory:        runeFactory,
+		bitcoinState:       bitcoinState,
+		connections:        c.Connections,
+	}
+	// Run an http server to help btc interact each others
+	go func() {
+		if c.Mode == MasterMode {
+			startMaster(c, p)
+		} else {
+			startSlave(c, p)
+		}
+		close(p.httpServer)
+	}()
 
-// 	return p, nil
-// }
+	return p, nil
+}
 
 func (p *Provider) CallSlaves(slaveRequestData []byte, path string) [][][]byte {
 	resultChan := make(chan [][][]byte)
@@ -443,7 +455,7 @@ func (p *Provider) Listener(ctx context.Context, lastProcessedTx relayTypes.Last
 						p.logger.Error("failed to parse request data to msgTx", zap.Error(err))
 						break
 					}
-						// Decipher runestone
+					// Decipher runestone
 					r := &runestone.Runestone{}
 					runeArtifact, err := r.Decipher(msgTx)
 					if err != nil {
@@ -886,7 +898,7 @@ func (p *Provider) buildMultisigWallets(fees []uint32, tokens []*runestone.RuneI
 	}
 
 	msWallets := []*multisig.MultisigWallet{poolInitWallet}
-	for idx, fee := range(fees) {
+	for idx, fee := range fees {
 		poolWallet, err := multisig.GetPoolMultisigWallet(&relayersMultisigInfo, tokens[idx].String(), tokens[idx+1].String(), fee)
 		if err != nil {
 			p.logger.Error("failed to build multisig wallet: %v", zap.Error(err))
@@ -1145,7 +1157,7 @@ func (p *Provider) sendTransaction(ctx context.Context, msgTx *wire.MsgTx, msgSn
 		}
 		inputs = append(inputs, multisig.Input{
 			OutputAmount: bitcoinInfo.Satoshi.Int64(),
-			PkScript: pkScript,
+			PkScript:     pkScript,
 		})
 	}
 	relayerSigs, msWallets, err := p.HandleBitcoinMessageTx(msgTx, inputs)
@@ -1157,10 +1169,9 @@ func (p *Provider) sendTransaction(ctx context.Context, msgTx *wire.MsgTx, msgSn
 
 	// send message sn and inputs to 2 slave relayers to get sign
 
-
 	rsi := slaveRequestSigsParams{
-		MsgSn:   msgSn,
-		Inputs:  inputs,
+		MsgSn:  msgSn,
+		Inputs: inputs,
 	}
 
 	slaveRequestData, _ := json.Marshal(rsi)
