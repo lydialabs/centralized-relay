@@ -15,7 +15,9 @@ import (
 )
 
 func startMaster(c *Config, p *Provider) {
-	http.HandleFunc("/execute", handleExecute)
+	http.HandleFunc("/get-last-sn", func(w http.ResponseWriter, r *http.Request) {
+		handleGetLastSn(w, r, p)
+	})
 	http.HandleFunc("/broadcast-request", func(w http.ResponseWriter, r *http.Request) {
 		handleBroadcastNewRequest(w, r, p)
 	})
@@ -29,7 +31,7 @@ func startMaster(c *Config, p *Provider) {
 	log.Fatal(server.ListenAndServe())
 }
 
-func handleExecute(w http.ResponseWriter, r *http.Request) {
+func handleGetLastSn(w http.ResponseWriter, r *http.Request, p *Provider) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
@@ -46,25 +48,37 @@ func handleExecute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var msg string
+	// var msg string
 
-	body, err := io.ReadAll(r.Body)
+	// body, err := io.ReadAll(r.Body)
+	// if err != nil {
+	// 	http.Error(w, "Failed to read request body", http.StatusBadRequest)
+	// 	return
+	// }
+	// defer r.Body.Close()
+
+	// err = json.Unmarshal(body, &msg)
+	// if err != nil {
+	// 	http.Error(w, "Failed to parse JSON", http.StatusBadRequest)
+	// 	return
+	// }
+
+	lastSqnNumberBig, err := p.bitcoinState.RequestCount(nil)
 	if err != nil {
-		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		http.Error(w, "Failed to get last contract sn", http.StatusBadRequest)
 		return
 	}
-	defer r.Body.Close()
 
-	err = json.Unmarshal(body, &msg)
+	lastPendingSqn, err := p.GetLastPendingSn()
 	if err != nil {
-		http.Error(w, "Failed to parse JSON", http.StatusBadRequest)
+		http.Error(w, "Failed to get last pending sn", http.StatusBadRequest)
 		return
 	}
 
 	// Send a response
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-	response := map[string]string{"status": "success", "msg": msg}
+	response := map[string]string{"status": "success", "last_contract_sn": lastSqnNumberBig.String(), "last_pending_sn": fmt.Sprint(lastPendingSqn)}
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -101,14 +115,9 @@ func handleBroadcastNewRequest(w http.ResponseWriter, r *http.Request, p *Provid
 		return
 	}
 
-	// Send a response
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "application/json")
-	response := map[string]string{"status": "success", "msg": msg.RawTransaction}
-	json.NewEncoder(w).Encode(response)
-
 	// todo: validation raw tx
-	// store the request to db 
+	
+	// store the request to db
 	storeData, err := hex.DecodeString(msg.RawTransaction)
 	if err != nil {
 		p.logger.Error("Error decoding hex string", zap.Error(err))
@@ -120,13 +129,27 @@ func handleBroadcastNewRequest(w http.ResponseWriter, r *http.Request, p *Provid
 		http.Error(w, "Failed to store new request", http.StatusBadRequest)
 		return
 	}
-	
+
 	// route
 	route := "/add-new-request"
 
 	// fwd data to slavers
-	sendRequestToSlaver(p.cfg.ApiKey, p.cfg.SlaveServer1+route, msg, p.logger)
-	sendRequestToSlaver(p.cfg.ApiKey, p.cfg.SlaveServer2+route, msg, p.logger)
+	err = sendRequestToSlaver(p.cfg.ApiKey, p.cfg.SlaveServer1+route, msg, p.logger)
+	if err != nil {
+		http.Error(w, "Failed to send request to slave 1", http.StatusBadRequest)
+		return
+	}
+	err = sendRequestToSlaver(p.cfg.ApiKey, p.cfg.SlaveServer2+route, msg, p.logger)
+	if err != nil {
+		http.Error(w, "Failed to send request to slave 2", http.StatusBadRequest)
+		return
+	}
+
+	// Send a response
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	response := map[string]string{"status": "success", "msg": msg.RawTransaction}
+	json.NewEncoder(w).Encode(response)
 }
 
 func sendRequestToSlaver(apiKey, url string, msg slaveNewRequest, logger *zap.Logger) error {
@@ -146,7 +169,7 @@ func sendRequestToSlaver(apiKey, url string, msg slaveNewRequest, logger *zap.Lo
 		_, err = client.Do(req)
 		if err != nil {
 			logger.Error("sendRequestToSlaver: failed to send request: ", zap.Error(err))
-			// retry 
+			// retry
 			maxRetry++
 			if maxRetry == 5 {
 				return err

@@ -326,31 +326,59 @@ func (p *Provider) Type() string {
 // 	return p.cfg
 // }
 
-func (p *Provider) StoreNewPendingRequest(pendingDataRequest []byte) error {
-	// todo: validation
-
-	// get last pending id
+func (p *Provider) GetLastPendingSn() (uint64, error) {
 	lastSeqKey := AddPrefixChainName(p.NID(), []byte(LastPendingSequenceNumber))
 	lastPendingSqnBytes, err := p.db.Get(lastSeqKey, nil)
+	if err != nil {
+		return 0, err
+	}
+
+	lastPendingSqn, err := strconv.ParseUint(string(lastPendingSqnBytes), 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	return lastPendingSqn, nil
+}
+
+func (p *Provider) SetLastPendingSn(lastPendingSqn uint64) error {
+	return p.db.Put(AddPrefixChainName(p.NID(), []byte(LastPendingSequenceNumber)), []byte(fmt.Sprintf("%d", lastPendingSqn)), nil)
+}
+
+func (p *Provider) StoreNewPendingRequest(pendingDataRequest []byte) error {
+	// todo: validation
+	msgTx, err := multisig.ParseTxBytes(pendingDataRequest)
+	if err != nil {
+		p.logger.Error(err.Error())
+		return err
+	}
+	radFiMessage, err := multisig.ReadRadFiMessage(msgTx)
 	if err != nil {
 		p.logger.Error(err.Error())
 		return err
 	}
 
-	lastPendingSqn, err := strconv.ParseUint(string(lastPendingSqnBytes), 10, 64)
+	// get last pending id
+	lastPendingSqn, err := p.GetLastPendingSn()
 	if err != nil {
 		p.logger.Error(err.Error())
 		return err
 	}
 	lastPendingSqn++
 
-	// store the new last request
-	err = p.db.Put(AddPrefixChainName(p.NID(), []byte(LastPendingSequenceNumber)), []byte(fmt.Sprintf("%d", lastPendingSqn)), nil)
-	if err != nil {
+	if lastPendingSqn != radFiMessage.SequenceNumber.Lo {
+		err := fmt.Errorf("invalid sequence number in msgTx, contain %v, but needed %v", radFiMessage.SequenceNumber.Lo, lastPendingSqn)
 		p.logger.Error(err.Error())
 		return err
 	}
 
+	p.logger.Info("new lastPendingSqn %v", zap.Uint64("sn", lastPendingSqn))
+	// store the new last request
+	err = p.SetLastPendingSn(lastPendingSqn)
+	if err != nil {
+		p.logger.Error(err.Error())
+		return err
+	}
 	// store the data
 	err = p.db.Put(AddPrefixChainName(p.NID(), []byte(fmt.Sprintf("%d", lastPendingSqn))), pendingDataRequest, nil)
 	if err != nil {
@@ -371,6 +399,7 @@ func (p *Provider) Listener(ctx context.Context, lastProcessedTx relayTypes.Last
 		return err
 	}
 	lastSqnNumber := lastSqnNumberBig.Uint64()
+	p.logger.Info("contract lastSqnNumber %v", zap.Uint64("sn", lastSqnNumber))
 	// init sequence number if needed
 	lastSeqKey := AddPrefixChainName(p.NID(), []byte(LastPendingSequenceNumber))
 	lastPendingSqnBytes, err := p.db.Get(lastSeqKey, nil)
@@ -494,6 +523,12 @@ func (p *Provider) Listener(ctx context.Context, lastProcessedTx relayTypes.Last
 					if err != nil || gasLimit == 0 {
 						p.logger.Error(fmt.Sprintln("simulate fail because of err"), zap.Error(err))
 						lastSqnNumber--
+						// todo: update db pending sequence number
+						err = p.SetLastPendingSn(lastSqnNumber)
+						if err != nil {
+							p.logger.Error(err.Error())
+							return err
+						}
 						break
 					}
 
@@ -520,7 +555,7 @@ func (p *Provider) Listener(ctx context.Context, lastProcessedTx relayTypes.Last
 					}
 
 					// check the sqn number on contract is updated
-					tempSqn := 0
+					tempSqn := uint64(0)
 					for {
 						<-checkSqnUpdatedContract.C
 						// get last sqn from the contract
@@ -528,11 +563,15 @@ func (p *Provider) Listener(ctx context.Context, lastProcessedTx relayTypes.Last
 						if err != nil {
 							p.logger.Error(fmt.Sprintln("retry: get sequence error"), zap.Error(err))
 						} else {
-							tempSqn = int(lastSqnNumberBig.Int64())
+							tempSqn = uint64(lastSqnNumberBig.Int64())
 						}
-						if lastSqnNumber == uint64(tempSqn) {
+						if lastSqnNumber == tempSqn {
 							if p.cfg.Mode == MasterMode {
 								p.sendTransaction(ctx, msgTx, fmt.Sprint(lastSqnNumber))
+								if err != nil {
+									p.logger.Error(fmt.Sprintln("fail to broadcast bitcoin tx"), zap.Error(err))
+									break
+								}
 							}
 							checkSqnUpdatedContract.Stop()
 							break

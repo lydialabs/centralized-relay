@@ -108,6 +108,7 @@ type RadFiDecodedMsg struct {
 	WithdrawLiquidityMsg	*RadFiWithdrawLiquidityMsg
 	CollectFeesMsg			*RadFiCollectFeesMsg
 	IncreaseLiquidityMsg	*RadFiIncreaseLiquidityMsg
+	SequenceNumber	uint128.Uint128
 	Fees 			[]uint32
 	Tokens			[]*runestone.RuneId
 }
@@ -348,6 +349,7 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 					Token0Id:		token0Id,
 					Token1Id:		token1Id,
 				},
+				SequenceNumber: 		integers[7],
 				Fees:					[]uint32{fee},
 				Tokens:					[]*runestone.RuneId{&token0Id, &token1Id},
 			}, nil
@@ -379,6 +381,7 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 					Fees:			fees,
 					Tokens:			tokens,
 				},
+				SequenceNumber: integers[2],
 				Fees:		fees,
 				Tokens:		tokens,
 			}, nil
@@ -405,6 +408,7 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 					Token0Id:		token0Id,
 					Token1Id:		token1Id,
 				},
+				SequenceNumber: 		integers[4],
 				Fees:					[]uint32{fee},
 				Tokens:					[]*runestone.RuneId{&token0Id, &token1Id},
 			}, nil
@@ -430,6 +434,7 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 					Token0Id:		token0Id,
 					Token1Id:		token1Id,
 				},
+				SequenceNumber: 		integers[3],
 				Fees:					[]uint32{fee},
 				Tokens:					[]*runestone.RuneId{&token0Id, &token1Id},
 			}, nil
@@ -457,6 +462,7 @@ func ReadRadFiMessage(transaction *wire.MsgTx) (*RadFiDecodedMsg, error) {
 					Token0Id:		token0Id,
 					Token1Id:		token1Id,
 				},
+				SequenceNumber: 		integers[5],
 				Fees:					[]uint32{fee},
 				Tokens:					[]*runestone.RuneId{&token0Id, &token1Id},
 			}, nil
